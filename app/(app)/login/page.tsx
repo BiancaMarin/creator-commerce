@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Link from "next/link"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import * as React from "react";
+import Link from "next/link";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   EyeIcon,
   EyeSlashIcon,
   GithubLogoIcon,
   GoogleLogoIcon,
   StorefrontIcon,
-} from "@phosphor-icons/react"
+} from "@phosphor-icons/react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -21,19 +21,20 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { strings } from "@/constants/strings";
 
 const loginSchema = z.object({
   email: z.email("Enter a valid email address"),
   password: z.string().min(1, "Password is required"),
-})
+});
 
-type LoginValues = z.infer<typeof loginSchema>
+type LoginValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = React.useState(false)
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const {
     register,
@@ -42,12 +43,12 @@ export default function LoginPage() {
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
-  })
+  });
 
   const onSubmit = handleSubmit(async (values) => {
     // TODO: wire up authentication with `values`.
-    console.log(values)
-  })
+    console.log(values);
+  });
 
   return (
     <div className="flex flex-1 items-center justify-center p-4">
@@ -58,26 +59,28 @@ export default function LoginPage() {
           </span>
           <div className="space-y-1">
             <h1 className="font-heading text-xl font-semibold tracking-tight">
-              Welcome back
+              {strings.login.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              Sign in to your Creator Commerce workspace.
+              {strings.login.subtitle}
             </p>
           </div>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Sign in</CardTitle>
-            <CardDescription>
-              Enter your email and password to continue.
-            </CardDescription>
+            <CardTitle>{strings.login.signIn}</CardTitle>
+            <CardDescription>{strings.login.paragraph}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+            <form
+              onSubmit={onSubmit}
+              className="flex flex-col gap-4"
+              noValidate
+            >
               <div className="flex flex-col gap-2">
                 <label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  {strings.login.email}
                 </label>
                 <Input
                   id="email"
@@ -97,13 +100,13 @@ export default function LoginPage() {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <label htmlFor="password" className="text-sm font-medium">
-                    Password
+                    {strings.login.password}
                   </label>
                   <Link
                     href="/login"
                     className="text-xs font-medium text-muted-foreground hover:text-foreground"
                   >
-                    Forgot password?
+                    {strings.login.password}
                   </Link>
                 </div>
                 <div className="relative">
@@ -121,7 +124,9 @@ export default function LoginPage() {
                     variant="ghost"
                     size="icon-sm"
                     className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                     aria-pressed={showPassword}
                     onClick={() => setShowPassword((value) => !value)}
                   >
@@ -143,7 +148,7 @@ export default function LoginPage() {
             <div className="flex items-center gap-3 py-4">
               <Separator className="flex-1" />
               <span className="text-xs text-muted-foreground">
-                or continue with
+                {strings.login.continueWith}
               </span>
               <Separator className="flex-1" />
             </div>
@@ -151,11 +156,11 @@ export default function LoginPage() {
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline">
                 <GoogleLogoIcon />
-                Google
+                {strings.login.google}
               </Button>
               <Button variant="outline">
                 <GithubLogoIcon />
-                GitHub
+                {strings.login.github}
               </Button>
             </div>
           </CardContent>
@@ -165,11 +170,11 @@ export default function LoginPage() {
               href="/login"
               className="ml-1 font-medium text-foreground hover:underline"
             >
-              Sign up
+              {strings.signup}
             </Link>
           </CardFooter>
         </Card>
       </div>
     </div>
-  )
+  );
 }
