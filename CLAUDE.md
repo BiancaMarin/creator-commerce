@@ -52,6 +52,8 @@ components/
   ui/                     # shadcn primitives (Base UI wrappers) — treat as generated
   app-sidebar.tsx         # Left nav (client; uses usePathname for active state)
   site-header.tsx         # Top bar with NavigationMenu (client)
+constants/
+  strings.ts              # Centralized user-facing copy (see "Copy & UI strings")
 hooks/                    # e.g. use-mobile.ts
 lib/
   utils.ts                # cn() class-merge helper
@@ -124,6 +126,18 @@ This is **not** the Radix-based shadcn. Config lives in `components.json`
 - `--font-heading` maps to Public Sans; use `font-heading` for headings/titles.
 - **Always merge classes with `cn()`** from `@/lib/utils` (clsx + tailwind-merge).
 
+## Copy & UI strings
+
+User-facing text is centralized in **`constants/strings.ts`** — a single `strings` object,
+**grouped by domain** (`common`, `login`, `signup`, `validation`, `errors`) and exported
+`as const`. Import it as `@/constants/strings` and reference copy through it
+(`{strings.login.title}`) instead of hardcoding literals in JSX.
+
+- Add new copy under the relevant group; reuse `common` / `validation` / `errors` for
+  shared text rather than duplicating strings.
+- Prefer wiring **zod messages** to `strings.validation.*` (e.g. `invalidEmail`,
+  `passwordMin`) so validation copy stays in one place.
+
 ## Forms & validation strategy
 
 Standard stack is **react-hook-form + zod**, wired directly (no shadcn `Form` wrapper,
@@ -163,3 +177,4 @@ secrets to the client.
 - **Style with semantic tokens + `cn()`**, not raw colors or string concatenation.
 - **Add shadcn primitives via the CLI**; don't hand-roll or heavily edit `components/ui/*`.
 - **Base UI API:** `render` prop (+ `nativeButton={false}`) for polymorphism, not `asChild`.
+- **User-facing copy lives in `constants/strings.ts`** — reference it, don't hardcode text.
