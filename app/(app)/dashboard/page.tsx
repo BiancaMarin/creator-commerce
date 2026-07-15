@@ -12,6 +12,8 @@ import {
   UsersIcon,
 } from "@phosphor-icons/react/dist/ssr"
 
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -23,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
   title: "Dashboard · Creator Commerce",
@@ -109,10 +112,11 @@ const topProducts = [
   { name: "1:1 Coaching Call", sales: 64, share: 13 },
 ]
 
-const statusStyles: Record<string, string> = {
-  paid: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  pending: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  refunded: "bg-muted text-muted-foreground",
+const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> = {
+  paid: "success",
+  pending: "warning",
+  refunded: "neutral",
+  failed: "destructive",
 }
 
 function initials(name: string) {
@@ -140,7 +144,11 @@ export default function DashboardPage() {
             <ExportIcon />
             Export
           </Button>
-          <Button size="sm" nativeButton={false} render={<Link href="/products" />}>
+          <Button
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/products" />}
+          >
             <PlusIcon />
             New product
           </Button>
@@ -163,11 +171,10 @@ export default function DashboardPage() {
               </CardHeader>
               <CardFooter className="gap-1.5 text-xs text-muted-foreground">
                 <span
-                  className={
-                    stat.trend === "up"
-                      ? "inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400"
-                      : "inline-flex items-center gap-1 font-medium text-destructive"
-                  }
+                  className={cn(
+                    "inline-flex items-center gap-1 font-medium",
+                    stat.trend === "up" ? "text-success" : "text-destructive"
+                  )}
                 >
                   <TrendIcon className="size-3.5" />
                   {stat.delta}
@@ -201,9 +208,11 @@ export default function DashboardPage() {
               <div key={order.id}>
                 {index > 0 && <Separator />}
                 <div className="flex items-center gap-3 py-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                    {initials(order.customer)}
-                  </span>
+                  <Avatar>
+                    <AvatarFallback className="text-xs font-medium">
+                      {initials(order.customer)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">
                       {order.customer}
@@ -212,12 +221,10 @@ export default function DashboardPage() {
                       {order.product} · {order.id}
                     </p>
                   </div>
-                  <span
-                    className={`hidden rounded-full px-2 py-0.5 text-xs font-medium capitalize sm:inline-block ${statusStyles[order.status]}`}
-                  >
+                  <Badge variant={badgeFor[order.status]} className="capitalize">
                     {order.status}
-                  </span>
-                  <span className="w-16 text-right text-sm font-medium tabular-nums">
+                  </Badge>
+                  <span className="w-16 text-right font-mono text-sm font-medium">
                     {order.amount}
                   </span>
                 </div>

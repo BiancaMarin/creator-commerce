@@ -5,18 +5,16 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   ChartLineIcon,
-  GearIcon,
   HouseIcon,
   PackageIcon,
   ReceiptIcon,
-  StorefrontIcon,
   UsersIcon,
 } from "@phosphor-icons/react"
 
+import { LogoMark } from "@/components/marketing/logo"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -24,6 +22,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from "@/components/ui/sidebar"
 
 const navMain = [
@@ -33,8 +32,6 @@ const navMain = [
   { title: "Customers", href: "/customers", icon: UsersIcon },
   { title: "Analytics", href: "/analytics", icon: ChartLineIcon },
 ]
-
-const navFooter = [{ title: "Settings", href: "/settings", icon: GearIcon }]
 
 export function AppSidebar({
   ...props
@@ -50,16 +47,16 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              render={<Link href="/" />}
+              render={<Link href="/dashboard" />}
               tooltip="Creator Commerce"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <StorefrontIcon className="size-4" />
+                <LogoMark className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">Creator Commerce</span>
                 <span className="truncate text-xs text-sidebar-foreground/70">
-                  Workspace
+                  Seller
                 </span>
               </div>
             </SidebarMenuButton>
@@ -89,22 +86,7 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          {navFooter.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                isActive={isActive(item.href)}
-                tooltip={item.title}
-                render={<Link href={item.href} />}
-              >
-                <item.icon />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   )
 }
