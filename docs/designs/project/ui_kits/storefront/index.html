@@ -1,0 +1,179 @@
+<!-- @dsCard group="Storefront" viewport="1120x820" name="Creator storefront" subtitle="Public store · product grid · product page · checkout" -->
+<!-- @startingPoint section="Storefront" subtitle="Public creator storefront + product page" viewport="1120x820" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Creator Commerce — Storefront</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body,#root{margin:0}body{background:var(--background);color:var(--foreground);font-family:var(--font-sans)}a{color:var(--primary)}
+.cover{aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px}
+.mono{font-family:var(--font-mono)}</style>
+</head>
+<body><div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+const S = window.CreatorCommerceDesignSystem_8efbba;
+const { Button, Card, Badge, Separator, Avatar, Input } = S;
+
+const COVERS=["linear-gradient(135deg,var(--chart-2),var(--chart-4))","linear-gradient(135deg,var(--primary),var(--chart-4))","linear-gradient(135deg,var(--chart-1),var(--chart-3))","linear-gradient(135deg,var(--chart-3),var(--primary))"];
+const PRODUCTS=[
+ {id:1,name:"Studio Preset Pack",tag:"Lightroom presets",price:"$48",icon:"ph-sliders-horizontal",desc:"40 hand-tuned Lightroom presets for warm, filmic editorial portraits. Works with Lightroom Classic, CC and mobile.",files:"12 files · .xmp, .dng · 84 MB"},
+ {id:2,name:"Lightroom Masterclass",tag:"Video course",price:"$129",icon:"ph-play-circle",desc:"A 6-hour video course taking you from import to export, with RAW files to follow along.",files:"18 lessons · .mp4 · 4.2 GB"},
+ {id:3,name:"Brand Kit Templates",tag:"Design templates",price:"$64",icon:"ph-palette",desc:"Editable brand identity templates: logos, social layouts and a type system in Figma + Canva.",files:"6 files · .fig, .pdf · 220 MB"},
+ {id:4,name:"Motion Graphics Bundle",tag:"After Effects",price:"$89",icon:"ph-shapes",desc:"120 drag-and-drop After Effects motion presets and lower-thirds for creators.",files:"120 files · .aep · 1.1 GB"},
+];
+
+function StoreNav(){
+  return (<header style={{position:"sticky",top:0,zIndex:20,display:"flex",alignItems:"center",gap:16,height:60,padding:"0 32px",borderBottom:"1px solid var(--border)",background:"color-mix(in oklch,var(--background),transparent 20%)",backdropFilter:"blur(8px)"}}>
+    <span style={{display:"flex",alignItems:"center",gap:8,fontWeight:600}}><span style={{display:"flex",width:30,height:30,alignItems:"center",justifyContent:"center",borderRadius:"var(--radius-lg)",background:"var(--primary)",color:"var(--primary-foreground)"}}><svg width="17" height="17" viewBox="0 0 48 48" fill="none"><path d="M35 15 A13 13 0 1 0 35 33" stroke="currentColor" strokeWidth="4.4" strokeLinecap="round"/><path d="M31 21 A6.5 6.5 0 1 0 31 27" stroke="currentColor" strokeWidth="4.4" strokeLinecap="round"/></svg></span>alex.studio</span>
+    <nav style={{marginLeft:24,display:"flex",gap:20,fontSize:14,color:"var(--muted-foreground)"}}><a href="#" style={{textDecoration:"none",color:"var(--foreground)"}}>Shop</a><a href="#" style={{textDecoration:"none",color:"inherit"}}>About</a></nav>
+    <div style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center"}}>
+      <Button variant="ghost" size="icon-sm" aria-label="Cart"><i className="ph ph-shopping-bag"></i></Button>
+      <Button size="sm" variant="outline">Sign in</Button>
+    </div>
+  </header>);
+}
+
+function ProductCard({p,onOpen}){
+  return (<Card style={{padding:0,cursor:"pointer"}} onClick={()=>onOpen(p)}>
+    <div className="cover" style={{background:COVERS[(p.id-1)%COVERS.length]}}><i className={"ph "+p.icon}></i></div>
+    <div style={{padding:16,display:"flex",flexDirection:"column",gap:10}}>
+      <div>
+        <div style={{fontFamily:"var(--font-heading)",fontWeight:500,fontSize:15}}>{p.name}</div>
+        <div style={{fontSize:12,color:"var(--muted-foreground)"}}>{p.tag}</div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <span style={{fontFamily:"var(--font-mono)",fontWeight:600,fontSize:16}}>{p.price}</span>
+        <Button size="sm" onClick={(e)=>{e.stopPropagation();onOpen(p);}}>Buy</Button>
+      </div>
+    </div>
+  </Card>);
+}
+
+function StoreHome({onOpen}){
+  return (<div>
+    <section style={{padding:"48px 32px 32px",display:"flex",alignItems:"center",gap:20,maxWidth:1000,margin:"0 auto"}}>
+      <Avatar name="Alex Rivera" size="lg" style={{width:72,height:72,fontSize:24}}/>
+      <div>
+        <h1 style={{margin:"0 0 4px",fontFamily:"var(--font-heading)",fontSize:"var(--text-3xl)",fontWeight:600,letterSpacing:"-.02em"}}>Alex Rivera</h1>
+        <p style={{margin:0,color:"var(--muted-foreground)",maxWidth:520}}>Photographer & educator. Presets, courses and templates to help you shoot and edit with confidence.</p>
+      </div>
+    </section>
+    <section style={{padding:"8px 32px 56px",maxWidth:1000,margin:"0 auto"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+        <h2 style={{margin:0,fontFamily:"var(--font-heading)",fontSize:"var(--text-xl)",fontWeight:600}}>Products</h2>
+        <span style={{fontSize:13,color:"var(--muted-foreground)"}}>{PRODUCTS.length} items</span>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>
+        {PRODUCTS.map(p=><ProductCard key={p.id} p={p} onOpen={onOpen}/>)}
+      </div>
+    </section>
+  </div>);
+}
+
+function ProductPage({p,onBack,onBuy}){
+  return (<div style={{maxWidth:960,margin:"0 auto",padding:"28px 32px 56px"}}>
+    <Button variant="ghost" size="sm" onClick={onBack} style={{marginBottom:20}}><i className="ph ph-arrow-left"></i>Back to shop</Button>
+    <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr",gap:28,alignItems:"start"}}>
+      <Card style={{padding:0}}><div className="cover" style={{aspectRatio:"4/3",background:COVERS[(p.id-1)%COVERS.length],fontSize:64}}><i className={"ph "+p.icon}></i></div></Card>
+      <div style={{display:"flex",flexDirection:"column",gap:16}}>
+        <div><Badge variant="primary">{p.tag}</Badge></div>
+        <h1 style={{margin:0,fontFamily:"var(--font-heading)",fontSize:"var(--text-2xl)",fontWeight:600,letterSpacing:"-.02em"}}>{p.name}</h1>
+        <p style={{margin:0,color:"var(--muted-foreground)",lineHeight:1.55}}>{p.desc}</p>
+        <div style={{fontSize:13,color:"var(--muted-foreground)",display:"flex",alignItems:"center",gap:8}}><i className="ph ph-file-arrow-down"></i>{p.files}</div>
+        <Separator/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <span style={{fontFamily:"var(--font-mono)",fontWeight:700,fontSize:28}}>{p.price}</span>
+          <Button size="lg" onClick={()=>onBuy(p)}><i className="ph ph-lock-simple"></i>Buy now</Button>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"var(--muted-foreground)"}}><i className="ph ph-shield-check"></i>Secure Stripe checkout · instant download</div>
+      </div>
+    </div>
+  </div>);
+}
+
+function Checkout({p,onBack,onPay}){
+  const priceNum = Number(p.price.replace(/[^0-9.]/g,""));
+  const fee = (priceNum*0.02).toFixed(2);
+  const total = (priceNum + Number(fee)).toFixed(2);
+  const CardField=({label,children,style})=>(<div style={{display:"flex",flexDirection:"column",gap:6,...style}}><label style={{fontSize:13,fontWeight:500}}>{label}</label>{children}</div>);
+  return (<div style={{maxWidth:960,margin:"0 auto",padding:"28px 32px 56px"}}>
+    <Button variant="ghost" size="sm" onClick={onBack} style={{marginBottom:20}}><i className="ph ph-arrow-left"></i>Back</Button>
+    <div style={{display:"grid",gridTemplateColumns:"1.2fr 1fr",gap:28,alignItems:"start"}}>
+      <Card>
+        <div style={{padding:26,display:"flex",flexDirection:"column",gap:18}}>
+          <h1 style={{margin:0,fontFamily:"var(--font-heading)",fontSize:"var(--text-xl)",fontWeight:600}}>Checkout</h1>
+          <form onSubmit={(e)=>{e.preventDefault();onPay(p);}} style={{display:"flex",flexDirection:"column",gap:18}}>
+            <CardField label="Email"><Input type="email" placeholder="you@example.com" defaultValue=""/></CardField>
+            <Separator/>
+            <div style={{fontSize:13,fontWeight:600,color:"var(--muted-foreground)"}}>Payment details</div>
+            <CardField label="Card number">
+              <div style={{position:"relative"}}>
+                <Input placeholder="1234 1234 1234 1234" style={{paddingRight:78}}/>
+                <span style={{position:"absolute",top:"50%",right:12,transform:"translateY(-50%)",display:"flex",gap:5,color:"var(--muted-foreground)"}}><i className="ph ph-credit-card" style={{fontSize:18}}></i></span>
+              </div>
+            </CardField>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              <CardField label="Expiry"><Input placeholder="MM / YY"/></CardField>
+              <CardField label="CVC"><Input placeholder="123"/></CardField>
+            </div>
+            <CardField label="Name on card"><Input placeholder="Jane Creator"/></CardField>
+            <Button type="submit" size="lg" style={{width:"100%"}}><i className="ph ph-lock-simple"></i>Pay ${total}</Button>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,fontSize:12,color:"var(--muted-foreground)"}}><i className="ph ph-lock-simple"></i>Payments secured by Stripe</div>
+          </form>
+        </div>
+      </Card>
+      <Card>
+        <div style={{padding:24,display:"flex",flexDirection:"column",gap:16}}>
+          <div style={{fontSize:13,fontWeight:600,color:"var(--muted-foreground)"}}>Order summary</div>
+          <div style={{display:"flex",gap:12,alignItems:"center"}}>
+            <span className="cover" style={{width:56,height:56,borderRadius:"var(--radius-2xl)",fontSize:22,background:COVERS[(p.id-1)%COVERS.length],flex:"0 0 auto"}}><i className={"ph "+p.icon}></i></span>
+            <div style={{minWidth:0}}><div style={{fontWeight:500,fontSize:14}}>{p.name}</div><div style={{fontSize:12,color:"var(--muted-foreground)"}}>{p.tag}</div></div>
+          </div>
+          <Separator/>
+          <div style={{display:"flex",flexDirection:"column",gap:8,fontSize:14}}>
+            <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"var(--muted-foreground)"}}>Subtotal</span><span className="mono">${priceNum.toFixed(2)}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"var(--muted-foreground)"}}>Platform fee (2%)</span><span className="mono">${fee}</span></div>
+          </div>
+          <Separator/>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}><span style={{fontWeight:600}}>Total</span><span className="mono" style={{fontWeight:700,fontSize:22}}>${total}</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:"var(--muted-foreground)"}}><i className="ph ph-file-arrow-down"></i>Instant download after payment</div>
+        </div>
+      </Card>
+    </div>
+  </div>);
+}
+
+function Success({p,onDone}){
+  return (<div style={{minHeight:"70vh",display:"flex",alignItems:"center",justifyContent:"center",padding:32}}>
+    <Card style={{maxWidth:400,textAlign:"center"}}>
+      <div style={{padding:"32px 28px",display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+        <span style={{display:"flex",width:56,height:56,alignItems:"center",justifyContent:"center",borderRadius:"var(--radius-full)",background:"color-mix(in oklch,var(--success),transparent 88%)",color:"var(--success)"}}><i className="ph ph-check-circle" style={{fontSize:30}}></i></span>
+        <h1 style={{margin:0,fontFamily:"var(--font-heading)",fontSize:"var(--text-xl)",fontWeight:600}}>Payment successful</h1>
+        <p style={{margin:0,color:"var(--muted-foreground)",fontSize:14}}>Your download for <b style={{color:"var(--foreground)"}}>{p.name}</b> is ready and a receipt is on its way.</p>
+        <Button style={{width:"100%"}}><i className="ph ph-download-simple"></i>Download files</Button>
+        <Button variant="ghost" size="sm" onClick={onDone}>Back to shop</Button>
+      </div>
+    </Card>
+  </div>);
+}
+
+function App(){
+  const [view,setView]=useState({name:"home"});
+  return (<div style={{minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+    <StoreNav/>
+    <div style={{flex:1}}>
+      {view.name==="home" && <StoreHome onOpen={(p)=>setView({name:"product",p})}/>}
+      {view.name==="product" && <ProductPage p={view.p} onBack={()=>setView({name:"home"})} onBuy={(p)=>setView({name:"checkout",p})}/>}
+      {view.name==="checkout" && <Checkout p={view.p} onBack={()=>setView({name:"product",p:view.p})} onPay={(p)=>setView({name:"success",p})}/>}
+      {view.name==="success" && <Success p={view.p} onDone={()=>setView({name:"home"})}/>}
+    </div>
+    <footer style={{borderTop:"1px solid var(--border)",padding:"24px 32px",display:"flex",justifyContent:"space-between",fontSize:13,color:"var(--muted-foreground)"}}>
+      <span>© 2026 Alex Rivera</span><span>Powered by <b style={{color:"var(--foreground)"}}>Creator Commerce</b></span>
+    </footer>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>

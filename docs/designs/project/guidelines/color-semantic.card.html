@@ -1,0 +1,13 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Semantic status" subtitle="Success · warning · destructive" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../styles.css">
+<style>body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground)}
+.wrap{display:flex;gap:14px;padding:20px;align-items:center}
+.col{flex:1;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.pill{border-radius:var(--radius-full);padding:3px 10px;font-size:12px;font-weight:500}
+.solid{height:32px;width:100%;border-radius:var(--radius-lg)}
+.v{font-size:10px;color:var(--muted-foreground);font-family:var(--font-mono)}</style></head>
+<body><div class="wrap">
+<div class="col"><span class="pill" style="background:color-mix(in oklch,var(--success),transparent 90%);color:var(--success)">paid</span><div class="solid" style="background:var(--success)"></div><span class="v">--success</span></div>
+<div class="col"><span class="pill" style="background:color-mix(in oklch,var(--warning),transparent 88%);color:var(--warning)">pending</span><div class="solid" style="background:var(--warning)"></div><span class="v">--warning</span></div>
+<div class="col"><span class="pill" style="background:color-mix(in oklch,var(--destructive),transparent 90%);color:var(--destructive)">failed</span><div class="solid" style="background:var(--destructive)"></div><span class="v">--destructive</span></div>
+</div></body></html>

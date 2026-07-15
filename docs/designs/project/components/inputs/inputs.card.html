@@ -1,0 +1,18 @@
+<!-- @dsCard group="Components" viewport="700x230" name="Inputs" subtitle="Text field · label · error · disabled" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground)}#r{padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:16px}label{display:block;font-size:14px;font-weight:500;margin-bottom:6px}.err{color:var(--destructive);font-size:12px;margin-top:6px}</style></head>
+<body><div id="r"></div>
+<script type="text/babel">
+const { Input } = window.CreatorCommerceDesignSystem_8efbba;
+function Demo(){return(<>
+<div><label>Email</label><Input type="email" placeholder="you@example.com"/></div>
+<div><label>Password</label><Input type="password" placeholder="••••••••"/></div>
+<div><label>Invalid</label><Input aria-invalid defaultValue="not-an-email"/><p className="err">Please enter a valid email address.</p></div>
+<div><label>Disabled</label><Input disabled placeholder="Unavailable"/></div>
+</>);}
+ReactDOM.createRoot(document.getElementById("r")).render(<Demo/>);
+</script></body></html>

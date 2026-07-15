@@ -1,0 +1,33 @@
+<!-- @dsCard group="Seller App" viewport="1280x760" name="Seller dashboard" subtitle="Sidebar shell · KPIs · orders · products · customers" -->
+<!-- @startingPoint section="Seller App" subtitle="Full seller dashboard app shell" viewport="1280x760" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Creator Commerce — Seller App</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body,#root{height:100%;margin:0}body{background:var(--muted)}a{color:var(--primary)}a:hover{color:color-mix(in oklch,var(--primary),var(--foreground) 15%)}</style>
+</head>
+<body><div id="root"></div>
+<script type="text/babel" src="AppShell.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+const { AppShell } = window.CCShell;
+const { DashboardScreen, ProductsScreen, OrdersScreen, CustomersScreen, PlaceholderScreen } = window.CCScreens;
+
+function App(){
+  const [active,setActive]=useState("dashboard");
+  const [collapsed,setCollapsed]=useState(false);
+  let screen;
+  if(active==="dashboard") screen=<DashboardScreen onNav={setActive}/>;
+  else if(active==="products") screen=<ProductsScreen/>;
+  else if(active==="orders") screen=<OrdersScreen/>;
+  else if(active==="customers") screen=<CustomersScreen/>;
+  else if(active==="analytics") screen=<PlaceholderScreen title="Analytics" icon="ph-chart-line"/>;
+  else screen=<PlaceholderScreen title="Settings" icon="ph-gear"/>;
+  return <AppShell active={active} onNav={setActive} collapsed={collapsed} onToggle={()=>setCollapsed(c=>!c)}>{screen}</AppShell>;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>

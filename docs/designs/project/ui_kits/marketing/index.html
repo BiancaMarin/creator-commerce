@@ -1,0 +1,253 @@
+<!-- @dsCard group="Marketing" viewport="1120x780" name="Landing page" subtitle="Hero · features · how it works · pricing · CTA" -->
+<!-- @startingPoint section="Marketing" subtitle="Marketing landing page" viewport="1120x780" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Creator Commerce — Sell your digital products</title>
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body,#root{margin:0}body{background:var(--background);color:var(--foreground);font-family:var(--font-sans)}
+a{color:inherit;text-decoration:none}
+.mono{font-family:var(--font-mono)}
+.h-tight{letter-spacing:-.03em;line-height:1.02;font-family:var(--font-heading);font-weight:600}
+.container{max-width:1120px;margin:0 auto;padding:0 32px}
+.mark{color:#fff}</style>
+</head>
+<body><div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+const S = window.CreatorCommerceDesignSystem_8efbba;
+const { Button, Card, Badge, Separator, Avatar } = S;
+
+const Mark = ({size=17,color="#fff"}) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" style={{color}}>
+    <path d="M35 15 A13 13 0 1 0 35 33" stroke="currentColor" strokeWidth="4.4" strokeLinecap="round"/>
+    <path d="M31 21 A6.5 6.5 0 1 0 31 27" stroke="currentColor" strokeWidth="4.4" strokeLinecap="round"/>
+  </svg>
+);
+
+function Logo(){
+  return (<a href="#" style={{display:"flex",alignItems:"center",gap:9,fontWeight:600,fontSize:16}}>
+    <span style={{display:"flex",width:30,height:30,alignItems:"center",justifyContent:"center",borderRadius:"var(--radius-lg)",background:"var(--primary)"}}><Mark/></span>
+    Creator Commerce
+  </a>);
+}
+
+function Nav(){
+  return (<header style={{position:"sticky",top:0,zIndex:20,borderBottom:"1px solid var(--border)",background:"color-mix(in oklch,var(--background),transparent 20%)",backdropFilter:"blur(8px)"}}>
+    <div className="container" style={{height:64,display:"flex",alignItems:"center",gap:24}}>
+      <Logo/>
+      <nav style={{marginLeft:16,display:"flex",gap:22,fontSize:14,color:"var(--muted-foreground)"}}>
+        <a href="#features">Features</a><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="#">Docs</a>
+      </nav>
+      <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:8}}>
+        <Button variant="ghost" size="sm">Sign in</Button>
+        <Button size="sm">Get started<i className="ph ph-arrow-right"></i></Button>
+      </div>
+    </div>
+  </header>);
+}
+
+/* Stylized product preview — a mini dashboard, not a screenshot */
+function AppPreview(){
+  const stats=[["Revenue","$48,120","ph-currency-dollar"],["Orders","1,204","ph-receipt"],["Customers","318","ph-users"]];
+  const bars=[82,57,34,64,46];
+  return (<div style={{borderRadius:"var(--radius-4xl)",background:"var(--card)",boxShadow:"var(--shadow-lg),var(--ring-hairline)",overflow:"hidden"}}>
+    <div style={{display:"flex",alignItems:"center",gap:6,padding:"12px 16px",borderBottom:"1px solid var(--border)"}}>
+      <span style={{width:9,height:9,borderRadius:"50%",background:"var(--border)"}}></span>
+      <span style={{width:9,height:9,borderRadius:"50%",background:"var(--border)"}}></span>
+      <span style={{width:9,height:9,borderRadius:"50%",background:"var(--border)"}}></span>
+      <span style={{marginLeft:10,fontSize:12,color:"var(--muted-foreground)"}}>Dashboard</span>
+    </div>
+    <div style={{padding:18,display:"flex",flexDirection:"column",gap:14}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
+        {stats.map(([l,v,ic])=>(
+          <div key={l} style={{borderRadius:"var(--radius-2xl)",background:"var(--background)",boxShadow:"var(--ring-hairline)",padding:14,display:"flex",flexDirection:"column",gap:6}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:11,color:"var(--muted-foreground)"}}>{l}</span><i className={"ph "+ic} style={{color:"var(--muted-foreground)",fontSize:14}}></i></div>
+            <span className="mono" style={{fontSize:20,fontWeight:600}}>{v}</span>
+            <span style={{fontSize:11,color:"var(--success)",display:"flex",alignItems:"center",gap:3}}><i className="ph ph-trend-up" style={{fontSize:12}}></i>+12%</span>
+          </div>
+        ))}
+      </div>
+      <div style={{borderRadius:"var(--radius-2xl)",background:"var(--background)",boxShadow:"var(--ring-hairline)",padding:16}}>
+        <div style={{fontSize:12,color:"var(--muted-foreground)",marginBottom:12}}>Sales this month</div>
+        <div style={{display:"flex",alignItems:"flex-end",gap:10,height:90}}>
+          {bars.map((h,i)=><div key={i} style={{flex:1,height:h+"%",borderRadius:"var(--radius-md) var(--radius-md) 0 0",background:i===3?"var(--primary)":"color-mix(in oklch,var(--primary),transparent 70%)"}}></div>)}
+        </div>
+      </div>
+    </div>
+  </div>);
+}
+
+function Hero(){
+  return (<section style={{padding:"72px 0 80px"}}>
+    <div className="container" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:56,alignItems:"center"}}>
+      <div style={{display:"flex",flexDirection:"column",gap:24}}>
+        <span><Badge variant="primary"><i className="ph ph-sparkle" style={{fontSize:12}}></i>&nbsp;Now with AI product pages</Badge></span>
+        <h1 className="h-tight" style={{margin:0,fontSize:54}}>The storefront built for creators.</h1>
+        <p style={{margin:0,fontSize:18,lineHeight:1.55,color:"var(--muted-foreground)",maxWidth:460}}>Publish digital products, take payments through Stripe, and deliver protected downloads — track revenue, orders, and customers all in one place.</p>
+        <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <Button size="lg">Start selling free<i className="ph ph-arrow-right"></i></Button>
+          <Button size="lg" variant="outline"><i className="ph ph-play-circle"></i>Watch demo</Button>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:10,fontSize:13,color:"var(--muted-foreground)"}}>
+          <i className="ph ph-check-circle" style={{color:"var(--success)"}}></i>No credit card required
+          <span style={{color:"var(--border)"}}>·</span>
+          <i className="ph ph-check-circle" style={{color:"var(--success)"}}></i>2% flat fee
+        </div>
+      </div>
+      <AppPreview/>
+    </div>
+  </section>);
+}
+
+function TrustStrip(){
+  const s=[["12,000+","creators selling"],["$40M+","paid out to date"],["180+","countries"],["4.9/5","average rating"]];
+  return (<section style={{borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)",background:"var(--muted)"}}>
+    <div className="container" style={{padding:"32px 32px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:24}}>
+      {s.map(([n,l])=><div key={l} style={{textAlign:"center"}}><div className="mono h-tight" style={{fontSize:30}}>{n}</div><div style={{fontSize:13,color:"var(--muted-foreground)",marginTop:4}}>{l}</div></div>)}
+    </div>
+  </section>);
+}
+
+const FEATURES=[
+  ["ph-storefront","Public storefront","Every creator gets a clean storefront at /@handle — no site builder, no theme wrangling."],
+  ["ph-credit-card","Stripe checkout","Take card payments worldwide with buyer, seller and product tracked on every order."],
+  ["ph-lock-key","Protected downloads","Files stay locked to the buyer. Secure links, instant delivery, re-download anytime."],
+  ["ph-sparkle","AI product pages","Generate a polished product page and teaser straight from the file you upload."],
+  ["ph-chart-line-up","Revenue analytics","See revenue, top products and conversion at a glance — updated in real time."],
+  ["ph-users-three","Customer profiles","Segments, lifetime value and order history for every buyer, built in."],
+];
+
+function Features(){
+  return (<section id="features" style={{padding:"80px 0"}}>
+    <div className="container">
+      <div style={{textAlign:"center",maxWidth:640,margin:"0 auto 44px",display:"flex",flexDirection:"column",gap:14}}>
+        <span style={{margin:"0 auto"}}><Badge variant="neutral">Everything included</Badge></span>
+        <h2 className="h-tight" style={{margin:0,fontSize:38}}>One platform to sell what you make</h2>
+        <p style={{margin:0,fontSize:17,color:"var(--muted-foreground)"}}>From your first upload to your ten-thousandth sale — the tools stay out of your way.</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>
+        {FEATURES.map(([ic,t,d])=>(
+          <Card key={t}>
+            <div style={{padding:"22px 22px 24px",display:"flex",flexDirection:"column",gap:12}}>
+              <span style={{display:"flex",width:44,height:44,alignItems:"center",justifyContent:"center",borderRadius:"var(--radius-2xl)",background:"color-mix(in oklch,var(--primary),transparent 88%)",color:"var(--primary)"}}><i className={"ph "+ic} style={{fontSize:22}}></i></span>
+              <div style={{fontFamily:"var(--font-heading)",fontWeight:600,fontSize:17}}>{t}</div>
+              <p style={{margin:0,fontSize:14,lineHeight:1.55,color:"var(--muted-foreground)"}}>{d}</p>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  </section>);
+}
+
+const STEPS=[
+  ["ph-upload-simple","Upload your file","Drop in a PDF, video, preset pack or ZIP. We handle storage and delivery."],
+  ["ph-magic-wand","Publish in a click","AI drafts the product page. Set a price, hit publish, share your link."],
+  ["ph-hand-coins","Get paid","Buyers check out with Stripe. Money lands in your account — you keep 98%."],
+];
+
+function How(){
+  return (<section id="how" style={{padding:"80px 0",background:"var(--muted)",borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)"}}>
+    <div className="container">
+      <div style={{textAlign:"center",marginBottom:44}}>
+        <h2 className="h-tight" style={{margin:"0 0 12px",fontSize:38}}>Live in three steps</h2>
+        <p style={{margin:0,fontSize:17,color:"var(--muted-foreground)"}}>Most creators publish their first product in under ten minutes.</p>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>
+        {STEPS.map(([ic,t,d],i)=>(
+          <div key={t} style={{display:"flex",flexDirection:"column",gap:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <span style={{display:"flex",width:40,height:40,alignItems:"center",justifyContent:"center",borderRadius:"var(--radius-full)",background:"var(--primary)",color:"#fff"}}><i className={"ph "+ic} style={{fontSize:20}}></i></span>
+              <span className="mono" style={{fontSize:13,color:"var(--muted-foreground)"}}>0{i+1}</span>
+            </div>
+            <div style={{fontFamily:"var(--font-heading)",fontWeight:600,fontSize:19}}>{t}</div>
+            <p style={{margin:0,fontSize:14,lineHeight:1.55,color:"var(--muted-foreground)"}}>{d}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>);
+}
+
+function Pricing(){
+  const [yearly,setYearly]=useState(false);
+  const tiers=[
+    {name:"Starter",price:0,sub:"For your first sales",fee:"2% + Stripe fees",feats:["Public storefront","Unlimited products","Protected downloads","Basic analytics"],cta:"Start free",hi:false},
+    {name:"Pro",price:yearly?15:19,sub:"For growing creators",fee:"1% + Stripe fees",feats:["Everything in Starter","AI product pages","Customer segments","Custom domain","Priority support"],cta:"Start Pro trial",hi:true},
+    {name:"Studio",price:yearly?39:49,sub:"For full catalogs",fee:"0% platform fee",feats:["Everything in Pro","Team members","Stripe Connect payouts","Advanced analytics","Sentry & PostHog"],cta:"Contact sales",hi:false},
+  ];
+  return (<section id="pricing" style={{padding:"80px 0"}}>
+    <div className="container">
+      <div style={{textAlign:"center",marginBottom:32}}>
+        <h2 className="h-tight" style={{margin:"0 0 12px",fontSize:38}}>Simple pricing that scales</h2>
+        <p style={{margin:"0 0 22px",fontSize:17,color:"var(--muted-foreground)"}}>Start free. Upgrade when you grow. Cancel anytime.</p>
+        <div style={{display:"inline-flex",alignItems:"center",gap:4,padding:4,borderRadius:"var(--radius-full)",background:"var(--muted)"}}>
+          {["Monthly","Yearly"].map((l,i)=>{const on=(i===1)===yearly;return <button key={l} onClick={()=>setYearly(i===1)} style={{border:"none",cursor:"pointer",fontFamily:"var(--font-sans)",fontSize:13,fontWeight:500,padding:"7px 16px",borderRadius:"var(--radius-full)",background:on?"var(--background)":"transparent",color:on?"var(--foreground)":"var(--muted-foreground)",boxShadow:on?"var(--shadow-xs)":"none"}}>{l}{i===1&&<span style={{color:"var(--primary)"}}> −20%</span>}</button>})}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20,alignItems:"start"}}>
+        {tiers.map(t=>(
+          <div key={t.name} style={{borderRadius:"var(--radius-4xl)",background:"var(--card)",padding:26,boxShadow:t.hi?"var(--shadow-lg),0 0 0 2px var(--primary)":"var(--shadow-md),var(--ring-hairline)",display:"flex",flexDirection:"column",gap:18}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <span style={{fontFamily:"var(--font-heading)",fontWeight:600,fontSize:18}}>{t.name}</span>
+              {t.hi&&<Badge variant="primary">Most popular</Badge>}
+            </div>
+            <div><span className="mono h-tight" style={{fontSize:44}}>${t.price}</span><span style={{color:"var(--muted-foreground)",fontSize:14}}>/mo</span><div style={{fontSize:13,color:"var(--muted-foreground)",marginTop:4}}>{t.sub}</div></div>
+            <Button variant={t.hi?"default":"outline"} style={{width:"100%"}}>{t.cta}</Button>
+            <Separator/>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{fontSize:12,color:"var(--muted-foreground)",fontWeight:500}}>{t.fee}</div>
+              {t.feats.map(f=><div key={f} style={{display:"flex",alignItems:"center",gap:9,fontSize:14}}><i className="ph ph-check" style={{color:"var(--primary)",fontSize:15}}></i>{f}</div>)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>);
+}
+
+function CTA(){
+  return (<section style={{padding:"0 0 80px"}}>
+    <div className="container">
+      <div style={{borderRadius:"var(--radius-4xl)",background:"var(--primary)",color:"var(--primary-foreground)",padding:"56px 40px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
+        <span style={{display:"flex",width:52,height:52,alignItems:"center",justifyContent:"center",borderRadius:"var(--radius-2xl)",background:"color-mix(in oklch,#fff,transparent 82%)"}}><Mark size={28}/></span>
+        <h2 className="h-tight" style={{margin:0,fontSize:38,maxWidth:560}}>Start selling your work today</h2>
+        <p style={{margin:0,fontSize:17,opacity:.85,maxWidth:460}}>Join 12,000+ creators running their business on Creator Commerce.</p>
+        <div style={{display:"flex",gap:12}}>
+          <Button size="lg" variant="secondary">Start selling free<i className="ph ph-arrow-right"></i></Button>
+        </div>
+      </div>
+    </div>
+  </section>);
+}
+
+function Footer(){
+  const cols=[["Product",["Features","Pricing","Storefront","Analytics"]],["Company",["About","Blog","Careers","Contact"]],["Resources",["Docs","Guides","Support","Status"]]];
+  return (<footer style={{borderTop:"1px solid var(--border)"}}>
+    <div className="container" style={{padding:"48px 32px 32px",display:"grid",gridTemplateColumns:"1.6fr 1fr 1fr 1fr",gap:32}}>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <Logo/>
+        <p style={{margin:0,fontSize:13,color:"var(--muted-foreground)",maxWidth:240}}>The storefront built for creators. Sell what you make.</p>
+      </div>
+      {cols.map(([h,items])=>(
+        <div key={h} style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontSize:13,fontWeight:600}}>{h}</div>
+          {items.map(i=><a key={i} href="#" style={{fontSize:13,color:"var(--muted-foreground)"}}>{i}</a>)}
+        </div>
+      ))}
+    </div>
+    <div className="container" style={{padding:"20px 32px",borderTop:"1px solid var(--border)",display:"flex",justifyContent:"space-between",fontSize:12,color:"var(--muted-foreground)"}}>
+      <span>© 2026 Creator Commerce</span>
+      <span style={{display:"flex",gap:16}}><a href="#">Privacy</a><a href="#">Terms</a></span>
+    </div>
+  </footer>);
+}
+
+function App(){
+  return (<div><Nav/><Hero/><TrustStrip/><Features/><How/><Pricing/><CTA/><Footer/></div>);
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script></body></html>

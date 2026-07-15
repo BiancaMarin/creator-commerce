@@ -1,0 +1,22 @@
+<!-- @dsCard group="Components" viewport="700x180" name="Feedback" subtitle="Separator · Skeleton · Tooltip" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground)}#r{padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:center}.col{display:flex;flex-direction:column;gap:10px}.lbl{font-size:11px;color:var(--muted-foreground)}.rowc{display:flex;align-items:center;gap:10px}i{font-size:16px}</style></head>
+<body><div id="r"></div>
+<script type="text/babel">
+const {Separator,Skeleton,Tooltip,Button}=window.CreatorCommerceDesignSystem_8efbba;
+function Demo(){return(<>
+<div className="col"><span className="lbl">Skeleton</span>
+<Skeleton style={{height:"12px",width:"70%"}}/><Skeleton style={{height:"12px",width:"90%"}}/><Skeleton style={{height:"48px",width:"100%"}}/></div>
+<div className="col"><span className="lbl">Separator</span>
+<span style={{fontSize:"13px"}}>Row one</span><Separator/><span style={{fontSize:"13px"}}>Row two</span>
+<div className="rowc" style={{marginTop:"8px"}}><span className="lbl">Tooltip →</span>
+<Tooltip label="Export CSV"><Button variant="ghost" size="icon-sm" aria-label="Export"><i className="ph ph-export"></i></Button></Tooltip>
+<span style={{fontSize:"12px",color:"var(--muted-foreground)"}}>hover the icon</span></div></div>
+</>);}
+ReactDOM.createRoot(document.getElementById("r")).render(<Demo/>);
+</script></body></html>

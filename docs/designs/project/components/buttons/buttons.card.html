@@ -1,0 +1,24 @@
+<!-- @dsCard group="Components" viewport="700x210" name="Buttons" subtitle="Six variants · five sizes · icon buttons" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;font-family:var(--font-sans);background:var(--background);color:var(--foreground)}#r{padding:22px}.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}.lbl{width:64px;font-size:11px;color:var(--muted-foreground)}i{font-size:16px}</style></head>
+<body><div id="r"></div>
+<script type="text/babel">
+const { Button } = window.CreatorCommerceDesignSystem_8efbba;
+function Demo(){return(<>
+<div className="row"><span className="lbl">Variants</span>
+<Button>Default</Button><Button variant="secondary">Secondary</Button><Button variant="outline">Outline</Button><Button variant="ghost">Ghost</Button><Button variant="destructive">Delete</Button><Button variant="link">Link</Button></div>
+<div className="row"><span className="lbl">Sizes</span>
+<Button size="xs">XS</Button><Button size="sm">Small</Button><Button size="md">Medium</Button><Button size="lg">Large</Button><Button disabled>Disabled</Button></div>
+<div className="row"><span className="lbl">Icon</span>
+<Button><i className="ph ph-plus"></i>New product</Button>
+<Button variant="outline"><i className="ph ph-export"></i>Export</Button>
+<Button size="icon" aria-label="add"><i className="ph ph-plus"></i></Button>
+<Button size="icon-sm" variant="ghost" aria-label="more"><i className="ph ph-dots-three"></i></Button></div>
+</>);}
+ReactDOM.createRoot(document.getElementById("r")).render(<Demo/>);
+</script></body></html>
