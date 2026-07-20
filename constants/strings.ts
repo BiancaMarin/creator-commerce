@@ -108,5 +108,6 @@ export const strings = {
   errors: {
     generic: "Something went wrong.",
     unauthorized: "Invalid email or password.",
+    emailTaken: "An account with that email already exists.",
   },
 } as const;

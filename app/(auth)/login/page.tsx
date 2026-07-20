@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { strings } from "@/constants/strings";
+import { authClient } from "@/lib/auth-client";
 
 const loginSchema = z.object({
   email: z.email(strings.validation.invalidEmail),
@@ -34,7 +36,9 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
 
   const {
     register,
@@ -46,8 +50,25 @@ export default function LoginPage() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    // TODO: wire up authentication with `values`.
-    console.log(values);
+    setFormError(null);
+
+    const { error } = await authClient.signIn.email({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) {
+      // Don't leak which half of the credentials was wrong.
+      setFormError(
+        error.status === 401
+          ? strings.errors.unauthorized
+          : strings.errors.generic,
+      );
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
   });
 
   return (
@@ -73,6 +94,15 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+            {formError && (
+              <p
+                role="alert"
+                className="rounded-2xl bg-destructive/10 px-3 py-2 text-xs text-destructive"
+              >
+                {formError}
+              </p>
+            )}
+
             <div className="flex flex-col gap-2">
               <label htmlFor="email" className="text-sm font-medium">
                 {strings.login.email}

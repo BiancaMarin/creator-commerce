@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { strings } from "@/constants/strings";
+import { authClient } from "@/lib/auth-client";
 
 const signupSchema = z.object({
   name: z.string().min(1, strings.validation.required),
@@ -35,7 +37,9 @@ const signupSchema = z.object({
 type SignupValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
 
   const {
     register,
@@ -47,8 +51,25 @@ export default function SignupPage() {
   });
 
   const onSubmit = handleSubmit(async (values) => {
-    // TODO: wire up sign-up with `values`.
-    console.log(values);
+    setFormError(null);
+
+    const { error } = await authClient.signUp.email({
+      name: values.name,
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) {
+      setFormError(
+        error.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL"
+          ? strings.errors.emailTaken
+          : strings.errors.generic,
+      );
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
   });
 
   return (
@@ -74,6 +95,15 @@ export default function SignupPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+            {formError && (
+              <p
+                role="alert"
+                className="rounded-2xl bg-destructive/10 px-3 py-2 text-xs text-destructive"
+              >
+                {formError}
+              </p>
+            )}
+
             <div className="flex flex-col gap-2">
               <label htmlFor="name" className="text-sm font-medium">
                 {strings.signup.name}
