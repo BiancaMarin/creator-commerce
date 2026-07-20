@@ -7,6 +7,9 @@ export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
+  // Public storefront slug — powers /[slug]. Declared as a required
+  // additionalField in lib/server/auth.ts, so it must stay NOT NULL here.
+  handle: text("handle").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

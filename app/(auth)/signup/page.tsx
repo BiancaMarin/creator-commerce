@@ -53,6 +53,7 @@ export default function SignupPage() {
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
 
+    // `handle` is derived server-side in lib/server/auth.ts, not collected here.
     const { error } = await authClient.signUp.email({
       name: values.name,
       email: values.email,
@@ -189,11 +190,11 @@ export default function SignupPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline">
+            <Button variant="outline" disabled title={strings.account.socialComingSoon}>
               <GoogleLogoIcon />
               {strings.signup.google}
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" disabled title={strings.account.socialComingSoon}>
               <GithubLogoIcon />
               {strings.signup.github}
             </Button>

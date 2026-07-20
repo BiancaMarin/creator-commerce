@@ -5,6 +5,8 @@ export type ProductIcon =
   | "shapes"
 
 export type Product = {
+  /** Stable identity — the `[id]` segment. Survives a slug rename. */
+  id: string
   slug: string
   name: string
   tag: string
@@ -25,6 +27,7 @@ export const creator = {
 
 export const products: Product[] = [
   {
+    id: "8f21",
     slug: "studio-preset-pack",
     name: "Studio Preset Pack",
     tag: "Lightroom presets",
@@ -35,6 +38,7 @@ export const products: Product[] = [
     files: "12 files · .xmp, .dng · 84 MB",
   },
   {
+    id: "3c07",
     slug: "lightroom-masterclass",
     name: "Lightroom Masterclass",
     tag: "Video course",
@@ -45,6 +49,7 @@ export const products: Product[] = [
     files: "18 lessons · .mp4 · 4.2 GB",
   },
   {
+    id: "b45e",
     slug: "brand-kit-templates",
     name: "Brand Kit Templates",
     tag: "Design templates",
@@ -55,6 +60,7 @@ export const products: Product[] = [
     files: "6 files · .fig, .pdf · 220 MB",
   },
   {
+    id: "d9a3",
     slug: "motion-graphics-bundle",
     name: "Motion Graphics Bundle",
     tag: "After Effects",
@@ -66,8 +72,12 @@ export const products: Product[] = [
   },
 ]
 
-export function getProduct(slug: string): Product | undefined {
-  return products.find((product) => product.slug === slug)
+/**
+ * Resolves a product by its stable `id`. The `[slug]` segment that follows it
+ * in the URL is cosmetic, so renaming a product never breaks an existing link.
+ */
+export function getProduct(id: string): Product | undefined {
+  return products.find((product) => product.id === id)
 }
 
 /** Whole prices render as `$48`; anything with cents keeps two decimals. */

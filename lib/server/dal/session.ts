@@ -23,3 +23,14 @@ export async function requireSession() {
 
   return session;
 }
+
+/**
+ * The signed-in user, for the common case where the caller needs identity
+ * (name, email, handle) and not the session metadata. Redirects to /login
+ * when signed out, so the return value is always non-null.
+ */
+export async function requireUser() {
+  const { user } = await requireSession();
+
+  return user;
+}

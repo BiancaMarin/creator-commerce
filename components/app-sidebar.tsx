@@ -5,6 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   ChartLineIcon,
+  FileArrowDownIcon,
+  HeartIcon,
   HouseIcon,
   PackageIcon,
   ReceiptIcon,
@@ -12,9 +14,11 @@ import {
 } from "@phosphor-icons/react"
 
 import { LogoMark } from "@/components/marketing/logo"
+import { NavUser, type NavUserProps } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -31,11 +35,14 @@ const navMain = [
   { title: "Orders", href: "/orders", icon: ReceiptIcon },
   { title: "Customers", href: "/customers", icon: UsersIcon },
   { title: "Analytics", href: "/analytics", icon: ChartLineIcon },
+  { title: "Wishlist", href: "/wishlist", icon: HeartIcon },
+  { title: "Downloads", href: "/downloads", icon: FileArrowDownIcon },
 ]
 
 export function AppSidebar({
+  user,
   ...props
-}: React.ComponentProps<typeof Sidebar>) {
+}: React.ComponentProps<typeof Sidebar> & { user: NavUserProps }) {
   const pathname = usePathname()
 
   const isActive = (href: string) => pathname.startsWith(href)
@@ -85,6 +92,14 @@ export function AppSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <NavUser {...user} />
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

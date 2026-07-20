@@ -1,5 +1,5 @@
-import type { Metadata } from "next"
-import Link from "next/link"
+import type { Metadata } from "next";
+import Link from "next/link";
 import {
   ArrowUpRightIcon,
   CurrencyDollarIcon,
@@ -10,11 +10,11 @@ import {
   TrendDownIcon,
   TrendUpIcon,
   UsersIcon,
-} from "@phosphor-icons/react/dist/ssr"
+} from "@phosphor-icons/react/dist/ssr";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -23,14 +23,17 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { strings } from "@/constants/strings";
+import { requireUser } from "@/lib/server/dal/session";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Dashboard · Creator Commerce",
   description: "Revenue, orders, and customer activity at a glance.",
-}
+};
 
 const stats = [
   {
@@ -65,7 +68,7 @@ const stats = [
     hint: "vs. last 30 days",
     icon: TrendUpIcon,
   },
-]
+];
 
 const recentOrders = [
   {
@@ -103,40 +106,48 @@ const recentOrders = [
     amount: "$220.00",
     status: "paid" as const,
   },
-]
+];
 
 const topProducts = [
   { name: "Studio Preset Pack", sales: 412, share: 82 },
   { name: "Lightroom Masterclass", sales: 286, share: 57 },
   { name: "Brand Kit Templates", sales: 173, share: 34 },
   { name: "1:1 Coaching Call", sales: 64, share: 13 },
-]
+];
 
-const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> = {
-  paid: "success",
-  pending: "warning",
-  refunded: "neutral",
-  failed: "destructive",
-}
+const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> =
+  {
+    paid: "success",
+    pending: "warning",
+    refunded: "neutral",
+    failed: "destructive",
+  };
 
 function initials(name: string) {
   return name
     .split(" ")
     .map((part) => part[0])
     .slice(0, 2)
-    .join("")
+    .join("");
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await requireUser();
+
+  // "Alex Rivera" -> "Alex". Falls back to the whole string for mononyms,
+  // and to the email local part if the name is somehow blank.
+  const firstName =
+    user.name?.trim().split(/\s+/)[0] || user.email.split("@")[0];
+
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Dashboard
+            {strings.dashboard.greeting.replace("{name}", firstName)}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Here&apos;s how your storefront is performing this month.
+            {strings.dashboard.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -155,122 +166,222 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => {
-          const TrendIcon = stat.trend === "up" ? TrendUpIcon : TrendDownIcon
-          return (
-            <Card key={stat.label} size="sm">
+      <Tabs defaultValue="overview" className="gap-6">
+        <TabsList>
+          <TabsTrigger value="overview">
+            {strings.dashboard.tabs.overview}
+          </TabsTrigger>
+          <TabsTrigger value="account">
+            {strings.dashboard.tabs.account}
+          </TabsTrigger>
+          <TabsTrigger value="settings">
+            {strings.dashboard.tabs.settings}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat) => {
+              const TrendIcon =
+                stat.trend === "up" ? TrendUpIcon : TrendDownIcon;
+              return (
+                <Card key={stat.label} size="sm">
+                  <CardHeader>
+                    <CardDescription>{stat.label}</CardDescription>
+                    <CardTitle className="text-2xl">{stat.value}</CardTitle>
+                    <CardAction>
+                      <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                        <stat.icon className="size-4" />
+                      </span>
+                    </CardAction>
+                  </CardHeader>
+                  <CardFooter className="gap-1.5 text-xs text-muted-foreground">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1 font-medium",
+                        stat.trend === "up"
+                          ? "text-success"
+                          : "text-destructive",
+                      )}
+                    >
+                      <TrendIcon className="size-3.5" />
+                      {stat.delta}
+                    </span>
+                    {stat.hint}
+                  </CardFooter>
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
               <CardHeader>
-                <CardDescription>{stat.label}</CardDescription>
-                <CardTitle className="text-2xl">{stat.value}</CardTitle>
+                <CardTitle>Recent orders</CardTitle>
+                <CardDescription>
+                  Your latest 5 orders across the store.
+                </CardDescription>
                 <CardAction>
-                  <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                    <stat.icon className="size-4" />
-                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    nativeButton={false}
+                    render={<Link href="/orders" />}
+                  >
+                    View all
+                    <ArrowUpRightIcon />
+                  </Button>
                 </CardAction>
               </CardHeader>
-              <CardFooter className="gap-1.5 text-xs text-muted-foreground">
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 font-medium",
-                    stat.trend === "up" ? "text-success" : "text-destructive"
-                  )}
+              <CardContent className="flex flex-col">
+                {recentOrders.map((order, index) => (
+                  <div key={order.id}>
+                    {index > 0 && <Separator />}
+                    <div className="flex items-center gap-3 py-3">
+                      <Avatar>
+                        <AvatarFallback className="text-xs font-medium">
+                          {initials(order.customer)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {order.customer}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {order.product} · {order.id}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={badgeFor[order.status]}
+                        className="capitalize"
+                      >
+                        {order.status}
+                      </Badge>
+                      <span className="w-16 text-right font-mono text-sm font-medium">
+                        {order.amount}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Top products</CardTitle>
+                <CardDescription>Best sellers this month.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                {topProducts.map((product) => (
+                  <div key={product.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <PackageIcon className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate font-medium">
+                          {product.name}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-muted-foreground tabular-nums">
+                        {product.sales}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${product.share}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+              <CardFooter>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  nativeButton={false}
+                  render={<Link href="/analytics" />}
                 >
-                  <TrendIcon className="size-3.5" />
-                  {stat.delta}
-                </span>
-                {stat.hint}
+                  View analytics
+                </Button>
               </CardFooter>
             </Card>
-          )
-        })}
-      </div>
+          </div>
+        </TabsContent>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent orders</CardTitle>
-            <CardDescription>Your latest 5 orders across the store.</CardDescription>
-            <CardAction>
-              <Button
-                variant="ghost"
-                size="sm"
-                nativeButton={false}
-                render={<Link href="/orders" />}
-              >
-                View all
-                <ArrowUpRightIcon />
-              </Button>
-            </CardAction>
-          </CardHeader>
-          <CardContent className="flex flex-col">
-            {recentOrders.map((order, index) => (
-              <div key={order.id}>
-                {index > 0 && <Separator />}
-                <div className="flex items-center gap-3 py-3">
-                  <Avatar>
-                    <AvatarFallback className="text-xs font-medium">
-                      {initials(order.customer)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {order.customer}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {order.product} · {order.id}
-                    </p>
+        <TabsContent value="account">
+          <Card>
+            <CardHeader>
+              <CardTitle>{strings.dashboard.accountPanel.title}</CardTitle>
+              <CardDescription>
+                {strings.dashboard.accountPanel.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col">
+              <div className="flex items-center gap-3 pb-4">
+                <Avatar size="lg">
+                  <AvatarFallback className="font-medium">
+                    {initials(user.name || user.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{user.name}</p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+
+              {[
+                {
+                  label: strings.dashboard.accountPanel.name,
+                  value: user.name,
+                },
+                {
+                  label: strings.dashboard.accountPanel.email,
+                  value: user.email,
+                },
+                {
+                  label: strings.dashboard.accountPanel.handle,
+                  value: user.handle,
+                },
+                {
+                  label: strings.dashboard.accountPanel.storefront,
+                  value: `/${user.handle}`,
+                },
+              ].map((row, index) => (
+                <div key={row.label}>
+                  {index > 0 && <Separator />}
+                  <div className="flex items-center justify-between gap-4 py-3 text-sm">
+                    <span className="text-muted-foreground">{row.label}</span>
+                    <span className="truncate font-medium">{row.value}</span>
                   </div>
-                  <Badge variant={badgeFor[order.status]} className="capitalize">
-                    {order.status}
-                  </Badge>
-                  <span className="w-16 text-right font-mono text-sm font-medium">
-                    {order.amount}
-                  </span>
                 </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+            <CardFooter className="border-t text-xs text-muted-foreground">
+              {strings.dashboard.accountPanel.handleNote}
+            </CardFooter>
+          </Card>
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Top products</CardTitle>
-            <CardDescription>Best sellers this month.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {topProducts.map((product) => (
-              <div key={product.name} className="space-y-1.5">
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <PackageIcon className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate font-medium">{product.name}</span>
-                  </span>
-                  <span className="shrink-0 text-muted-foreground tabular-nums">
-                    {product.sales}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${product.share}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-          <CardFooter>
-            <Button
-              variant="outline"
-              className="w-full"
-              nativeButton={false}
-              render={<Link href="/analytics" />}
-            >
-              View analytics
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>{strings.dashboard.settingsPanel.title}</CardTitle>
+              <CardDescription>
+                {strings.dashboard.settingsPanel.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Deliberately empty: no settings are wired up yet, so this
+                  says so rather than showing controls that do nothing. */}
+              <p className="rounded-2xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+                {strings.dashboard.settingsPanel.comingSoon}
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
-  )
+  );
 }

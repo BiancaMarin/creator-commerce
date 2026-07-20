@@ -177,12 +177,14 @@ export default function LoginPage() {
             <Separator className="flex-1" />
           </div>
 
+          {/* No socialProviders configured in lib/server/auth.ts yet, so these
+              stay disabled rather than pretending to be wired up. */}
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline">
+            <Button variant="outline" disabled title={strings.account.socialComingSoon}>
               <GoogleLogoIcon />
               {strings.login.google}
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" disabled title={strings.account.socialComingSoon}>
               <GithubLogoIcon />
               {strings.login.github}
             </Button>

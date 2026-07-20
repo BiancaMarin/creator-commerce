@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 export default async function StorefrontPage({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ handle: string }>
 }) {
-  const { slug } = await params
+  const { handle } = await params
 
   return (
     <>
@@ -50,7 +50,10 @@ export default async function StorefrontPage({
               key={product.slug}
               className="gap-0 overflow-hidden p-0 transition-shadow hover:shadow-lg"
             >
-              <Link href={`/${slug}/${product.slug}`} className="block">
+              <Link
+                href={`/${handle}/${product.id}/${product.slug}`}
+                className="block"
+              >
                 <ProductCover
                   product={product}
                   className="aspect-[16/10]"

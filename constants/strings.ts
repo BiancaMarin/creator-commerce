@@ -46,6 +46,38 @@ export const strings = {
     footerLink: "Sign in",
   },
 
+  dashboard: {
+    // {name} is replaced with the signed-in user's first name.
+    greeting: "Hi, {name}! Welcome back",
+    subtitle: "Here's how your storefront is performing this month.",
+    tabs: {
+      overview: "Overview",
+      account: "Account",
+      settings: "Settings",
+    },
+    accountPanel: {
+      title: "Account",
+      description: "The details tied to your Creator Commerce login.",
+      name: "Name",
+      email: "Email",
+      handle: "Storefront handle",
+      storefront: "Storefront URL",
+      handleNote: "Handles are assigned automatically for now.",
+    },
+    settingsPanel: {
+      title: "Settings",
+      description: "Store preferences, payouts, and notifications.",
+      comingSoon: "Settings aren't wired up yet — check back soon.",
+    },
+  },
+
+  account: {
+    signOut: "Sign out",
+    signingOut: "Signing out…",
+    fallbackName: "Your account",
+    socialComingSoon: "Social sign-in is coming soon.",
+  },
+
   marketing: {
     nav: {
       features: "Features",

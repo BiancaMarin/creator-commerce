@@ -12,6 +12,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schemas/auth";
+import { generateUniqueHandle } from "@/lib/server/handle";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -20,6 +21,29 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+  },
+  user: {
+    additionalFields: {
+      // `required: false` refers to the *input* payload only — Better Auth
+      // validates required fields before databaseHooks run, so leaving it true
+      // would reject every signup with MISSING_FIELD. The column itself is
+      // still NOT NULL; the create hook below is what guarantees a value.
+      handle: { type: "string", required: false, unique: true, input: false },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (newUser) => {
+          return {
+            data: {
+              ...newUser,
+              handle: await generateUniqueHandle(newUser.email),
+            },
+          };
+        },
+      },
+    },
   },
   // Must stay last so it can flush Set-Cookie from Server Actions.
   plugins: [nextCookies()],

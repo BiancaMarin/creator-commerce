@@ -35,10 +35,10 @@ function Field({
 
 export function ProductCheckoutFlow({
   product,
-  storeSlug,
+  storeHandle,
 }: {
   product: Product
-  storeSlug: string
+  storeHandle: string
 }) {
   const router = useRouter()
   const [step, setStep] = React.useState<"product" | "checkout">("product")
@@ -53,7 +53,7 @@ export function ProductCheckoutFlow({
           variant="ghost"
           size="sm"
           className="mb-5"
-          onClick={() => router.push(`/${storeSlug}`)}
+          onClick={() => router.push(`/${storeHandle}`)}
         >
           <ArrowLeftIcon />
           Back to shop
@@ -121,7 +121,7 @@ export function ProductCheckoutFlow({
                 event.preventDefault()
                 // TODO: wire up Stripe payment.
                 router.push(
-                  `/checkout/success?p=${product.slug}&s=${storeSlug}`
+                  `/checkout/success?p=${product.id}&s=${storeHandle}`
                 )
               }}
             >

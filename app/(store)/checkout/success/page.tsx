@@ -20,7 +20,7 @@ export default async function CheckoutSuccessPage({
 }) {
   const { p, s } = await searchParams
   const product = p ? getProduct(p) : undefined
-  const backHref = `/${s ?? creator.slug}`
+  const backHref = `/${s ?? creator.handle}`
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center p-8">
