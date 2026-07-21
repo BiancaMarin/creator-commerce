@@ -1,13 +1,13 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { and, ne, sql } from "drizzle-orm";
 
+import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from "@/lib/handle-schema";
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";
 
-/** Matches the shape enforced by the `handle` column: 3–30 chars, [a-z0-9-]. */
-const MIN_LENGTH = 3;
-const MAX_LENGTH = 30;
+const MIN_LENGTH = HANDLE_MIN_LENGTH;
+const MAX_LENGTH = HANDLE_MAX_LENGTH;
 
 /**
  * Turn an email local part into a URL-safe slug: lowercase, non-alphanumerics
@@ -26,11 +26,25 @@ function randomSuffix() {
   return Math.random().toString(36).slice(2, 6);
 }
 
-async function isTaken(candidate: string) {
+/**
+ * Is this handle already claimed? Compared case-insensitively to match
+ * `getCreatorByHandle`, which resolves /Test and /test to the same store — so
+ * they must not be claimable as two separate handles.
+ *
+ * `exceptUserId` lets a user re-save their own handle without colliding
+ * with themselves.
+ */
+export async function isHandleTaken(candidate: string, exceptUserId?: string) {
+  const matchesHandle = sql`lower(${user.handle}) = ${candidate.toLowerCase()}`;
+
   const [row] = await db
     .select({ id: user.id })
     .from(user)
-    .where(eq(user.handle, candidate))
+    .where(
+      exceptUserId
+        ? and(matchesHandle, ne(user.id, exceptUserId))
+        : matchesHandle,
+    )
     .limit(1);
 
   return Boolean(row);
@@ -53,7 +67,7 @@ export async function generateUniqueHandle(email: string, maxAttempts = 5) {
     base = `creator-${base}`.replace(/-$/, "");
   }
 
-  if (!(await isTaken(base))) {
+  if (!(await isHandleTaken(base))) {
     return base;
   }
 
@@ -63,7 +77,7 @@ export async function generateUniqueHandle(email: string, maxAttempts = 5) {
     const trimmed = base.slice(0, MAX_LENGTH - suffix.length - 1);
     const candidate = `${trimmed}-${suffix}`;
 
-    if (!(await isTaken(candidate))) {
+    if (!(await isHandleTaken(candidate))) {
       return candidate;
     }
   }

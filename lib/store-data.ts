@@ -17,14 +17,9 @@ export type Product = {
   files: string
 }
 
-export const creator = {
-  slug: "alex.studio",
-  name: "Alex Rivera",
-  handle: "alex.studio",
-  initials: "AR",
-  bio: "Photographer & educator. Presets, courses and templates to help you shoot and edit with confidence.",
-}
-
+// The creator is no longer mocked here — storefronts resolve their owner from
+// the `user` table via `getCreatorByHandle` in lib/server/dal/creators.ts.
+// Products are still placeholder data until the products table is wired up.
 export const products: Product[] = [
   {
     id: "8f21",

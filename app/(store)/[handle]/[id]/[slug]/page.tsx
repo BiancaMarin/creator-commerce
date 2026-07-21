@@ -2,19 +2,26 @@ import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 
 import { ProductCheckoutFlow } from "@/components/store/product-checkout-flow"
-import { creator, getProduct } from "@/lib/store-data"
+import { strings } from "@/constants/strings"
+import { getCreatorByHandle } from "@/lib/server/dal/creators"
+import { getProduct } from "@/lib/store-data"
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ handle: string; id: string }>
 }): Promise<Metadata> {
-  const { id } = await params
+  const { handle, id } = await params
   const found = getProduct(id)
+
+  if (!found) {
+    return { title: `Product — ${strings.store.brand}` }
+  }
+
+  const creator = await getCreatorByHandle(handle)
+
   return {
-    title: found
-      ? `${found.name} — ${creator.name}`
-      : "Product — Creator Commerce",
+    title: `${found.name} — ${creator?.name ?? strings.store.brand}`,
   }
 }
 

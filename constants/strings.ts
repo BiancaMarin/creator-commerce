@@ -48,7 +48,7 @@ export const strings = {
 
   dashboard: {
     // {name} is replaced with the signed-in user's first name.
-    greeting: "Hi, {name}! Welcome back",
+    greeting: "Welcome, {name}!",
     subtitle: "Here's how your storefront is performing this month.",
     tabs: {
       overview: "Overview",
@@ -61,8 +61,13 @@ export const strings = {
       name: "Name",
       email: "Email",
       handle: "Storefront handle",
-      storefront: "Storefront URL",
-      handleNote: "Handles are assigned automatically for now.",
+      handleNote:
+        "Renaming your handle changes your storefront URL. The old one stops working right away, so any links you've shared will break.",
+      handlePlaceholder: "your-handle",
+      handleSave: "Save handle",
+      handleSaving: "Saving…",
+      handleSaved: "Handle updated.",
+      viewStore: "View store",
     },
     settingsPanel: {
       title: "Settings",
@@ -76,6 +81,22 @@ export const strings = {
     signingOut: "Signing out…",
     fallbackName: "Your account",
     socialComingSoon: "Social sign-in is coming soon.",
+  },
+
+  store: {
+    brand: "Creator Commerce",
+    shop: "Shop",
+    about: "About",
+    signIn: "Sign in",
+    cart: "Cart",
+    products: "Products",
+    // {count} is replaced with the number of products in the store.
+    itemCount: "{count} items",
+    buy: "Buy",
+    backToShop: "Back to shop",
+    poweredBy: "Powered by",
+    // {name} is replaced with the creator's name.
+    tagline: "Digital products by {name}.",
   },
 
   marketing: {
@@ -135,11 +156,15 @@ export const strings = {
     required: "This field is required.",
     invalidEmail: "Please enter a valid email address.",
     passwordMin: "Password must contain at least 8 characters.",
+    handleLength: "Handles must be between 3 and 30 characters.",
+    handleFormat:
+      "Use lowercase letters, numbers and single hyphens between them.",
   },
 
   errors: {
     generic: "Something went wrong.",
     unauthorized: "Invalid email or password.",
     emailTaken: "An account with that email already exists.",
+    handleTaken: "That handle is already taken.",
   },
 } as const;

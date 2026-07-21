@@ -8,23 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
 import { strings } from "@/constants/strings";
 import { authClient } from "@/lib/auth-client";
+import { getInitials } from "@/lib/utils";
 
 export interface NavUserProps {
   name: string;
   email: string;
   image?: string | null;
-}
-
-/** Initials for the avatar fallback: "Jane Creator" -> "JC". */
-function initials(name: string) {
-  const letters = name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("");
-
-  return letters.toUpperCase() || "?";
 }
 
 export function NavUser({ name, email, image }: NavUserProps) {
@@ -54,7 +43,7 @@ export function NavUser({ name, email, image }: NavUserProps) {
       <Avatar className="size-8 rounded-lg">
         {image && <AvatarImage src={image} alt={displayName} />}
         <AvatarFallback className="rounded-lg">
-          {initials(displayName)}
+          {getInitials(displayName) || "?"}
         </AvatarFallback>
       </Avatar>
       <div className="grid flex-1 text-left text-sm leading-tight">

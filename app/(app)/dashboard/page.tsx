@@ -12,6 +12,7 @@ import {
   UsersIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
+import { HandleForm } from "@/components/dashboard/handle-form";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { strings } from "@/constants/strings";
 import { requireUser } from "@/lib/server/dal/session";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Dashboard · Creator Commerce",
@@ -122,14 +123,6 @@ const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> =
     refunded: "neutral",
     failed: "destructive",
   };
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("");
-}
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -240,7 +233,7 @@ export default async function DashboardPage() {
                     <div className="flex items-center gap-3 py-3">
                       <Avatar>
                         <AvatarFallback className="text-xs font-medium">
-                          {initials(order.customer)}
+                          {getInitials(order.customer)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
@@ -320,7 +313,7 @@ export default async function DashboardPage() {
               <div className="flex items-center gap-3 pb-4">
                 <Avatar size="lg">
                   <AvatarFallback className="font-medium">
-                    {initials(user.name || user.email)}
+                    {getInitials(user.name || user.email)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
@@ -340,14 +333,6 @@ export default async function DashboardPage() {
                   label: strings.dashboard.accountPanel.email,
                   value: user.email,
                 },
-                {
-                  label: strings.dashboard.accountPanel.handle,
-                  value: user.handle,
-                },
-                {
-                  label: strings.dashboard.accountPanel.storefront,
-                  value: `/${user.handle}`,
-                },
               ].map((row, index) => (
                 <div key={row.label}>
                   {index > 0 && <Separator />}
@@ -357,6 +342,15 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               ))}
+
+              <Separator />
+
+              <div className="pt-4">
+                {/* The column is NOT NULL, but `handle` is declared with
+                    `required: false` in additionalFields, so Better Auth types
+                    it as optional on the session user. */}
+                <HandleForm handle={user.handle ?? ""} />
+              </div>
             </CardContent>
             <CardFooter className="border-t text-xs text-muted-foreground">
               {strings.dashboard.accountPanel.handleNote}

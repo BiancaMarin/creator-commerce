@@ -37,7 +37,9 @@ const navMain = [
   { title: "Analytics", href: "/analytics", icon: ChartLineIcon },
   { title: "Wishlist", href: "/wishlist", icon: HeartIcon },
   { title: "Downloads", href: "/downloads", icon: FileArrowDownIcon },
-]
+  // `as const` keeps each href a literal type — typed routes reject a widened
+  // `string`, and this is what makes a dead nav link a build error.
+] as const
 
 export function AppSidebar({
   user,

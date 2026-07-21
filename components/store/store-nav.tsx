@@ -3,30 +3,33 @@ import { ShoppingBagIcon } from "@phosphor-icons/react/dist/ssr"
 
 import { Button } from "@/components/ui/button"
 import { LogoMark } from "@/components/marketing/logo"
-import { creator } from "@/lib/store-data"
+import { strings } from "@/constants/strings"
+import type { Creator } from "@/lib/server/dal/creators"
 
-export function StoreNav() {
+export function StoreNav({ creator }: { creator: Creator | null }) {
+  // `null` means a store page that isn't scoped to a creator (a checkout
+  // return without a handle) — fall back to platform branding. The `as const`
+  // keeps the literal types typed routes need; a plain ternary widens to string.
+  const homeHref = creator ? (`/${creator.handle}` as const) : ("/" as const)
+
   return (
     <header className="sticky top-0 z-20 flex h-[60px] items-center gap-4 border-b bg-background/80 px-8 backdrop-blur-md">
-      <Link
-        href={`/${creator.slug}`}
-        className="flex items-center gap-2 font-semibold"
-      >
+      <Link href={homeHref} className="flex items-center gap-2 font-semibold">
         <span className="flex size-[30px] items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <LogoMark />
         </span>
-        {creator.handle}
+        {creator ? creator.handle : strings.store.brand}
       </Link>
       <nav className="ml-6 hidden items-center gap-5 text-sm text-muted-foreground sm:flex">
-        <Link href={`/${creator.slug}`} className="text-foreground">
-          Shop
+        <Link href={homeHref} className="text-foreground">
+          {strings.store.shop}
         </Link>
         <a href="#" className="hover:text-foreground">
-          About
+          {strings.store.about}
         </a>
       </nav>
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon-sm" aria-label="Cart">
+        <Button variant="ghost" size="icon-sm" aria-label={strings.store.cart}>
           <ShoppingBagIcon />
         </Button>
         <Button
@@ -35,7 +38,7 @@ export function StoreNav() {
           nativeButton={false}
           render={<Link href="/login" />}
         >
-          Sign in
+          {strings.store.signIn}
         </Button>
       </div>
     </header>
