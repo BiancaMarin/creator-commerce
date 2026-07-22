@@ -1,10 +1,11 @@
+import { sql } from "drizzle-orm";
 import {
   integer,
   numeric,
   pgTable,
   text,
   timestamp,
-  unique,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 
@@ -31,10 +32,21 @@ export const productsTable = pgTable(
     files: varchar({ length: 160 }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    // Soft delete. NULL means live; a timestamp means the creator removed it.
+    // Nothing in the app hard-deletes a product, so every read has to filter
+    // on this — see lib/server/dal/products.ts.
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => [
     // Slugs only need to be unique within a storefront — two creators can both
     // sell a "starter-pack".
-    unique("products_user_id_slug_key").on(table.userId, table.slug),
+    //
+    // Partial on purpose: the constraint only applies to live rows, so deleting
+    // a product releases its slug. Without the WHERE, a deleted "starter-pack"
+    // would reserve that URL forever and a re-created one would silently become
+    // "starter-pack-2".
+    uniqueIndex("products_user_id_slug_key")
+      .on(table.userId, table.slug)
+      .where(sql`${table.deletedAt} is null`),
   ],
 );

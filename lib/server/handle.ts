@@ -6,7 +6,7 @@ import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from "@/lib/schemas/handle";
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";
 // Same slug rules as product URLs — handles and slugs are both path segments.
-import { slugify } from "@/lib/slug";
+import { slugify } from "@/lib/utils";
 
 const MIN_LENGTH = HANDLE_MIN_LENGTH;
 const MAX_LENGTH = HANDLE_MAX_LENGTH;

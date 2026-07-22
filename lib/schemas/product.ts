@@ -27,11 +27,14 @@ export const productSchema = z.object({
     .min(10, strings.validation.productDescription)
     .max(2000, strings.validation.productDescription),
   // Kept as a string all the way to the database: `numeric` round-trips as a
-  // string in Drizzle, and money should never pass through a float.
+  // string in Drizzle, and money should never pass through a float. The regex
+  // is what makes it a number — digits, at most 2 decimals, no sign or
+  // exponent — so the refine only has to rule out the zero the regex allows.
   price: z
     .string()
     .trim()
-    .regex(/^\d{1,8}(\.\d{1,2})?$/, strings.validation.productPrice),
+    .regex(/^\d{1,8}(\.\d{1,2})?$/, strings.validation.productPrice)
+    .refine((value) => Number(value) > 0, strings.validation.productPricePositive),
   files: z.string().trim().max(160, strings.validation.productFiles),
 });
 

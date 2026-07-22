@@ -99,7 +99,7 @@ constants/
   strings.ts              # Centralized user-facing copy (see "Copy & UI strings")
 hooks/                    # e.g. use-mobile.ts
 lib/
-  utils.ts                # cn() class-merge helper, getInitials()
+  utils.ts                # cn() class-merge helper, getInitials(), slugify()
   auth-client.ts          # Better Auth React client (browser)
   schemas/                # ALL zod schemas — shared client + server (see "Forms & validation")
     auth.ts               # signupSchema, loginSchema
@@ -194,9 +194,17 @@ Every user owns a public storefront at `/:handle`.
 - **Queries belong in `lib/server/dal/`**, not inline in pages. Wrap read functions in
   React `cache()` so a layout, its page and `generateMetadata` share one query per request
   (see `getCreatorByHandle`).
-- **Products are still placeholder data** in `lib/store-data.ts` — a `products` table
-  exists (`schemas/product.ts`) and `dal/products.ts` is a stub returning `[]`. Storefront
-  product grids are not live yet; the creator identity around them is.
+- **Products are live.** Both the seller catalog and the storefront read real rows through
+  `dal/products.ts`. `lib/store-data.ts` is now only presentation helpers (`formatPrice`,
+  `visualsFor`) — not a data source.
+- **Products are soft-deleted, never dropped.** `deleted_at` NULL means live. Two rules
+  follow, and both are easy to break silently:
+  - **Every read must filter `deleted_at IS NULL`** — use the shared `isLive` predicate in
+    `dal/products.ts`. A missing filter resurrects deleted products on a public storefront.
+  - **Slug uniqueness is a *partial* unique index** on `(user_id, slug) WHERE deleted_at IS
+    NULL`, so deleting a product releases its URL. `isSlugTaken()` mirrors that WHERE
+    exactly; if the two drift apart, `uniqueSlug()` starts proposing slugs the database
+    rejects.
 - There is no `bio` column on `user`; the storefront shows `@handle` under the name rather
   than inventing copy. Adding one means a schema change + migration.
 

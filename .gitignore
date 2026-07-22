@@ -30,6 +30,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# scratch files — throwaway query scripts (q.tmp.mjs) and captured output.
+# See CLAUDE.md "Verifying database-backed work": these have to live in the
+# project root for @neondatabase/serverless to resolve, so they need ignoring.
+*.tmp.*
+
 # env files (can opt-in for committing if needed)
 .env*
 

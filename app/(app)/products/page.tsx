@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { PackageIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr"
 
+import { DeleteProductDialog } from "@/components/dashboard/delete-product-dialog"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
@@ -12,6 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { strings } from "@/constants/strings"
 import { listProductsForUser } from "@/lib/server/dal/products"
 import { requireUser } from "@/lib/server/dal/session"
@@ -106,15 +112,30 @@ export default async function ProductsPage() {
                   <TableCell className="px-5 py-3 text-right font-mono">
                     {formatPrice(product.price)}
                   </TableCell>
-                  <TableCell className="px-5 py-3 text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      nativeButton={false}
-                      render={<Link href={`/products/${product.id}`} />}
-                    >
-                      {strings.products.edit}
-                    </Button>
+                  <TableCell className="px-5 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              nativeButton={false}
+                              render={<Link href={`/products/${product.id}`} />}
+                            >
+                              {strings.products.edit}
+                            </Button>
+                          }
+                        />
+                        <TooltipContent>
+                          {strings.products.editTooltip}
+                        </TooltipContent>
+                      </Tooltip>
+                      <DeleteProductDialog
+                        id={product.id}
+                        name={product.name}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

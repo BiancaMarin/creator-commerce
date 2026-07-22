@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { ArrowSquareOutIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
+import { DeleteProductDialog } from "@/components/dashboard/delete-product-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { strings } from "@/constants/strings";
 import { createProduct, updateProduct } from "@/lib/actions/products";
 import { productSchema, type ProductValues } from "@/lib/schemas/product";
-import { slugify } from "@/lib/slug";
+import { slugify } from "@/lib/utils";
 
 type SavedProduct = {
   id: number;
@@ -241,18 +242,26 @@ export function ProductForm({
           </div>
 
           {product && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground"
-              nativeButton={false}
-              render={
-                <Link href={`/${handle}/${product.id}/${product.slug}`} />
-              }
-            >
-              {strings.products.viewInStore}
-              <ArrowSquareOutIcon />
-            </Button>
+            <div className="flex items-center gap-1">
+              <DeleteProductDialog
+                id={product.id}
+                name={product.name}
+                trigger="button"
+                afterDelete="list"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                nativeButton={false}
+                render={
+                  <Link href={`/${handle}/${product.id}/${product.slug}`} />
+                }
+              >
+                {strings.products.viewInStore}
+                <ArrowSquareOutIcon />
+              </Button>
+            </div>
           )}
         </CardFooter>
       </Card>

@@ -1,15 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
 
 import { strings } from "@/constants/strings";
 import { productSchema, type ProductValues } from "@/lib/schemas/product";
 import { requireUser } from "@/lib/server/dal/session";
-import { isSlugTaken } from "@/lib/server/dal/products";
-import db from "@/lib/server/db";
-import { productsTable } from "@/lib/server/db/schemas/product";
-import { slugify } from "@/lib/slug";
+import {
+  createProductForUser,
+  deleteProductForUser,
+  isSlugTaken,
+  updateProductForUser,
+  type ProductWrite,
+} from "@/lib/server/dal/products";
+import { slugify } from "@/lib/utils";
 
 export type ProductActionResult =
   | { ok: true; id: number; slug: string }
@@ -42,8 +45,8 @@ async function uniqueSlug(userId: string, name: string, exceptId?: number) {
   return `${base}-${Date.now().toString(36)}`;
 }
 
-/** Shared shape written on both create and update. */
-function toRow(values: ProductValues, slug: string) {
+/** Maps the validated form values onto the columns the DAL writes. */
+function toRow(values: ProductValues, slug: string): ProductWrite {
   return {
     name: values.name,
     slug,
@@ -86,11 +89,7 @@ export async function createProduct(
   }
 
   const slug = await uniqueSlug(user.id, parsed.data.name);
-
-  const [row] = await db
-    .insert(productsTable)
-    .values({ ...toRow(parsed.data, slug), userId: user.id })
-    .returning({ id: productsTable.id, slug: productsTable.slug });
+  const row = await createProductForUser(user.id, toRow(parsed.data, slug));
 
   if (!row) {
     return { ok: false, error: strings.errors.generic };
@@ -118,13 +117,29 @@ export async function updateProduct(
   // Renaming re-derives the slug, so the URL keeps matching the product name.
   const slug = await uniqueSlug(user.id, parsed.data.name, id);
 
-  const [row] = await db
-    .update(productsTable)
-    .set({ ...toRow(parsed.data, slug), updatedAt: new Date() })
-    // The userId predicate is the authorization check: a product belonging to
-    // someone else simply matches no rows.
-    .where(and(eq(productsTable.id, id), eq(productsTable.userId, user.id)))
-    .returning({ id: productsTable.id, slug: productsTable.slug });
+  // Passing user.id is what scopes the write to its owner — see the DAL.
+  const row = await updateProductForUser(id, user.id, toRow(parsed.data, slug));
+
+  if (!row) {
+    return { ok: false, error: strings.errors.productNotFound };
+  }
+
+  revalidateProduct(user.handle, row.id, row.slug);
+
+  return { ok: true, id: row.id, slug: row.slug };
+}
+
+/**
+ * Retires a product. The row is soft-deleted rather than dropped (see the DAL),
+ * so this stays a normal write from the action's point of view.
+ *
+ * There is no schema to validate — the only input is an id, and it is not
+ * trusted: ownership comes from the session and is enforced inside the write's
+ * WHERE clause, not by a check here.
+ */
+export async function deleteProduct(id: number): Promise<ProductActionResult> {
+  const user = await requireUser();
+  const row = await deleteProductForUser(id, user.id);
 
   if (!row) {
     return { ok: false, error: strings.errors.productNotFound };

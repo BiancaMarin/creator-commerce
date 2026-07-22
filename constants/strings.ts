@@ -112,6 +112,22 @@ export const strings = {
     columnPrice: "Price",
     columnUrl: "URL",
     edit: "Edit",
+    // Tooltip copy is deliberately more explicit than the button labels — the
+    // delete trigger in the table is icon-only, so this is the only visible
+    // hint at what it does.
+    editTooltip: "Edit product",
+    deleteTooltip: "Delete product",
+    delete: "Delete",
+    // {name} is the product being removed — used for the icon button's label
+    // and inside the confirmation, so the dialog never says "this item".
+    deleteAria: "Delete {name}",
+    deleteTitle: "Delete this product?",
+    // Soft delete: the row is retained, so this deliberately doesn't promise
+    // permanence. It also doesn't promise recovery — there's no restore UI yet.
+    deleteDescription:
+      "“{name}” will be removed from your storefront and buyers will no longer be able to reach it.",
+    deleteConfirm: "Delete product",
+    deleting: "Deleting…",
   },
 
   account: {
@@ -255,6 +271,7 @@ export const strings = {
     productDescription:
       "Describe the product in at least 10 characters (2000 max).",
     productPrice: "Enter a price like 48 or 48.00.",
+    productPricePositive: "Price must be greater than 0.",
     productFiles: "Keep the file summary under 160 characters.",
   },
 
