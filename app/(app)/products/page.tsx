@@ -1,16 +1,9 @@
 import type { Metadata } from "next"
-import {
-  DotsThreeIcon,
-  FunnelIcon,
-  MagnifyingGlassIcon,
-  PackageIcon,
-  PlusIcon,
-} from "@phosphor-icons/react/dist/ssr"
+import Link from "next/link"
+import { PackageIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -19,140 +12,116 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { strings } from "@/constants/strings"
+import { listProductsForUser } from "@/lib/server/dal/products"
+import { requireUser } from "@/lib/server/dal/session"
+import { formatPrice } from "@/lib/store-data"
 
 export const metadata: Metadata = {
   title: "Products · Creator Commerce",
   description: "Manage your catalog of digital products.",
 }
 
-const products = [
-  {
-    name: "Studio Preset Pack",
-    type: "Lightroom presets",
-    price: "$48.00",
-    sales: 412,
-    status: "Published" as const,
-  },
-  {
-    name: "Lightroom Masterclass",
-    type: "Video course",
-    price: "$129.00",
-    sales: 286,
-    status: "Published" as const,
-  },
-  {
-    name: "Brand Kit Templates",
-    type: "Design templates",
-    price: "$64.00",
-    sales: 173,
-    status: "Published" as const,
-  },
-  {
-    name: "1:1 Coaching Call",
-    type: "Service",
-    price: "$220.00",
-    sales: 64,
-    status: "Published" as const,
-  },
-  {
-    name: "Motion Graphics Bundle",
-    type: "After Effects",
-    price: "$89.00",
-    sales: 0,
-    status: "Draft" as const,
-  },
-]
+export default async function ProductsPage() {
+  const user = await requireUser()
+  const products = await listProductsForUser(user.id)
 
-export default function ProductsPage() {
   return (
     <div className="flex flex-1 flex-col gap-5 p-4 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Products
+            {strings.products.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Manage your catalog of digital products.
+            {strings.products.subtitle}
           </p>
         </div>
-        <Button size="sm">
+        <Button
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/products/new" />}
+        >
           <PlusIcon />
-          New product
+          {strings.products.newProduct}
         </Button>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="relative max-w-[280px] flex-1">
-          <MagnifyingGlassIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search products" className="pl-9" />
-        </div>
-        <Button variant="outline" size="sm">
-          <FunnelIcon />
-          Status
-        </Button>
-      </div>
-
-      <Card className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="px-5 text-xs text-muted-foreground">
-                Product
-              </TableHead>
-              <TableHead className="px-5 text-xs text-muted-foreground">
-                Type
-              </TableHead>
-              <TableHead className="px-5 text-right text-xs text-muted-foreground">
-                Price
-              </TableHead>
-              <TableHead className="px-5 text-right text-xs text-muted-foreground">
-                Sales
-              </TableHead>
-              <TableHead className="px-5 text-xs text-muted-foreground">
-                Status
-              </TableHead>
-              <TableHead className="px-5 text-right">
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.name}>
-                <TableCell className="px-5 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                      <PackageIcon className="size-4" />
-                    </span>
-                    <span className="font-medium">{product.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="px-5 py-3 text-muted-foreground">
-                  {product.type}
-                </TableCell>
-                <TableCell className="px-5 py-3 text-right font-mono">
-                  {product.price}
-                </TableCell>
-                <TableCell className="px-5 py-3 text-right font-mono text-muted-foreground">
-                  {product.sales}
-                </TableCell>
-                <TableCell className="px-5 py-3">
-                  <Badge
-                    variant={product.status === "Published" ? "success" : "outline"}
-                  >
-                    {product.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="px-5 py-3 text-right">
-                  <Button variant="ghost" size="icon-sm" aria-label="More actions">
-                    <DotsThreeIcon />
-                  </Button>
-                </TableCell>
+      {products.length === 0 ? (
+        <Card className="flex flex-1 items-center justify-center">
+          <div className="flex max-w-xs flex-col items-center gap-3 py-10 text-center text-muted-foreground">
+            <span className="flex size-14 items-center justify-center rounded-4xl bg-muted">
+              <PackageIcon className="size-6" />
+            </span>
+            <p className="text-sm">{strings.products.empty}</p>
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/products/new" />}
+            >
+              <PlusIcon />
+              {strings.products.newProduct}
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="px-5 text-xs text-muted-foreground">
+                  {strings.products.columnProduct}
+                </TableHead>
+                <TableHead className="px-5 text-xs text-muted-foreground">
+                  {strings.products.columnType}
+                </TableHead>
+                <TableHead className="px-5 text-xs text-muted-foreground">
+                  {strings.products.columnUrl}
+                </TableHead>
+                <TableHead className="px-5 text-right text-xs text-muted-foreground">
+                  {strings.products.columnPrice}
+                </TableHead>
+                <TableHead className="px-5 text-right">
+                  <span className="sr-only">{strings.products.edit}</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+            </TableHeader>
+            <TableBody>
+              {products.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell className="px-5 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                        <PackageIcon className="size-4" />
+                      </span>
+                      <span className="font-medium">{product.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-5 py-3 text-muted-foreground">
+                    {product.tag}
+                  </TableCell>
+                  <TableCell className="px-5 py-3 font-mono text-xs text-muted-foreground">
+                    /{user.handle}/{product.id}/{product.slug}
+                  </TableCell>
+                  <TableCell className="px-5 py-3 text-right font-mono">
+                    {formatPrice(product.price)}
+                  </TableCell>
+                  <TableCell className="px-5 py-3 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      nativeButton={false}
+                      render={<Link href={`/products/${product.id}`} />}
+                    >
+                      {strings.products.edit}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   )
 }

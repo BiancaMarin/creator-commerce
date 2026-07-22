@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card"
 import { StoreChrome } from "@/components/store/store-chrome"
 import { strings } from "@/constants/strings"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
-import { getProduct } from "@/lib/store-data"
+import { getProductByHandleAndId } from "@/lib/server/dal/products"
 
 export const metadata: Metadata = {
   title: "Payment successful — Creator Commerce",
@@ -22,10 +22,16 @@ export default async function CheckoutSuccessPage({
   searchParams: Promise<{ p?: string; s?: string }>
 }) {
   const { p, s } = await searchParams
-  const product = p ? getProduct(p) : undefined
   // `s` is the store the buyer came from. Unknown or missing means we can't
   // name a creator, so the chrome falls back to platform branding.
   const creator = s ? await getCreatorByHandle(s) : null
+  const productId = Number(p)
+  // The product is only named if it really belongs to that store — `p` and `s`
+  // are user-supplied query params, not trusted state.
+  const product =
+    creator && Number.isInteger(productId)
+      ? await getProductByHandleAndId(creator.handle, productId)
+      : null
   // Inlined at the `href` rather than hoisted to a `const`: typed routes need
   // the template-literal type, and a hoisted ternary widens it to `string`.
   const backHref = creator ? (`/${creator.handle}` as const) : ("/" as const)

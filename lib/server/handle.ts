@@ -5,22 +5,11 @@ import { and, ne, sql } from "drizzle-orm";
 import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from "@/lib/handle-schema";
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";
+// Same slug rules as product URLs — handles and slugs are both path segments.
+import { slugify } from "@/lib/slug";
 
 const MIN_LENGTH = HANDLE_MIN_LENGTH;
 const MAX_LENGTH = HANDLE_MAX_LENGTH;
-
-/**
- * Turn an email local part into a URL-safe slug: lowercase, non-alphanumerics
- * collapsed to hyphens, no leading/trailing or doubled hyphens.
- */
-function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .replace(/-{2,}/g, "-")
-    .slice(0, MAX_LENGTH);
-}
 
 function randomSuffix() {
   return Math.random().toString(36).slice(2, 6);
@@ -60,7 +49,7 @@ export async function isHandleTaken(candidate: string, exceptUserId?: string) {
  */
 export async function generateUniqueHandle(email: string, maxAttempts = 5) {
   const local = email.split("@")[0] ?? "";
-  let base = slugify(local);
+  let base = slugify(local, MAX_LENGTH);
 
   // "a@x.com" or "___@x.com" can slugify to something too short for the column.
   if (base.length < MIN_LENGTH) {

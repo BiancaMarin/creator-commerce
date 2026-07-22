@@ -76,6 +76,44 @@ export const strings = {
     },
   },
 
+  products: {
+    title: "Products",
+    subtitle: "Manage your catalog of digital products.",
+    newProduct: "New product",
+    empty: "No products yet — add your first one to fill your storefront.",
+    createTitle: "New product",
+    createSubtitle: "Add a digital product to your storefront.",
+    editTitle: "Edit product",
+    editSubtitle: "Update the details buyers see on your storefront.",
+    name: "Name",
+    namePlaceholder: "Studio Preset Pack",
+    tag: "Type",
+    tagPlaceholder: "Lightroom presets",
+    description: "Description",
+    descriptionPlaceholder:
+      "What the buyer gets, who it's for, and what they can do with it.",
+    price: "Price",
+    pricePlaceholder: "48.00",
+    files: "Files",
+    filesPlaceholder: "12 files · .xmp, .dng · 84 MB",
+    filesHint: "Shown on the product page. Optional.",
+    // {url} is replaced with the storefront path the product will live at.
+    slugPreview: "Storefront URL: {url}",
+    slugPending: "The URL is generated from the name.",
+    create: "Create product",
+    creating: "Creating…",
+    save: "Save changes",
+    saving: "Saving…",
+    saved: "Product saved.",
+    viewInStore: "View in store",
+    backToProducts: "Back to products",
+    columnProduct: "Product",
+    columnType: "Type",
+    columnPrice: "Price",
+    columnUrl: "URL",
+    edit: "Edit",
+  },
+
   account: {
     signOut: "Sign out",
     signingOut: "Signing out…",
@@ -92,6 +130,7 @@ export const strings = {
     products: "Products",
     // {count} is replaced with the number of products in the store.
     itemCount: "{count} items",
+    noProducts: "This creator hasn't published any products yet.",
     buy: "Buy",
     backToShop: "Back to shop",
     poweredBy: "Powered by",
@@ -159,6 +198,12 @@ export const strings = {
     handleLength: "Handles must be between 3 and 30 characters.",
     handleFormat:
       "Use lowercase letters, numbers and single hyphens between them.",
+    productName: "Give the product a name between 3 and 255 characters.",
+    productTag: "Add a short type, like “Video course”.",
+    productDescription:
+      "Describe the product in at least 10 characters (2000 max).",
+    productPrice: "Enter a price like 48 or 48.00.",
+    productFiles: "Keep the file summary under 160 characters.",
   },
 
   errors: {
@@ -166,5 +211,6 @@ export const strings = {
     unauthorized: "Invalid email or password.",
     emailTaken: "An account with that email already exists.",
     handleTaken: "That handle is already taken.",
+    productNotFound: "That product no longer exists.",
   },
 } as const;

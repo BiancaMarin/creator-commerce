@@ -8,7 +8,7 @@ import {
 } from "@phosphor-icons/react"
 
 import { cn } from "@/lib/utils"
-import type { Product, ProductIcon } from "@/lib/store-data"
+import { visualsFor, type ProductIcon } from "@/lib/store-data"
 
 const icons: Record<ProductIcon, React.ComponentType<{ className?: string }>> = {
   "sliders-horizontal": SlidersHorizontalIcon,
@@ -19,22 +19,26 @@ const icons: Record<ProductIcon, React.ComponentType<{ className?: string }>> = 
 
 /**
  * The gradient cover art placeholder for a digital product — swap for real
- * cover images later. Size it via `className`, the glyph via `iconClassName`.
+ * cover images later. `seed` (use the product slug) picks a stable gradient, so
+ * a product looks the same everywhere it appears. Size it via `className`, the
+ * glyph via `iconClassName`.
  */
 export function ProductCover({
-  product,
+  seed,
   className,
   iconClassName,
 }: {
-  product: Product
+  seed: string
   className?: string
   iconClassName?: string
 }) {
-  const Icon = icons[product.icon]
+  const { icon, cover } = visualsFor(seed)
+  const Icon = icons[icon]
+
   return (
     <div
       className={cn("flex items-center justify-center text-white", className)}
-      style={{ background: product.cover }}
+      style={{ background: cover }}
     >
       <Icon className={cn("size-8", iconClassName)} />
     </div>

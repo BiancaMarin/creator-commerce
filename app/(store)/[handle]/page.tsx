@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/card"
 import { ProductCover } from "@/components/store/product-cover"
 import { strings } from "@/constants/strings"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
-import { formatPrice, products } from "@/lib/store-data"
+import { listProductsByHandle } from "@/lib/server/dal/products"
+import { formatPrice } from "@/lib/store-data"
 
 export async function generateMetadata({
   params,
@@ -40,6 +41,8 @@ export default async function StorefrontPage({
   if (!creator) {
     notFound()
   }
+
+  const products = await listProductsByHandle(creator.handle)
 
   return (
     <>
@@ -73,10 +76,16 @@ export default async function StorefrontPage({
             {strings.store.itemCount.replace("{count}", String(products.length))}
           </span>
         </div>
+        {products.length === 0 && (
+          <Card className="flex items-center justify-center py-14 text-sm text-muted-foreground">
+            {strings.store.noProducts}
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
             <Card
-              key={product.slug}
+              key={product.id}
               className="gap-0 overflow-hidden p-0 transition-shadow hover:shadow-lg"
             >
               <Link
@@ -84,7 +93,7 @@ export default async function StorefrontPage({
                 className="block"
               >
                 <ProductCover
-                  product={product}
+                  seed={product.slug}
                   className="aspect-[16/10]"
                   iconClassName="size-9"
                 />

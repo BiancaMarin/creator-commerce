@@ -16,7 +16,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { ProductCover } from "@/components/store/product-cover"
-import { formatPrice, type Product } from "@/lib/store-data"
+import { formatPrice, type StoreProduct } from "@/lib/store-data"
 
 function Field({
   label,
@@ -37,14 +37,15 @@ export function ProductCheckoutFlow({
   product,
   storeHandle,
 }: {
-  product: Product
+  product: StoreProduct
   storeHandle: string
 }) {
   const router = useRouter()
   const [step, setStep] = React.useState<"product" | "checkout">("product")
 
-  const fee = product.price * 0.02
-  const total = product.price + fee
+  const price = Number(product.price)
+  const fee = price * 0.02
+  const total = price + fee
 
   if (step === "product") {
     return (
@@ -61,7 +62,7 @@ export function ProductCheckoutFlow({
         <div className="grid items-start gap-7 md:grid-cols-[1.3fr_1fr]">
           <Card className="overflow-hidden p-0">
             <ProductCover
-              product={product}
+              seed={product.slug}
               className="aspect-[4/3]"
               iconClassName="size-16"
             />
@@ -74,12 +75,14 @@ export function ProductCheckoutFlow({
               {product.name}
             </h1>
             <p className="leading-relaxed text-muted-foreground">
-              {product.desc}
+              {product.description}
             </p>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <FileArrowDownIcon className="size-4" />
-              {product.files}
-            </div>
+            {product.files && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <FileArrowDownIcon className="size-4" />
+                {product.files}
+              </div>
+            )}
             <Separator />
             <div className="flex items-center justify-between">
               <span className="font-mono text-[28px] font-bold">
@@ -168,7 +171,7 @@ export function ProductCheckoutFlow({
             </div>
             <div className="flex items-center gap-3">
               <ProductCover
-                product={product}
+                seed={product.slug}
                 className="size-14 shrink-0 rounded-2xl"
                 iconClassName="size-[22px]"
               />
@@ -183,7 +186,7 @@ export function ProductCheckoutFlow({
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-mono">${product.price.toFixed(2)}</span>
+                <span className="font-mono">${price.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Platform fee (2%)</span>
