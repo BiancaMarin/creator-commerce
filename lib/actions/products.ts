@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 
 import { strings } from "@/constants/strings";
-import { productSchema, type ProductValues } from "@/lib/product-schema";
+import { productSchema, type ProductValues } from "@/lib/schemas/product";
 import { requireUser } from "@/lib/server/dal/session";
 import { isSlugTaken } from "@/lib/server/dal/products";
 import db from "@/lib/server/db";

@@ -2,7 +2,7 @@ import "server-only";
 
 import { and, ne, sql } from "drizzle-orm";
 
-import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from "@/lib/handle-schema";
+import { HANDLE_MAX_LENGTH, HANDLE_MIN_LENGTH } from "@/lib/schemas/handle";
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";
 // Same slug rules as product URLs — handles and slugs are both path segments.

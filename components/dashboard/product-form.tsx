@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { strings } from "@/constants/strings";
 import { createProduct, updateProduct } from "@/lib/actions/products";
-import { productSchema, type ProductValues } from "@/lib/product-schema";
+import { productSchema, type ProductValues } from "@/lib/schemas/product";
 import { slugify } from "@/lib/slug";
 
 type SavedProduct = {

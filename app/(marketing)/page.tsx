@@ -25,72 +25,31 @@ import { PricingSection } from "@/components/marketing/pricing-section";
 import { strings } from "@/constants/strings";
 
 export const metadata: Metadata = {
-  title: "Creator Commerce — Sell your digital products",
+  title: strings.marketing.meta.title,
   description: strings.marketing.hero.subtitle,
 };
 
+// Copy lives in constants/strings.ts; only the icon — which isn't copy — is
+// paired in here, by name rather than by position.
 const features = [
-  {
-    icon: StorefrontIcon,
-    title: "Public storefront",
-    desc: "Every creator gets a clean storefront at /@handle — no site builder, no theme wrangling.",
-  },
-  {
-    icon: CreditCardIcon,
-    title: "Stripe checkout",
-    desc: "Take card payments worldwide with buyer, seller and product tracked on every order.",
-  },
-  {
-    icon: LockKeyIcon,
-    title: "Protected downloads",
-    desc: "Files stay locked to the buyer. Secure links, instant delivery, re-download anytime.",
-  },
-  {
-    icon: SparkleIcon,
-    title: "AI product pages",
-    desc: "Generate a polished product page and teaser straight from the file you upload.",
-  },
-  {
-    icon: ChartLineUpIcon,
-    title: "Revenue analytics",
-    desc: "See revenue, top products and conversion at a glance — updated in real time.",
-  },
-  {
-    icon: UsersThreeIcon,
-    title: "Customer profiles",
-    desc: "Segments, lifetime value and order history for every buyer, built in.",
-  },
+  { icon: StorefrontIcon, ...strings.marketing.features.items.storefront },
+  { icon: CreditCardIcon, ...strings.marketing.features.items.checkout },
+  { icon: LockKeyIcon, ...strings.marketing.features.items.downloads },
+  { icon: SparkleIcon, ...strings.marketing.features.items.aiPages },
+  { icon: ChartLineUpIcon, ...strings.marketing.features.items.analytics },
+  { icon: UsersThreeIcon, ...strings.marketing.features.items.customers },
 ];
 
 const steps = [
-  {
-    icon: UploadSimpleIcon,
-    title: "Upload your file",
-    desc: "Drop in a PDF, video, preset pack or ZIP. We handle storage and delivery.",
-  },
-  {
-    icon: MagicWandIcon,
-    title: "Publish in a click",
-    desc: "AI drafts the product page. Set a price, hit publish, share your link.",
-  },
-  {
-    icon: HandCoinsIcon,
-    title: "Get paid",
-    desc: "Buyers check out with Stripe. Money lands in your account — you keep 98%.",
-  },
-];
-
-const trustStats = [
-  { value: "12,000+", label: "creators selling" },
-  { value: "$40M+", label: "paid out to date" },
-  { value: "180+", label: "countries" },
-  { value: "4.9/5", label: "average rating" },
+  { icon: UploadSimpleIcon, ...strings.marketing.how.steps.upload },
+  { icon: MagicWandIcon, ...strings.marketing.how.steps.publish },
+  { icon: HandCoinsIcon, ...strings.marketing.how.steps.getPaid },
 ];
 
 const headingClass = "font-heading font-semibold tracking-[-0.03em]";
 
 export default function MarketingHomePage() {
-  const { hero, features: featuresCopy, how, cta } = strings.marketing;
+  const { hero, trust, features: featuresCopy, how, cta } = strings.marketing;
 
   return (
     <>
@@ -147,7 +106,7 @@ export default function MarketingHomePage() {
       {/* Trust strip */}
       <section className="border-y bg-muted">
         <div className="mx-auto grid max-w-[1120px] grid-cols-2 gap-6 px-8 py-8 md:grid-cols-4">
-          {trustStats.map((stat) => (
+          {trust.map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="font-mono text-3xl font-semibold tracking-[-0.03em]">
                 {stat.value}

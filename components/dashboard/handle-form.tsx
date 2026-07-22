@@ -11,7 +11,7 @@ import { updateHandle } from "@/app/(app)/dashboard/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { strings } from "@/constants/strings";
-import { handleSchema, type HandleValues } from "@/lib/handle-schema";
+import { handleSchema, type HandleValues } from "@/lib/schemas/handle";
 
 export function HandleForm({ handle }: { handle: string }) {
   const router = useRouter();

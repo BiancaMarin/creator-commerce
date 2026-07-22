@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
 import { strings } from "@/constants/strings";
-import { handleSchema } from "@/lib/handle-schema";
+import { handleSchema } from "@/lib/schemas/handle";
 import { requireUser } from "@/lib/server/dal/session";
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";

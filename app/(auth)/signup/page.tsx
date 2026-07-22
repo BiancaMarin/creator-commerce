@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import {
   EyeIcon,
   EyeSlashIcon,
@@ -27,14 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { strings } from "@/constants/strings";
 import { authClient } from "@/lib/auth-client";
-
-const signupSchema = z.object({
-  name: z.string().min(1, strings.validation.required),
-  email: z.email(strings.validation.invalidEmail),
-  password: z.string().min(8, strings.validation.passwordMin),
-});
-
-type SignupValues = z.infer<typeof signupSchema>;
+import { signupSchema, type SignupValues } from "@/lib/schemas/auth";
 
 export default function SignupPage() {
   const router = useRouter();

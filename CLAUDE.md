@@ -101,7 +101,10 @@ hooks/                    # e.g. use-mobile.ts
 lib/
   utils.ts                # cn() class-merge helper, getInitials()
   auth-client.ts          # Better Auth React client (browser)
-  handle-schema.ts        # zod schema for storefront handles — shared client + server
+  schemas/                # ALL zod schemas — shared client + server (see "Forms & validation")
+    auth.ts               # signupSchema, loginSchema
+    handle.ts             # handleSchema + HANDLE_MIN/MAX_LENGTH
+    product.ts            # productSchema
   store-data.ts           # PLACEHOLDER product data (not from the DB yet)
   server/                 # server-only modules (see "Server-only code")
     auth.ts               # Better Auth config (Drizzle adapter, handle generation hook)
@@ -180,7 +183,7 @@ Every user owns a public storefront at `/:handle`.
 - **Lookups are case-insensitive** (`getCreatorByHandle` lowercases both sides), so
   `/Test` and `/test` are the same store. Uniqueness checks must therefore be
   case-insensitive too — use `isHandleTaken()`, don't write a new `eq()` comparison.
-- Validation rules live in **one** place, `lib/handle-schema.ts`, imported by both the
+- Validation rules live in **one** place, `lib/schemas/handle.ts`, imported by both the
   client form and the server action. Change them there, not in either caller.
 
 ## Data layer
@@ -202,7 +205,7 @@ Every user owns a public storefront at `/:handle`.
 Anything under `lib/server/` starts with `import "server-only"` and must never reach a
 client bundle. If a Client Component needs something from there, either pass it as a prop
 from a Server Component, or extract the shared part to a neutral module — that's exactly
-why `lib/handle-schema.ts` sits outside `lib/server/`.
+why `lib/schemas/` sits outside `lib/server/`.
 
 ## UI components (shadcn — Base UI variant)
 
@@ -265,11 +268,15 @@ Standard stack is **react-hook-form + zod**, wired directly (no shadcn `Form` wr
 since that primitive isn't installed). Pattern — see `app/(auth)/signup/page.tsx` and
 `components/dashboard/handle-form.tsx`:
 
-1. Define a **zod schema as the single source of truth**; derive the type with `z.infer`.
+1. Define a **zod schema as the single source of truth**, in **`lib/schemas/`** — one file
+   per domain (`auth.ts`, `handle.ts`, `product.ts`), exporting the schema *and* its
+   `z.infer` type. Never declare a schema inline in a page, component or action: client
+   and server both import it from there, which is the only way they can't drift.
+   - The folder sits outside `lib/server/` on purpose so Client Components can import it.
+     Nothing in it may pull from `lib/server/` — keep it free of DB and auth imports.
    - Use zod v4 **top-level format helpers** (`z.email()`, `z.url()`, …). The method forms
      (`z.string().email()`) are **deprecated** in v4.
-   - If the server also validates it (it should), put the schema in a shared module both
-     sides import — see `lib/handle-schema.ts`.
+   - Wire messages to `strings.validation.*`, don't inline literals.
 2. `useForm({ resolver: zodResolver(schema), defaultValues })`.
 3. Register fields with `{...register("field")}` (drop manual `name`/`required`).
 4. Surface errors under the field **and** set `aria-invalid={!!errors.field}` on the
@@ -295,3 +302,4 @@ since that primitive isn't installed). Pattern — see `app/(auth)/signup/page.t
 - **Auth checks live in layouts**; read sessions through `lib/server/dal/session.ts`.
 - **Server Actions take identity from the session**, never from client-supplied ids.
 - **Queries live in `lib/server/dal/`**, wrapped in React `cache()`.
+- **Zod schemas live in `lib/schemas/`** — never inline in a page, component or action.

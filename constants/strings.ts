@@ -139,6 +139,9 @@ export const strings = {
   },
 
   marketing: {
+    meta: {
+      title: "Creator Commerce — Sell your digital products",
+    },
     nav: {
       features: "Features",
       how: "How it works",
@@ -159,15 +162,64 @@ export const strings = {
       previewLabel: "Dashboard",
       previewChart: "Sales this month",
     },
+    // Headline numbers under the hero.
+    trust: [
+      { value: "12,000+", label: "creators selling" },
+      { value: "$40M+", label: "paid out to date" },
+      { value: "180+", label: "countries" },
+      { value: "4.9/5", label: "average rating" },
+    ],
     features: {
       badge: "Everything included",
       title: "One platform to sell what you make",
       subtitle:
         "From your first upload to your ten-thousandth sale — the tools stay out of your way.",
+      // Keyed rather than a list: the page pairs each entry with an icon by
+      // name, so reordering the cards can't silently mismatch the two.
+      items: {
+        storefront: {
+          title: "Public storefront",
+          desc: "Every creator gets a clean storefront at /@handle — no site builder, no theme wrangling.",
+        },
+        checkout: {
+          title: "Stripe checkout",
+          desc: "Take card payments worldwide with buyer, seller and product tracked on every order.",
+        },
+        downloads: {
+          title: "Protected downloads",
+          desc: "Files stay locked to the buyer. Secure links, instant delivery, re-download anytime.",
+        },
+        aiPages: {
+          title: "AI product pages",
+          desc: "Generate a polished product page and teaser straight from the file you upload.",
+        },
+        analytics: {
+          title: "Revenue analytics",
+          desc: "See revenue, top products and conversion at a glance — updated in real time.",
+        },
+        customers: {
+          title: "Customer profiles",
+          desc: "Segments, lifetime value and order history for every buyer, built in.",
+        },
+      },
     },
     how: {
       title: "Live in three steps",
       subtitle: "Most creators publish their first product in under ten minutes.",
+      steps: {
+        upload: {
+          title: "Upload your file",
+          desc: "Drop in a PDF, video, preset pack or ZIP. We handle storage and delivery.",
+        },
+        publish: {
+          title: "Publish in a click",
+          desc: "AI drafts the product page. Set a price, hit publish, share your link.",
+        },
+        getPaid: {
+          title: "Get paid",
+          desc: "Buyers check out with Stripe. Money lands in your account — you keep 98%.",
+        },
+      },
     },
     pricing: {
       title: "Simple pricing that scales",
