@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "image_urls" varchar(512)[] DEFAULT '{}'::varchar(512)[] NOT NULL;

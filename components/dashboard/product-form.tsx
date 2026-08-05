@@ -8,6 +8,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { ArrowSquareOutIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
 import { DeleteProductDialog } from "@/components/dashboard/delete-product-dialog";
+import { ProductImageField } from "@/components/dashboard/product-image-field";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,6 +33,7 @@ type SavedProduct = {
   description: string;
   price: string;
   files: string | null;
+  imageUrls: string[];
 };
 
 export function ProductForm({
@@ -61,6 +63,7 @@ export function ProductForm({
       description: product?.description ?? "",
       price: product?.price ?? "",
       files: product?.files ?? "",
+      imageUrls: product?.imageUrls ?? [],
     },
   });
 
@@ -200,6 +203,14 @@ export function ProductForm({
               </p>
             )}
           </div>
+
+          {/* Uploads append to the `imageUrls` form value; nothing reaches the
+              product row until this form is submitted. */}
+          <ProductImageField
+            control={control}
+            productName={name ?? ""}
+            seed={previewSlug || String(product?.id ?? "")}
+          />
 
           <div className="flex flex-col gap-2">
             <label htmlFor="files" className="text-sm font-medium">

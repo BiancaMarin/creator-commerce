@@ -59,6 +59,7 @@ export default async function EditProductPage({
             description: product.description,
             price: product.price,
             files: product.files,
+            imageUrls: product.imageUrls,
           }}
         />
       </div>

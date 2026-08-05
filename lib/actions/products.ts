@@ -56,6 +56,9 @@ function toRow(values: ProductValues, slug: string): ProductWrite {
     // are stored identically.
     price: Number(values.price).toFixed(2),
     files: values.files || null,
+    // Stored as-is, order included — the first image is the product's cover.
+    // Removing every image writes `[]`, never NULL.
+    imageUrls: values.imageUrls,
   };
 }
 

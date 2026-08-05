@@ -18,6 +18,8 @@ export type StoreProduct = {
   description: string
   price: string
   files: string | null
+  /** Display order; the first entry is the cover. Empty when there are none. */
+  imageUrls: string[]
 }
 
 export type ProductIcon =
@@ -52,9 +54,9 @@ const VISUALS: ProductVisuals[] = [
 ]
 
 /**
- * Cover art is a placeholder until products carry real images, but it should
- * at least be *stable* — the same product always gets the same gradient,
- * derived from its slug rather than its position on the page.
+ * The fallback cover for a product with no uploaded image. It should at least
+ * be *stable* — the same product always gets the same gradient, derived from
+ * its slug rather than its position on the page.
  */
 export function visualsFor(seed: string): ProductVisuals {
   let hash = 0

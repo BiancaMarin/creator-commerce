@@ -63,6 +63,9 @@ export function ProductCheckoutFlow({
           <Card className="overflow-hidden p-0">
             <ProductCover
               seed={product.slug}
+              imageUrl={product.imageUrls[0]}
+              alt={product.name}
+              sizes="(max-width: 768px) 100vw, 560px"
               className="aspect-[4/3]"
               iconClassName="size-16"
             />
@@ -172,6 +175,9 @@ export function ProductCheckoutFlow({
             <div className="flex items-center gap-3">
               <ProductCover
                 seed={product.slug}
+                imageUrl={product.imageUrls[0]}
+                alt={product.name}
+                sizes="56px"
                 className="size-14 shrink-0 rounded-2xl"
                 iconClassName="size-[22px]"
               />

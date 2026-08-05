@@ -94,6 +94,9 @@ export default async function StorefrontPage({
               >
                 <ProductCover
                   seed={product.slug}
+                  imageUrl={product.imageUrls[0]}
+                  alt={product.name}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 320px"
                   className="aspect-[16/10]"
                   iconClassName="size-9"
                 />

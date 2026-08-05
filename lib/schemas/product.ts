@@ -3,6 +3,13 @@ import { z } from "zod";
 import { strings } from "@/constants/strings";
 
 /**
+ * How many images one product can carry. Lives here because three places have
+ * to agree on it: this schema (the authoritative check), the upload endpoint's
+ * `maxFileCount`, and the form, which stops offering the button at the cap.
+ */
+export const MAX_PRODUCT_IMAGES = 6;
+
+/**
  * Shared by the product form and the create/edit server actions, so the two
  * can never disagree on what a valid product is. Mirrors the column widths in
  * `lib/server/db/schemas/product.ts`.
@@ -36,6 +43,26 @@ export const productSchema = z.object({
     .regex(/^\d{1,8}(\.\d{1,2})?$/, strings.validation.productPrice)
     .refine((value) => Number(value) > 0, strings.validation.productPricePositive),
   files: z.string().trim().max(160, strings.validation.productFiles),
+  // The image URLs handed back by UploadThing, in display order — the first is
+  // the cover. No images is `[]`, never null, matching the NOT NULL DEFAULT '{}'
+  // column, so neither side ever has to branch on a missing value.
+  //
+  // Validated but not trusted: these arrive from the client like any other
+  // field, so the shape check is all this is. The uploads themselves were
+  // authorized separately, in the file router's middleware.
+  imageUrls: z
+    .array(
+      z
+        .url(strings.validation.productImage)
+        .max(512, strings.validation.productImage),
+    )
+    .max(
+      MAX_PRODUCT_IMAGES,
+      strings.validation.productImageCount.replace(
+        "{count}",
+        String(MAX_PRODUCT_IMAGES),
+      ),
+    ),
 });
 
 export type ProductValues = z.infer<typeof productSchema>;

@@ -30,6 +30,18 @@ export const productsTable = pgTable(
     price: numeric({ precision: 10, scale: 2 }).notNull(),
     currency: varchar({ length: 3 }).notNull().default("USD"),
     files: varchar({ length: 160 }),
+    // Product images, uploaded through UploadThing (app/api/uploadthing/core.ts)
+    // and stored in the `ufsUrl` form — https://<appId>.ufs.sh/f/<key> — since
+    // the older `url`/`appUrl` fields are deprecated as of uploadthing v7.
+    //
+    // NOT NULL with a '{}' default rather than a nullable column: "no images" is
+    // an empty array, so reads never have to branch on NULL before indexing, and
+    // `imageUrls[0]` is simply undefined. Order is meaningful — the first entry
+    // is the cover.
+    imageUrls: varchar("image_urls", { length: 512 })
+      .array()
+      .notNull()
+      .default([]),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
     // Soft delete. NULL means live; a timestamp means the creator removed it.

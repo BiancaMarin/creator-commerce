@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
 import { PackageIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr"
 
@@ -97,9 +98,23 @@ export default async function ProductsPage() {
                 <TableRow key={product.id}>
                   <TableCell className="px-5 py-3">
                     <div className="flex items-center gap-2.5">
-                      <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                        <PackageIcon className="size-4" />
-                      </span>
+                      {product.imageUrls[0] ? (
+                        // alt="" on purpose — the product name sits right
+                        // beside it, so announcing the cover twice is noise.
+                        <span className="relative size-9 shrink-0 overflow-hidden rounded-2xl bg-muted">
+                          <Image
+                            src={product.imageUrls[0]}
+                            alt=""
+                            fill
+                            sizes="36px"
+                            className="object-cover"
+                          />
+                        </span>
+                      ) : (
+                        <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                          <PackageIcon className="size-4" />
+                        </span>
+                      )}
                       <span className="font-medium">{product.name}</span>
                     </div>
                   </TableCell>

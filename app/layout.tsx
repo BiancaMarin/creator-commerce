@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Public_Sans } from "next/font/google";
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
+import { extractRouterConfig } from "uploadthing/server";
 import "./globals.css";
+import { uploadRouter } from "@/app/api/uploadthing/core";
 import { cn } from "@/lib/utils";
 
 const publicSans = Public_Sans({ subsets: ["latin"], variable: "--font-sans" });
@@ -37,7 +40,14 @@ export default function RootLayout({
         publicSans.variable,
       )}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Ships the file router's limits (accepted types, max size/count) with
+            the initial HTML. Without it, an uploader has to fetch that config
+            on mount and sits disabled for a beat. `extractRouterConfig` strips
+            the middleware — only the public constraints cross to the client. */}
+        <NextSSRPlugin routerConfig={extractRouterConfig(uploadRouter)} />
+        {children}
+      </body>
     </html>
   );
 }

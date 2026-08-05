@@ -16,7 +16,7 @@ export type Product = typeof productsTable.$inferSelect;
  */
 export type ProductWrite = Pick<
   typeof productsTable.$inferInsert,
-  "name" | "slug" | "tag" | "description" | "price" | "files"
+  "name" | "slug" | "tag" | "description" | "price" | "files" | "imageUrls"
 >;
 
 /** What a write hands back — enough to build the product's URLs. */
@@ -40,6 +40,7 @@ const publicColumns = {
   price: productsTable.price,
   currency: productsTable.currency,
   files: productsTable.files,
+  imageUrls: productsTable.imageUrls,
   createdAt: productsTable.createdAt,
   updatedAt: productsTable.updatedAt,
   // Always NULL in practice — these reads filter on it — but kept so the

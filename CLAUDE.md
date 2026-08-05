@@ -25,6 +25,7 @@ Base UI–based shadcn component layer.
 | Validation    | **zod** ^4.4 + `@hookform/resolvers` ^5.4                         |
 | Auth          | **Better Auth** ^1.7.0-rc (email + password, cookie sessions)     |
 | Database      | **Neon Postgres** via **Drizzle ORM** ^1.0.0-rc + drizzle-kit     |
+| File uploads  | **UploadThing** ^7.7 (`uploadthing` + `@uploadthing/react`)        |
 | Class utils   | `clsx` + `tailwind-merge` (via `cn()`), `class-variance-authority` |
 
 Drizzle and Better Auth are on **prereleases**: `npm install` needs `--legacy-peer-deps`,
@@ -88,6 +89,8 @@ app/
     [handle]/[id]/[slug]/page.tsx # "/:handle/:id/:slug"   → product detail + checkout
     checkout/success/page.tsx     # "/checkout/success?p=&s="
   api/auth/[...all]/route.ts      # Better Auth handler (GET/POST)
+  api/uploadthing/core.ts         # UploadThing FileRouter (productImage endpoint)
+  api/uploadthing/route.ts        # UploadThing handler (GET/POST)
 components/
   ui/                     # shadcn primitives (Base UI wrappers) — treat as generated
   app-sidebar.tsx         # Seller left nav (client; usePathname for active state)
@@ -101,6 +104,7 @@ hooks/                    # e.g. use-mobile.ts
 lib/
   utils.ts                # cn() class-merge helper, getInitials(), slugify()
   auth-client.ts          # Better Auth React client (browser)
+  uploadthing.ts          # useUploadThing hook, typed off the FileRouter
   schemas/                # ALL zod schemas — shared client + server (see "Forms & validation")
     auth.ts               # signupSchema, loginSchema
     handle.ts             # handleSchema + HANDLE_MIN/MAX_LENGTH
@@ -208,6 +212,46 @@ Every user owns a public storefront at `/:handle`.
 - There is no `bio` column on `user`; the storefront shows `@handle` under the name rather
   than inventing copy. Adding one means a schema change + migration.
 
+## File uploads (UploadThing)
+
+Product cover images upload straight from the browser to UploadThing — the file
+never passes through this server.
+
+- Endpoints live in `app/api/uploadthing/core.ts`; the handler is `route.ts`
+  beside it. Add a route there, not a new API path.
+- **The `.middleware()` is the only authorization point.** Since the upload
+  bypasses this server, nothing downstream can reject it. Read the session with
+  `getSession()` — not `requireUser()`, whose redirect surfaces to the uploader
+  as an opaque failure — and throw
+  `new UploadThingError({ code: "FORBIDDEN", … })`. Without an explicit `code`
+  the error defaults to a **500**, which the client can't tell from an outage.
+- **Store `file.ufsUrl`.** `file.url` and `file.appUrl` are deprecated in v7 and
+  are removed in v9.
+- **`products.image_urls` is `varchar(512)[] NOT NULL DEFAULT '{}'`** — an array,
+  and never NULL. No images is `[]`, so reads never branch on NULL before
+  indexing and `imageUrls[0]` is just `undefined`. **Order is meaningful: the
+  first entry is the cover** everywhere it's rendered.
+- The per-product cap is `MAX_PRODUCT_IMAGES` in `lib/schemas/product.ts`. The
+  endpoint's `maxFileCount` only caps one *batch* — the zod `.max()` checked in
+  the server action is the real ceiling.
+- Uploads write into a *form value*, never a row: nothing is persisted until the
+  creator submits, so an abandoned form doesn't mutate the catalog. Removing an
+  image only drops it from the array — the file stays on UploadThing (reaping
+  orphans needs `UTApi` and isn't wired up).
+- Client code uses `useUploadThing` from `lib/uploadthing.ts`, whose
+  `UploadRouter` import **must stay `import type`** — a value import would drag
+  `lib/server/*` into the browser bundle. The prebuilt `UploadButton` /
+  `UploadDropzone` are deliberately unused: they ship their own stylesheet and
+  `ut-*` class API, which fights the token-based Tailwind v4 setup here, and
+  `UploadDropzone` would replace the whole control instead of slotting into it.
+  **Drag-and-drop is native** — `onDragEnter`/`Over`/`Leave`/`Drop` on the field
+  in `components/dashboard/product-image-field.tsx`. Two non-obvious bits:
+  `onDragOver` must call `preventDefault()` or the browser refuses the drop and
+  navigates to the file, and enters must be counted against leaves or the
+  highlight flickers as the cursor crosses child elements.
+- `next.config.ts` pins `images.remotePatterns` to this app's own UploadThing
+  subdomain and `/f/**`, so the optimizer can't be aimed at another tenant.
+
 ### Server-only code
 
 Anything under `lib/server/` starts with `import "server-only"` and must never reach a
@@ -226,10 +270,19 @@ This is **not** the Radix-based shadcn. Config lives in `components.json`
   ```
   `nativeButton={false}` is required when the underlying element is not a `<button>`.
 - Add new primitives with the **shadcn CLI** (`npx shadcn@latest add <name>`) rather than
-  hand-writing them. **Installed:** `avatar`, `badge`, `button`, `card`, `input`,
-  `navigation-menu`, `separator`, `sheet`, `sidebar`, `skeleton`, `table`, `tabs`,
-  `tooltip`. **Not installed:** `form`, `label`, `dropdown-menu` — compose with what exists
-  plus semantic HTML (e.g. a plain `<label htmlFor>`).
+  hand-writing them. **Installed:** `alert-dialog`, `avatar`, `badge`, `button`,
+  `card`, `carousel`, `input`, `navigation-menu`, `separator`, `sheet`, `sidebar`,
+  `skeleton`, `table`, `tabs`, `textarea`, `tooltip`. **Not installed:** `form`,
+  `label`, `dropdown-menu` — compose with what exists plus semantic HTML (e.g. a
+  plain `<label htmlFor>`).
+- **The CLI's own `npm install` will fail here.** It doesn't pass
+  `--legacy-peer-deps`, which this project's prereleases require, so install a
+  new primitive's dependencies first (`npm install <dep> --legacy-peer-deps`),
+  then run `npx shadcn@latest add <name> --yes`. Don't pass `--overwrite` unless
+  you mean it — without it the CLI skips primitives you already have.
+- `carousel` is Embla-based (`embla-carousel-react`). Its generated file trips
+  the `react-hooks/set-state-in-effect` lint rule on line 98, the same rule
+  `hooks/use-mobile.ts` trips — it comes from the registry, not from this repo.
 - Treat `components/ui/*` as generated — prefer `className` overrides and composition over
   editing them.
 

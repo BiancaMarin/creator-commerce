@@ -97,6 +97,28 @@ export const strings = {
     files: "Files",
     filesPlaceholder: "12 files · .xmp, .dng · 84 MB",
     filesHint: "Shown on the product page. Optional.",
+    images: "Images",
+    imageUpload: "Add images",
+    imageUploading: "Uploading…",
+    // {index} is the image's 1-based position, {name} the product.
+    imageRemoveAria: "Remove image {index}",
+    // Mirrors the limits on the productImage route in
+    // app/api/uploadthing/core.ts and MAX_PRODUCT_IMAGES — change them together.
+    // {count} is the maximum number of images.
+    imageHint:
+      "PNG or JPG, up to 4 MB each — {count} max. The first is the cover.",
+    imageEmptyHint: "Optional — without one, a generated gradient is used.",
+    imageDrop: "Drop to upload",
+    // Prefixes the hint below, so it has to read as a complete sentence
+    // followed by another.
+    imageDropHint: "Drag images here, or use the button.",
+    // Shown when a drag carries something that isn't an image, and when files
+    // are dropped after the cap is reached. {count} is the maximum.
+    imageDropRejected: "Only image files can be uploaded.",
+    imageDropFull: "You already have {count} images — remove one first.",
+    imageAlt: "Image {index} of {name}",
+    imageCover: "Cover",
+    imageError: "That image couldn't be uploaded. Try again.",
     // {url} is replaced with the storefront path the product will live at.
     slugPreview: "Storefront URL: {url}",
     slugPending: "The URL is generated from the name.",
@@ -273,6 +295,9 @@ export const strings = {
     productPrice: "Enter a price like 48 or 48.00.",
     productPricePositive: "Price must be greater than 0.",
     productFiles: "Keep the file summary under 160 characters.",
+    productImage: "That doesn't look like a valid image URL.",
+    // {count} is replaced with MAX_PRODUCT_IMAGES from lib/schemas/product.ts.
+    productImageCount: "You can add up to {count} images.",
   },
 
   errors: {
@@ -281,5 +306,8 @@ export const strings = {
     emailTaken: "An account with that email already exists.",
     handleTaken: "That handle is already taken.",
     productNotFound: "That product no longer exists.",
+    // Surfaced by the UploadThing file router's middleware, so it reads as an
+    // upload failure rather than a sign-in prompt.
+    uploadUnauthorized: "Sign in again to upload images.",
   },
 } as const;
