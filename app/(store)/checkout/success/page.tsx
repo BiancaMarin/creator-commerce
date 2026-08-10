@@ -1,5 +1,6 @@
-import type { Metadata } from "next"
+import type { Metadata, Route } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import {
   CheckCircleIcon,
   DownloadSimpleIcon,
@@ -11,6 +12,7 @@ import { StoreChrome } from "@/components/store/store-chrome"
 import { strings } from "@/constants/strings"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
 import { getProductByHandleAndId } from "@/lib/server/dal/products"
+import { getSession } from "@/lib/server/dal/session"
 
 export const metadata: Metadata = {
   title: "Payment successful — Creator Commerce",
@@ -22,6 +24,30 @@ export default async function CheckoutSuccessPage({
   searchParams: Promise<{ p?: string; s?: string }>
 }) {
   const { p, s } = await searchParams
+
+  // The rest of the checkout is gated in the Server Actions, but this page is
+  // reached by navigation and nothing here would have stopped a signed-out
+  // visitor typing the URL and being told their download is ready. It's the
+  // buyer's receipt, so it's theirs to see — read the session rather than
+  // relying on how they got here.
+  //
+  // `getSession` + an explicit redirect, not `requireSession`: that one lands on
+  // a bare /login and drops the receipt they were trying to reach.
+  if (!(await getSession())) {
+    const query = new URLSearchParams()
+
+    if (p) query.set("p", p)
+    if (s) query.set("s", s)
+
+    const search = query.toString()
+
+    redirect(
+      `/login?next=${encodeURIComponent(
+        `/checkout/success${search ? `?${search}` : ""}`,
+      )}` as Route,
+    )
+  }
+
   // `s` is the store the buyer came from. Unknown or missing means we can't
   // name a creator, so the chrome falls back to platform branding.
   const creator = s ? await getCreatorByHandle(s) : null

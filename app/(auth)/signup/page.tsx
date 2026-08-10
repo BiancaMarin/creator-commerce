@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -27,9 +28,12 @@ import { Separator } from "@/components/ui/separator";
 import { strings } from "@/constants/strings";
 import { authClient } from "@/lib/auth-client";
 import { signupSchema, type SignupValues } from "@/lib/schemas/auth";
+import { safeNextPath } from "@/lib/utils";
 
 export default function SignupPage() {
   const router = useRouter();
+  // Forwarded from /login when a buyer was sent to sign in from their cart.
+  const next = safeNextPath(useSearchParams().get("next"));
   const [showPassword, setShowPassword] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
 
@@ -61,7 +65,9 @@ export default function SignupPage() {
       return;
     }
 
-    router.push("/dashboard");
+    // A runtime string, so typed routes can't check it — safeNextPath is what
+    // stands in for that guarantee.
+    router.push(next as Route);
     router.refresh();
   });
 

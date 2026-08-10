@@ -4,9 +4,16 @@ import { ShoppingBagIcon } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
 import { LogoMark } from "@/components/marketing/logo"
 import { strings } from "@/constants/strings"
+import { readCartIds } from "@/lib/server/cart"
 import type { Creator } from "@/lib/server/dal/creators"
 
-export function StoreNav({ creator }: { creator: Creator | null }) {
+export async function StoreNav({ creator }: { creator: Creator | null }) {
+  // Counted from the cookie rather than from resolved rows: the badge appears
+  // on every storefront page, and a DB round trip per page view is a poor trade
+  // for catching the one case they differ — a product deleted while it sat in
+  // someone's cart. That id disappears from /cart immediately and from the
+  // count on the next cart change.
+  const cartCount = (await readCartIds()).length
   // `null` means a store page that isn't scoped to a creator (a checkout
   // return without a handle) — fall back to platform branding. The `as const`
   // keeps the literal types typed routes need; a plain ternary widens to string.
@@ -29,8 +36,29 @@ export function StoreNav({ creator }: { creator: Creator | null }) {
         </a>
       </nav>
       <div className="ml-auto flex items-center gap-2">
-        <Button variant="ghost" size="icon-sm" aria-label={strings.store.cart}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="relative"
+          nativeButton={false}
+          render={<Link href="/cart" />}
+          // The badge is decorative, so the count has to live in the accessible
+          // name instead.
+          aria-label={
+            cartCount > 0
+              ? strings.cart.navLabel.replace("{count}", String(cartCount))
+              : strings.cart.navLabelEmpty
+          }
+        >
           <ShoppingBagIcon />
+          {cartCount > 0 && (
+            <span
+              aria-hidden
+              className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground"
+            >
+              {cartCount}
+            </span>
+          )}
         </Button>
         <Button
           variant="outline"

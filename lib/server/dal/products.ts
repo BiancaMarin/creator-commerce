@@ -1,7 +1,18 @@
 import "server-only";
 
 import { cache } from "react";
-import { and, asc, desc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import {
   isSearchable,
@@ -120,6 +131,54 @@ export const getProductByHandleAndId = cache(
 
 /** A search hit carries its creator's handle, so the card can build a URL. */
 export type ProductSearchResult = Product & { handle: string };
+
+/**
+ * Resolves the product ids in a cart cookie to rows to display.
+ *
+ * Carries the creator's handle for the same reason `searchProducts` does: a
+ * cart spans storefronts, so each row needs its own `/handle/id/slug` link.
+ *
+ * `isLive` here is what makes a soft-deleted product disappear from a cart that
+ * still lists it — the id simply resolves to nothing and the caller drops it.
+ * The cart cookie itself is left stale, because a page can't write cookies; the
+ * next add or remove prunes it.
+ *
+ * Deliberately **not** wrapped in `cache()`. As noted on `searchProducts`,
+ * `cache()` memoizes on argument identity, and an array argument is a fresh
+ * object on every call — the entry would be written and never read.
+ */
+export async function listProductsByIds(
+  ids: readonly number[],
+): Promise<ProductSearchResult[]> {
+  // `inArray` with an empty list is a SQL syntax error in some dialects and a
+  // guaranteed-empty scan at best. Answer without a round trip.
+  if (ids.length === 0) {
+    return [];
+  }
+
+  return db
+    .select({ ...publicColumns, handle: user.handle })
+    .from(productsTable)
+    .innerJoin(user, eq(user.id, productsTable.userId))
+    .where(and(inArray(productsTable.id, [...ids]), isLive));
+}
+
+/**
+ * Does this id name a product someone can still buy?
+ *
+ * The validation behind `addToCart`: the cart is a cookie the server writes on
+ * request, so without this any integer could be pushed into it and would then
+ * have to be filtered out of every read forever.
+ */
+export const isLiveProduct = cache(async (id: number): Promise<boolean> => {
+  const [row] = await db
+    .select({ id: productsTable.id })
+    .from(productsTable)
+    .where(and(eq(productsTable.id, id), isLive))
+    .limit(1);
+
+  return Boolean(row);
+});
 
 /**
  * Escapes the LIKE metacharacters in a user's search term.

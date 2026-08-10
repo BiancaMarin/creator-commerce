@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import {
@@ -27,9 +28,13 @@ import { Separator } from "@/components/ui/separator";
 import { strings } from "@/constants/strings";
 import { authClient } from "@/lib/auth-client";
 import { loginSchema, type LoginValues } from "@/lib/schemas/auth";
+import { safeNextPath } from "@/lib/utils";
 
 export default function LoginPage() {
   const router = useRouter();
+  // Where to return to after signing in — set when a buyer was sent here from
+  // the cart. Validated rather than trusted; see safeNextPath.
+  const next = safeNextPath(useSearchParams().get("next"));
   const [showPassword, setShowPassword] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
 
@@ -60,7 +65,9 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    // `next` is a runtime string, which typed routes can't check — safeNextPath
+    // is what stands in for that guarantee.
+    router.push(next as Route);
     router.refresh();
   });
 
@@ -185,8 +192,10 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="justify-center border-t text-sm text-muted-foreground">
           {strings.login.footerPrompt}{" "}
+          {/* Carry the destination across, so a buyer who needs an account
+              first still lands back on their cart. */}
           <Link
-            href="/signup"
+            href={`/signup?next=${encodeURIComponent(next)}` as Route}
             className="ml-1 font-medium text-foreground hover:underline"
           >
             {strings.login.footerLink}

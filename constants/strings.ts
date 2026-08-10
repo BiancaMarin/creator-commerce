@@ -46,6 +46,23 @@ export const strings = {
     footerLink: "Sign in",
   },
 
+  nav: {
+    // Every account is both a seller and a buyer, so the sidebar splits by
+    // activity rather than by account type. The labels name what you're doing —
+    // "Selling" / "Buying" — not who you are, since the same person is both.
+    workspace: "Workspace",
+    dashboard: "Dashboard",
+    selling: "Selling",
+    buying: "Buying",
+    products: "Products",
+    orders: "Orders",
+    customers: "Customers",
+    analytics: "Analytics",
+    explore: "Explore",
+    wishlist: "Wishlist",
+    downloads: "Downloads",
+  },
+
   dashboard: {
     // {name} is replaced with the signed-in user's first name.
     greeting: "Welcome, {name}!",
@@ -204,6 +221,10 @@ export const strings = {
   account: {
     signOut: "Sign out",
     signingOut: "Signing out…",
+    // The sign-out request was rejected, so the session is still live. Says the
+    // session is intact rather than just "something went wrong" — the click
+    // otherwise looks like it worked until the next page proves it didn't.
+    signOutError: "Couldn't sign out — you're still signed in. Try again.",
     fallbackName: "Your account",
     socialComingSoon: "Social sign-in is coming soon.",
   },
@@ -231,6 +252,49 @@ export const strings = {
       // {current} / {total} are replaced with 1-based positions.
       imageCount: "{current} / {total}",
     },
+  },
+
+  cart: {
+    title: "Your cart",
+    // The sidebar row label — just the noun, since the count sits beside it.
+    navTitle: "Cart",
+    // {count} is replaced with the number of products in the cart. The cart
+    // holds no quantities, so an item and a product are the same thing here.
+    itemCount: "{count} items",
+    oneItem: "1 item",
+    // {count} is replaced with the number of products in the cart. This is the
+    // accessible name of the nav's cart button, so it has to say what the badge
+    // beside it only shows.
+    navLabel: "Cart, {count} items",
+    navLabelEmpty: "Cart, empty",
+    empty: "Your cart is empty.",
+    emptyAction: "Browse creators",
+    // {name} is replaced with the product's name.
+    remove: "Remove {name}",
+    addToCart: "Add to cart",
+    adding: "Adding…",
+    inCart: "In cart",
+    checkout: "Checkout",
+    // Shown instead of `checkout` to a signed-out visitor — buying needs an
+    // account, and saying so up front beats a payment form that then refuses.
+    signInToCheckout: "Sign in to checkout",
+    // The same requirement on the single-product "Buy now" path.
+    signInToBuy: "Sign in to buy",
+    orderSummary: "Order summary",
+    subtotal: "Subtotal",
+    platformFee: "Platform fee (2%)",
+    total: "Total",
+    payingWith: "Payment details",
+    // {total} is replaced with the formatted order total.
+    pay: "Pay {total}",
+    paying: "Processing…",
+    securedBy: "Payments secured by Stripe",
+    instantDownload: "Instant download after payment",
+    email: "Email",
+    cardNumber: "Card number",
+    expiry: "Expiry",
+    cvc: "CVC",
+    nameOnCard: "Name on card",
   },
 
   marketing: {
@@ -366,5 +430,12 @@ export const strings = {
     // Surfaced by the UploadThing file router's middleware, so it reads as an
     // upload failure rather than a sign-in prompt.
     uploadUnauthorized: "Sign in again to upload images.",
+    // Returned by checkoutCart to a signed-out caller. The UI normally sends
+    // people to sign in before they ever see this, so it surfaces only when the
+    // session expired mid-checkout.
+    signInToCheckout: "Please sign in to complete your purchase.",
+    cartEmpty: "Your cart is empty.",
+    // {count} is replaced with MAX_CART_ITEMS from lib/schemas/cart.ts.
+    cartFull: "A cart can hold up to {count} products.",
   },
 } as const;

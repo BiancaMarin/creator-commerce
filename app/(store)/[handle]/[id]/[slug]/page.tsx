@@ -3,8 +3,10 @@ import { notFound, redirect } from "next/navigation"
 
 import { ProductCheckoutFlow } from "@/components/store/product-checkout-flow"
 import { strings } from "@/constants/strings"
+import { readCartIds } from "@/lib/server/cart"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
 import { getProductByHandleAndId } from "@/lib/server/dal/products"
+import { getSession } from "@/lib/server/dal/session"
 
 /** "/alice/7/whatever" — the id segment must be an integer to be a product. */
 function parseId(id: string) {
@@ -61,5 +63,21 @@ export default async function ProductPage({
     redirect(`/${handle}/${product.id}/${product.slug}`)
   }
 
-  return <ProductCheckoutFlow product={product} storeHandle={handle} />
+  // Resolved here rather than in the button so they're right on first paint.
+  // Read after the redirect above, which would otherwise waste the lookups.
+  //
+  // The storefront is public, so this is the first look at the session on this
+  // route — it decides whether "Buy now" opens the payment form or sends the
+  // visitor to sign in. `checkoutProduct` is what enforces that either way.
+  const [cartIds, session] = await Promise.all([readCartIds(), getSession()])
+
+  return (
+    <ProductCheckoutFlow
+      product={product}
+      storeHandle={handle}
+      inCart={cartIds.includes(product.id)}
+      signedIn={Boolean(session)}
+      email={session?.user.email ?? ""}
+    />
+  )
 }

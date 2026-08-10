@@ -1,7 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
+import type { Route } from "next"
 import {
   ArrowLeftIcon,
   CreditCardIcon,
@@ -15,9 +17,13 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { AddToCartButton } from "@/components/store/add-to-cart-button"
 import { ProductCover } from "@/components/store/product-cover"
 import { ProductGallery } from "@/components/store/product-gallery"
+import { strings } from "@/constants/strings"
+import { checkoutProduct } from "@/lib/actions/cart"
 import { formatPrice, type StoreProduct } from "@/lib/store-data"
+import { CHECKOUT_INTENT_PARAM, signInToCheckoutHref } from "@/lib/utils"
 
 function Field({
   label,
@@ -37,12 +43,51 @@ function Field({
 export function ProductCheckoutFlow({
   product,
   storeHandle,
+  inCart,
+  signedIn,
+  email,
 }: {
   product: StoreProduct
   storeHandle: string
+  /** Whether this product is already in the visitor's cart cookie. */
+  inCart: boolean
+  /** Buying needs an account; browsing doesn't. Enforced in `checkoutProduct`. */
+  signedIn: boolean
+  email: string
 }) {
   const router = useRouter()
-  const [step, setStep] = React.useState<"product" | "checkout">("product")
+  // The buyer pressed "Buy now", was sent to sign in, and came back — reopen the
+  // payment form instead of making them press it again. Resolved at the first
+  // render so that step is what paints, not a flash of the product page.
+  const resuming =
+    useSearchParams().get(CHECKOUT_INTENT_PARAM) === "1" && signedIn
+  const [step, setStep] = React.useState<"product" | "checkout">(
+    resuming ? "checkout" : "product",
+  )
+  const [pending, startTransition] = React.useTransition()
+  const [error, setError] = React.useState<string | null>(null)
+
+  function pay() {
+    setError(null)
+
+    startTransition(async () => {
+      const result = await checkoutProduct(product.id)
+
+      if (!result.ok) {
+        if (result.signInHref) {
+          router.push(result.signInHref as Route)
+
+          return
+        }
+
+        setError(result.error)
+
+        return
+      }
+
+      router.push(`/checkout/success?p=${product.id}&s=${storeHandle}`)
+    })
+  }
 
   const price = Number(product.price)
   const fee = price * 0.02
@@ -88,14 +133,41 @@ export function ProductCheckoutFlow({
               </div>
             )}
             <Separator />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="font-mono text-[28px] font-bold">
                 {formatPrice(product.price)}
               </span>
-              <Button size="lg" onClick={() => setStep("checkout")}>
-                <LockSimpleIcon />
-                Buy now
-              </Button>
+              {/* Two ways to buy: straight through the single-product checkout
+                  below, or into the cart to pay for several at once. */}
+              <div className="flex items-center gap-2">
+                <AddToCartButton productId={product.id} inCart={inCart} />
+                {signedIn ? (
+                  <Button size="lg" onClick={() => setStep("checkout")}>
+                    <LockSimpleIcon />
+                    Buy now
+                  </Button>
+                ) : (
+                  // Adding to the cart stays open to anonymous visitors; paying
+                  // does not. Say so before the payment form rather than after
+                  // it — `checkoutProduct` refuses either way.
+                  <Button
+                    size="lg"
+                    nativeButton={false}
+                    render={
+                      <Link
+                        href={
+                          signInToCheckoutHref(
+                            `/${storeHandle}/${product.id}/${product.slug}`,
+                          ) as Route
+                        }
+                      />
+                    }
+                  >
+                    <LockSimpleIcon />
+                    {strings.cart.signInToBuy}
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ShieldCheckIcon className="size-4" />
@@ -122,18 +194,30 @@ export function ProductCheckoutFlow({
         <Card className="p-0">
           <div className="flex flex-col gap-4 p-6">
             <h1 className="font-heading text-xl font-semibold">Checkout</h1>
+            {error && (
+              <p
+                role="alert"
+                className="rounded-2xl bg-destructive/10 px-3 py-2 text-xs text-destructive"
+              >
+                {error}
+              </p>
+            )}
             <form
               className="flex flex-col gap-4"
+              noValidate
               onSubmit={(event) => {
                 event.preventDefault()
                 // TODO: wire up Stripe payment.
-                router.push(
-                  `/checkout/success?p=${product.id}&s=${storeHandle}`
-                )
+                pay()
               }}
             >
               <Field label="Email">
-                <Input type="email" placeholder="you@example.com" />
+                <Input
+                  type="email"
+                  autoComplete="email"
+                  defaultValue={email}
+                  placeholder="you@example.com"
+                />
               </Field>
               <Separator />
               <div className="text-sm font-semibold text-muted-foreground">
@@ -156,9 +240,14 @@ export function ProductCheckoutFlow({
               <Field label="Name on card">
                 <Input placeholder="Jane Creator" />
               </Field>
-              <Button type="submit" size="lg" className="w-full">
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={pending}
+              >
                 <LockSimpleIcon />
-                Pay ${total.toFixed(2)}
+                {pending ? strings.cart.paying : `Pay $${total.toFixed(2)}`}
               </Button>
               <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
                 <LockSimpleIcon className="size-3.5" />
