@@ -22,6 +22,11 @@ import { cn } from "@/lib/utils"
  * gradient fallback still works. The carousel only appears from the second
  * image on. `imageUrls` order is meaningful: entry 0 is the cover, so it is
  * the slide the carousel opens on.
+ *
+ * That first slide is also the detail page's LCP element, so it loads eagerly
+ * at high priority while the rest stay lazy — the visitor can't see slides 2+
+ * until they page to them, and marking those eager too would put them in
+ * contention with the one image that decides the score.
  */
 export function ProductGallery({
   seed,
@@ -35,7 +40,7 @@ export function ProductGallery({
   seed: string
   imageUrls: string[]
   alt?: string
-  /** Passed to next/image — the rendered width of one slide. */
+  /** Passed to `Image` — the rendered width of one slide. */
   sizes?: string
   className?: string
   iconClassName?: string
@@ -64,6 +69,7 @@ export function ProductGallery({
         imageUrl={imageUrls[0]}
         alt={alt}
         sizes={sizes}
+        eager
         className={className}
         iconClassName={iconClassName}
       />
@@ -84,6 +90,7 @@ export function ProductGallery({
               imageUrl={imageUrl}
               alt={alt}
               sizes={sizes}
+              eager={index === 0}
               className={className}
               iconClassName={iconClassName}
             />

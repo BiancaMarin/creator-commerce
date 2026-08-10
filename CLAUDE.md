@@ -252,6 +252,40 @@ never passes through this server.
 - `next.config.ts` pins `images.remotePatterns` to this app's own UploadThing
   subdomain and `/f/**`, so the optimizer can't be aimed at another tenant.
 
+### Rendering images
+
+**Never import `next/image` directly.** Every image goes through the wrapper at
+`components/image.tsx` (`import { Image } from "@/components/image"`), so the
+implementation is swappable from one file. It's a pass-through over `next/image`
+for now, with one addition:
+
+- **A size hint is mandatory** — the props are a union of `fill` or
+  `width` + `height` *together*. `next/image` leaves all three optional (a
+  static import supplies them, `fill` makes them moot), which lets a remote
+  `src` compile with no reserved space and reflow the page when it decodes.
+  Every image here is remote, so the union closes that hole. Passing `fill`
+  alongside dimensions is also rejected — pick one.
+- `width`/`height` are the **intrinsic** pixel size, used only for the aspect
+  ratio the browser reserves; CSS still sets the rendered size. So
+  `width={36} height={36}` next to `className="size-9"` is correct, not a
+  contradiction.
+- Pass `sizes` whenever the rendered box isn't viewport-wide, or the browser
+  fetches a variant far larger than it paints. It also switches Next from a
+  1x/2x `srcset` to a full width-based one.
+- Remote hosts must be listed in `images.remotePatterns` (see above).
+
+**LCP images:** use `loading="eager"` + `fetchPriority="high"`, not `preload` —
+the Next 16 docs say not to combine `preload` with either, and `priority` is
+deprecated in favour of `preload`. `ProductCover` exposes this as `eager`, and
+**at most one image per page should set it**, or the priority signal stops
+discriminating. Today the only caller is `ProductGallery`, which marks slide 0
+— the detail page's LCP element — and leaves the rest lazy.
+
+Product cover art doesn't call `Image` at the page level: it goes through
+`ProductCover`, which falls back to a seeded gradient when the product has no
+image. `AvatarImage` (Base UI) is exempt — it renders a raw `<img>` for
+arbitrary remote avatars that `remotePatterns` doesn't cover.
+
 ### Server-only code
 
 Anything under `lib/server/` starts with `import "server-only"` and must never reach a
@@ -360,6 +394,7 @@ since that primitive isn't installed). Pattern — see `app/(auth)/signup/page.t
 - **Add shadcn primitives via the CLI**; don't hand-roll or heavily edit `components/ui/*`.
 - **Base UI API:** `render` prop (+ `nativeButton={false}`) for polymorphism, not `asChild`.
 - **User-facing copy lives in `constants/strings.ts`** — reference it, don't hardcode text.
+- **Images render through `@/components/image`**, never `next/image` directly.
 - **Auth checks live in layouts**; read sessions through `lib/server/dal/session.ts`.
 - **Server Actions take identity from the session**, never from client-supplied ids.
 - **Queries live in `lib/server/dal/`**, wrapped in React `cache()`.

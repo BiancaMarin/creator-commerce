@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import {
   PaletteIcon,
   PlayCircleIcon,
@@ -8,6 +7,7 @@ import {
   SlidersHorizontalIcon,
 } from "@phosphor-icons/react"
 
+import { Image } from "@/components/image"
 import { cn } from "@/lib/utils"
 import { visualsFor, type ProductIcon } from "@/lib/store-data"
 
@@ -34,6 +34,7 @@ export function ProductCover({
   imageUrl,
   alt,
   sizes,
+  eager,
   className,
   iconClassName,
 }: {
@@ -41,8 +42,14 @@ export function ProductCover({
   /** The product's `image_url`; falls back to the gradient when absent. */
   imageUrl?: string | null
   alt?: string
-  /** Passed to next/image — tell it the rendered width so it picks a variant. */
+  /** Passed to `Image` — tell it the rendered width so it picks a variant. */
   sizes?: string
+  /**
+   * Opts this cover out of lazy loading. Set it only on the LCP image of a
+   * page — one per page, or the priority signal stops meaning anything and
+   * below-the-fold covers start competing with the one that matters.
+   */
+  eager?: boolean
   className?: string
   iconClassName?: string
 }) {
@@ -56,11 +63,17 @@ export function ProductCover({
           className,
         )}
       >
+        {/* `loading`/`fetchPriority` rather than `preload`: the Next 16 docs
+            say not to combine preload with either, and a carousel has more
+            than one candidate for the preload link. Left undefined when not
+            eager so Next keeps its own defaults (lazy / auto). */}
         <Image
           src={imageUrl}
           alt={alt ?? ""}
           fill
           sizes={sizes ?? "(max-width: 640px) 100vw, 33vw"}
+          loading={eager ? "eager" : undefined}
+          fetchPriority={eager ? "high" : undefined}
           className="object-cover"
         />
       </div>

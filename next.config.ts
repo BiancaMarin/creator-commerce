@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     // be pointed at another tenant's bucket. The app id is public — it's in
     // every uploaded file's URL — and is derived from UPLOADTHING_TOKEN.
     remotePatterns: [new URL("https://lv4lb8jo1m.ufs.sh/f/**")],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 2678400,
   },
 };
 

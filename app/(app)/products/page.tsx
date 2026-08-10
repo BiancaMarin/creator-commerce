@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
 import { PackageIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr"
 
 import { DeleteProductDialog } from "@/components/dashboard/delete-product-dialog"
+import { Image } from "@/components/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
