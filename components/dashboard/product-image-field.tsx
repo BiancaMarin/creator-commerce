@@ -56,14 +56,35 @@ export function ProductImageField({
     onClientUploadComplete: (files) => {
       // `serverData` is what the route's onUploadComplete returned, so these
       // are `ufsUrl`s rather than the deprecated `file.url`.
-      const uploaded = files.map((file) => file.serverData.imageUrl);
+      //
+      // It is typed non-nullable but isn't at runtime: onUploadComplete runs on
+      // *this* server only after UploadThing calls back into it, and when the
+      // app is served by `next start` on localhost that callback can't be
+      // delivered. Reading `.imageUrl` off the missing object would throw
+      // inside this callback, and useUploadThing catches anything that isn't an
+      // UploadThingError and reports it as "Something went wrong. Please report
+      // this to UploadThing." — so check instead, and say what actually broke.
+      const uploaded = files
+        .map((file) => file.serverData?.imageUrl)
+        .filter((imageUrl) => typeof imageUrl === "string");
+
+      // A partial result still keeps the images it did get — the message stands
+      // for the ones it didn't, so it isn't cleared below.
+      setError(
+        uploaded.length < files.length
+          ? strings.products.imageNoCallback
+          : null,
+      );
+
+      if (uploaded.length === 0) {
+        return;
+      }
 
       // Read through `field.value` rather than the `images` captured above:
       // this callback outlives the render that created it.
       field.onChange(
         [...(field.value ?? []), ...uploaded].slice(0, MAX_PRODUCT_IMAGES),
       );
-      setError(null);
     },
     onUploadError: (uploadError) => {
       // UploadThingError messages thrown in the router's middleware arrive

@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { ProductCover } from "@/components/store/product-cover"
+import { ProductGallery } from "@/components/store/product-gallery"
 import { formatPrice, type StoreProduct } from "@/lib/store-data"
 
 function Field({
@@ -61,9 +62,9 @@ export function ProductCheckoutFlow({
         </Button>
         <div className="grid items-start gap-7 md:grid-cols-[1.3fr_1fr]">
           <Card className="overflow-hidden p-0">
-            <ProductCover
+            <ProductGallery
               seed={product.slug}
-              imageUrl={product.imageUrls[0]}
+              imageUrls={product.imageUrls}
               alt={product.name}
               sizes="(max-width: 768px) 100vw, 560px"
               className="aspect-[4/3]"

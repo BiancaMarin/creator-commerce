@@ -119,6 +119,11 @@ export const strings = {
     imageAlt: "Image {index} of {name}",
     imageCover: "Cover",
     imageError: "That image couldn't be uploaded. Try again.",
+    // The file reached storage but the upload callback never came back, so
+    // there's no URL to attach. Locally this means the app is being served by
+    // `next start` — UploadThing can't call back into localhost.
+    imageNoCallback:
+      "The upload finished but didn't come back with a URL. If you're running locally, use `npm run dev` rather than `npm run start`.",
     // {url} is replaced with the storefront path the product will live at.
     slugPreview: "Storefront URL: {url}",
     slugPending: "The URL is generated from the name.",
@@ -174,6 +179,14 @@ export const strings = {
     poweredBy: "Powered by",
     // {name} is replaced with the creator's name.
     tagline: "Digital products by {name}.",
+    gallery: {
+      previousImage: "Previous image",
+      nextImage: "Next image",
+      // {index} is replaced with the 1-based position of the image.
+      goToImage: "Go to image {index}",
+      // {current} / {total} are replaced with 1-based positions.
+      imageCount: "{current} / {total}",
+    },
   },
 
   marketing: {
