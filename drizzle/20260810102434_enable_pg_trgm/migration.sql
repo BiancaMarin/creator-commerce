@@ -1,0 +1,11 @@
+-- Custom migration (drizzle-kit generate --custom): CREATE EXTENSION has no
+-- representation in a Drizzle schema, so this one is written by hand rather
+-- than generated. Everything else under drizzle/ still is — don't edit those.
+--
+-- pg_trgm backs the /explore search. Product matching uses ILIKE '%term%', and
+-- a leading wildcard rules out a B-tree entirely; the only index that serves it
+-- is GIN with gin_trgm_ops, which this extension provides. The trigram indexes
+-- themselves are declared in lib/server/db/schemas/product.ts and land in the
+-- next migration — which is why this one has to run first: gin_trgm_ops does
+-- not exist as an operator class until the extension is installed.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;

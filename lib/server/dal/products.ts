@@ -1,8 +1,14 @@
 import "server-only";
 
 import { cache } from "react";
-import { and, asc, desc, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, isNull, ne, or, sql } from "drizzle-orm";
 
+import {
+  isSearchable,
+  SEARCH_RESULT_LIMIT,
+  type ProductTypeFacet,
+  type SearchSort,
+} from "@/lib/schemas/search";
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";
 import { productsTable } from "@/lib/server/db/schemas/product";
@@ -109,6 +115,145 @@ export const getProductByHandleAndId = cache(
       .limit(1);
 
     return row ?? null;
+  },
+);
+
+/** A search hit carries its creator's handle, so the card can build a URL. */
+export type ProductSearchResult = Product & { handle: string };
+
+/**
+ * Escapes the LIKE metacharacters in a user's search term.
+ *
+ * `ilike()` parameterizes the *value*, so there is no injection risk here — but
+ * `%`, `_` and `\` keep their pattern meaning inside that value. Without this,
+ * searching for "50%" matches every product whose description contains "50"
+ * followed by anything, and a lone "_" matches the entire catalog.
+ *
+ * The backslash must be replaced first, or the escapes added for `%` and `_`
+ * would themselves get escaped on a later pass.
+ */
+function escapeLike(term: string) {
+  return term.replace(/[\\%_]/g, (character) => `\\${character}`);
+}
+
+/**
+ * Platform-wide product search for /explore, newest or oldest first.
+ *
+ * Two modes, deliberately one function: with a term at or above
+ * `MIN_SEARCH_LENGTH` it filters, and below that the predicate is dropped
+ * entirely and it browses the most recent products. The page needs both and
+ * they differ by one clause, so splitting them would duplicate the join, the
+ * `isLive` filter and the ordering.
+ *
+ * Scoped to nobody: the viewer's own products are included like everyone
+ * else's. An earlier version excluded them — "you can't buy your own" — but
+ * that also hid the creator's own product types from the filter, which made
+ * the page look broken to the person best placed to notice. Consistency with
+ * `listProductTypes` matters more than the tidiness of the results, and the two
+ * must carry the same predicates or a facet count stops matching its filter.
+ *
+ * Matching is `ILIKE '%term%'` on name and description. That's a substring
+ * match, not a ranked one — a term in a product's name sorts no higher than one
+ * buried in a description, because the ORDER BY is purely by date. Ranking
+ * would want `similarity()` or a tsvector; this is the agreed starting point.
+ *
+ * `type` and the `min`/`max` price bounds narrow further and compose with the
+ * search rather than replacing it — every predicate present is ANDed. Each is
+ * independently optional, so a max with no min reads as "under $25".
+ */
+export const searchProducts = cache(
+  async (
+    // Positional primitives rather than an options object: `cache()` memoizes
+    // on argument identity, and a fresh object literal per call would never
+    // hit. Matches the other reads in this file.
+    query: string,
+    sort: SearchSort,
+    /** The product "Type" (`tag`) to narrow to; empty means every type. */
+    type: string,
+    /** Inclusive price bounds as decimal strings; empty means unbounded. */
+    min: string,
+    max: string,
+  ): Promise<ProductSearchResult[]> => {
+    // Only filter once the term can actually drive the trigram index. Below
+    // the floor this stays undefined and `and()` ignores it, which is what
+    // makes an empty box a browse rather than an empty result set.
+    const matches = isSearchable(query)
+      ? or(
+          ilike(productsTable.name, `%${escapeLike(query.trim())}%`),
+          ilike(productsTable.description, `%${escapeLike(query.trim())}%`),
+        )
+      : undefined;
+
+    // Compared case-insensitively, and not optional politeness: the catalog
+    // already contains both "Test" and "test" as spellings of one type. An
+    // `eq()` here would split them into two filters that each hide half the
+    // products. Mirrors how handles are matched in dal/creators.ts.
+    const matchesType = type
+      ? sql`lower(${productsTable.tag}) = ${type.toLowerCase()}`
+      : undefined;
+
+    // Cast the bound explicitly. `price` is `numeric` and these arrive as
+    // strings, so without ::numeric Postgres would compare them as text —
+    // where "9.00" sorts above "10.00" and the filter quietly lies.
+    //
+    // Inclusive on both ends: a max of 50 should include a product priced
+    // exactly 50, which is what someone setting that bound expects.
+    const matchesMin = min
+      ? sql`${productsTable.price} >= ${min}::numeric`
+      : undefined;
+    const matchesMax = max
+      ? sql`${productsTable.price} <= ${max}::numeric`
+      : undefined;
+
+    return db
+      .select({ ...publicColumns, handle: user.handle })
+      .from(productsTable)
+      .innerJoin(user, eq(user.id, productsTable.userId))
+      .where(and(isLive, matches, matchesType, matchesMin, matchesMax))
+      .orderBy(
+        sort === "oldest"
+          ? asc(productsTable.createdAt)
+          : desc(productsTable.createdAt),
+      )
+      .limit(SEARCH_RESULT_LIMIT);
+  },
+);
+
+/**
+ * The product types on offer, most common first, for the /explore filter.
+ *
+ * Grouped by `lower(tag)` rather than `tag`, because the column is free text
+ * typed per product: the catalog already holds both "Test" and "test", which
+ * ungrouped would render as two chips that each find half the products. The
+ * label shown is the most common spelling of the group (alphabetical on a tie,
+ * so the choice is stable between requests rather than whatever the planner
+ * happened to return first).
+ *
+ * Carries exactly the same row-visibility predicate as the search — `isLive`,
+ * and nothing else — so the filter can never offer a type that yields nothing.
+ * If a predicate is ever added to one of these two queries it has to be added
+ * to the other, or a facet's count stops matching what clicking it returns.
+ *
+ * One deliberate difference: this ignores the current search term and price
+ * bounds. Facets that disappeared as you typed would make the filter shift
+ * under the cursor.
+ */
+export const listProductTypes = cache(
+  async (): Promise<ProductTypeFacet[]> => {
+    const rows = await db
+      .select({
+        type: sql<string>`mode() within group (order by ${productsTable.tag})`,
+        products: sql<number>`count(*)::int`,
+      })
+      .from(productsTable)
+      .where(isLive)
+      .groupBy(sql`lower(${productsTable.tag})`)
+      .orderBy(
+        sql`count(*) desc`,
+        sql`mode() within group (order by ${productsTable.tag}) asc`,
+      );
+
+    return rows;
   },
 );
 

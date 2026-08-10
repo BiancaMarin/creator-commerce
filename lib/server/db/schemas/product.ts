@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  index,
   integer,
   numeric,
   pgTable,
@@ -59,6 +60,55 @@ export const productsTable = pgTable(
     // "starter-pack-2".
     uniqueIndex("products_user_id_slug_key")
       .on(table.userId, table.slug)
+      .where(sql`${table.deletedAt} is null`),
+
+    // Backs the /explore search (lib/server/dal/products.ts → searchProducts).
+    //
+    // GIN + gin_trgm_ops, not B-tree: the search matches with ILIKE '%term%',
+    // and a leading wildcard makes a B-tree useless — it can only seek on a
+    // known prefix. Trigram indexes are the only kind that serve this shape.
+    // The extension is installed by the migration before this one.
+    //
+    // Two indexes rather than one over `name || ' ' || description`: the query
+    // ORs two separate predicates, and Postgres can BitmapOr two index scans,
+    // whereas an expression index is only usable by that exact expression.
+    //
+    // Neither index seeks usefully below 3 characters: a shorter pattern
+    // yields no complete trigram, so GIN reads the entire index and rechecks
+    // every row instead of narrowing (measured here: estimated cost 304 for a
+    // 2-character term vs 8.5 for a 3-character one). MIN_SEARCH_LENGTH in
+    // lib/schemas/search.ts is that floor, which is why the minimum is a
+    // storage constraint and not only a UX nicety.
+    index("products_name_trgm_idx").using("gin", table.name.op("gin_trgm_ops")),
+    index("products_description_trgm_idx").using(
+      "gin",
+      table.description.op("gin_trgm_ops"),
+    ),
+
+    // Serves the ORDER BY, and carries the whole query in the browse case where
+    // there's no search term to filter on. Partial so it mirrors the `deleted_at
+    // IS NULL` predicate every read in dal/products.ts already carries.
+    index("products_created_at_idx")
+      .on(table.createdAt.desc())
+      .where(sql`${table.deletedAt} is null`),
+
+    // The /explore type filter, and the GROUP BY behind its facet list. On the
+    // expression rather than the bare column: both compare `lower(tag)`, since
+    // the column is free text and "Test" and "test" are the same type. An index
+    // on `tag` alone would go unused by either query.
+    index("products_tag_lower_idx")
+      .on(sql`lower(${table.tag})`)
+      .where(sql`${table.deletedAt} is null`),
+
+    // The /explore price range. A plain B-tree is the right shape here — unlike
+    // the text search, a range scan is exactly what one is for.
+    //
+    // It competes with products_created_at_idx rather than combining with it:
+    // the planner can use this to satisfy the range or that one to satisfy the
+    // ORDER BY, not both, so which wins depends on how selective the bounds
+    // are. That's the correct trade-off to leave to the planner.
+    index("products_price_idx")
+      .on(table.price)
       .where(sql`${table.deletedAt} is null`),
   ],
 );

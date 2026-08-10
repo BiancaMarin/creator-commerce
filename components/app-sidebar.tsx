@@ -8,6 +8,7 @@ import {
   FileArrowDownIcon,
   HeartIcon,
   HouseIcon,
+  MagnifyingGlassIcon,
   PackageIcon,
   ReceiptIcon,
   UsersIcon,
@@ -31,6 +32,7 @@ import {
 
 const navMain = [
   { title: "Dashboard", href: "/dashboard", icon: HouseIcon },
+  { title: "Explore", href: "/explore", icon: MagnifyingGlassIcon },
   { title: "Products", href: "/products", icon: PackageIcon },
   { title: "Orders", href: "/orders", icon: ReceiptIcon },
   { title: "Customers", href: "/customers", icon: UsersIcon },

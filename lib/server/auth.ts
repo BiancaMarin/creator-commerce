@@ -29,6 +29,7 @@ export const auth = betterAuth({
       // would reject every signup with MISSING_FIELD. The column itself is
       // still NOT NULL; the create hook below is what guarantees a value.
       handle: { type: "string", required: false, unique: true, input: false },
+      bio: { type: "string", required: false, input: true },
     },
   },
   databaseHooks: {

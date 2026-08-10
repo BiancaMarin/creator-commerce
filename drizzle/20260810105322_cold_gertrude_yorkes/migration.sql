@@ -1,0 +1,1 @@
+CREATE INDEX "products_tag_lower_idx" ON "products" (lower("tag")) WHERE "deleted_at" is null;

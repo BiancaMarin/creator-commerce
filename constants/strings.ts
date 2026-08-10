@@ -157,6 +157,50 @@ export const strings = {
     deleting: "Deleting…",
   },
 
+  explore: {
+    title: "Explore",
+    subtitle: "Find digital products from creators across the platform.",
+    searchLabel: "Search products",
+    searchPlaceholder: "Search products…",
+    sortLabel: "Sort",
+    sortNewest: "Newest",
+    sortOldest: "Oldest",
+    // "Type" is the product form's label for the `tag` field — the two have to
+    // stay in step or the filter names something the creator never filled in.
+    typeLabel: "Filter by type",
+    typeAll: "All types",
+    priceLabel: "Price",
+    priceMin: "Min",
+    priceMax: "Max",
+    priceMinAria: "Minimum price",
+    priceMaxAria: "Maximum price",
+    clearFilters: "Clear filters",
+    // Shown while browsing, before anyone has typed a real search. {count} is
+    // the number of products on the page.
+    browsing: "Showing the {count} most recently added products.",
+    // Filters applied with no search term behind them. Deliberately generic:
+    // with three filter dimensions (type, min, max) naming each active one
+    // needs a combination matrix, and they're all visible in the controls
+    // directly above this line. {count} is the number of products.
+    browsingFiltered: "{count} products match these filters.",
+    browsingFilteredOne: "1 product matches these filters.",
+    // {count} is the number of matches, {query} the term that found them.
+    resultCount: "{count} products matching “{query}”.",
+    resultCountOne: "1 product matching “{query}”.",
+    // {query} is the term that found nothing.
+    noResults: "No products match “{query}”.",
+    // Filters, but no search term — see the note on browsingFiltered.
+    noResultsFiltered: "No products match these filters.",
+    noResultsHint: "Try a shorter or more general term.",
+    noResultsHintFilters: "Try widening the price range or clearing a filter.",
+    // The platform has nothing to show at all — not a failed search.
+    empty: "There's nothing to explore yet.",
+    // {count} is MIN_SEARCH_LENGTH from lib/schemas/search.ts.
+    minLengthHint: "Type at least {count} characters to search.",
+    // {name} is the creator's display handle, prefixed with @ in the markup.
+    byCreator: "by @{handle}",
+  },
+
   account: {
     signOut: "Sign out",
     signingOut: "Signing out…",

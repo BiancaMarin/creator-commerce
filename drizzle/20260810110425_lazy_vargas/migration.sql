@@ -1,0 +1,1 @@
+CREATE INDEX "products_price_idx" ON "products" ("price") WHERE "deleted_at" is null;

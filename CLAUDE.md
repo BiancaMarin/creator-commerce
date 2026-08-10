@@ -212,6 +212,67 @@ Every user owns a public storefront at `/:handle`.
 - There is no `bio` column on `user`; the storefront shows `@handle` under the name rather
   than inventing copy. Adding one means a schema change + migration.
 
+### Product search (`/explore`)
+
+Platform-wide search lives in `searchProducts()` (`dal/products.ts`) and matches with
+`ILIKE '%term%'` on `name` and `description`. Three things about it are load-bearing:
+
+- **The indexes are GIN + `gin_trgm_ops`, not B-tree.** A leading wildcard makes a B-tree
+  useless — it can only seek on a known prefix — so trigram indexes are the only kind that
+  serve this. `pg_trgm` is enabled by a **custom migration**
+  (`drizzle-kit generate --custom`), which is the sanctioned way to write SQL Drizzle can't
+  express; the "never hand-edit `drizzle/`" rule is about *generated* files. That migration
+  must stay ordered before the index one — `gin_trgm_ops` doesn't exist until the extension
+  is installed.
+- **`MIN_SEARCH_LENGTH` (3) is a storage constraint, not just UX.** Trigram indexes key on
+  three-character sequences, so a shorter pattern has no complete trigram to seek on and
+  GIN reads the whole index instead of narrowing (measured: estimated cost 304 vs 8.5).
+  Below the floor `searchProducts` drops the predicate entirely and the page browses.
+- **User input is escaped with `escapeLike()` before it reaches `ilike()`.** Drizzle
+  parameterizes the *value*, so there's no injection risk — but `%`, `_` and `\` keep their
+  pattern meaning inside it. Verified: `t%t` matches 7 rows unescaped, 0 escaped.
+
+Results are date-ordered, not ranked — a term in a product's name sorts no higher than one
+buried in a description. Ranking would want `similarity()` or a `tsvector`.
+
+**The type filter** narrows on the `tag` column — what the product form labels "Type".
+Because that's free text typed per product, not a fixed vocabulary:
+
+- **Match and group on `lower(tag)`, never `tag`.** The catalog already holds "Test" and
+  "test" as spellings of one type; comparing exactly splits them into two filters that
+  each find half the products. `products_tag_lower_idx` is a **functional** index on the
+  expression for the same reason — one on the bare column would go unused.
+- `listProductTypes()` picks each group's label with `mode()`, tie-broken alphabetically,
+  so the chip text is stable between requests.
+- **`listProductTypes()` and `searchProducts()` must carry identical row-visibility
+  predicates** — today just `isLive`. Add one to either and a chip's count stops matching
+  what clicking it returns. An earlier version excluded the viewer's own products from
+  both; that was dropped because it also hid a creator's own types from their filter,
+  which reads as a broken filter to the person best placed to notice.
+- The facet list deliberately ignores the active search term and price bounds. Facets that
+  vanished as you typed would make the filter shift under the cursor.
+- `/explore` reads **no session** — the `(app)` layout gates it and nothing on the page is
+  viewer-scoped, so re-reading the session there would be the redundant check the auth
+  section warns against.
+- `type` is a `z.string()`, not a `z.enum()` — an unknown value matches nothing, which is
+  the honest answer for a type nobody sells.
+
+**The price filter** is `?min=`/`?max=`, each independently optional (a max alone reads as
+"under $25"), inclusive at both ends, backed by `products_price_idx`.
+
+- **Cast the bound: `price >= $1::numeric`.** `price` is `numeric` and the bound arrives
+  from the URL as a string, so without the cast Postgres compares them as *text* — where
+  `129.00 <= '25'` is true. Verified: the text comparison pulls a $129 product into "under
+  $25". The same reasoning as `productSchema` keeping price a string end to end.
+- An inverted range (min above max) returns nothing rather than being silently swapped —
+  both numbers are visible in the inputs, so the cause is on screen.
+
+With three filter dimensions the result/empty copy is **deliberately generic**
+(`browsingFiltered`, `noResultsFiltered`) rather than naming which filters are active.
+Enumerating the combinations is a matrix that rots, and the controls sit directly above
+the message. The search term is the one exception — it still gets echoed back, because
+it's what the reader most needs confirmed.
+
 ## File uploads (UploadThing)
 
 Product cover images upload straight from the browser to UploadThing — the file
