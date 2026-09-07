@@ -17,7 +17,13 @@ export type StoreProduct = {
   tag: string
   description: string
   price: string
-  files: string | null
+  /**
+   * The digital product's filename and size in bytes, or null for a product
+   * created before product files existed. The storage key is deliberately
+   * absent: the storefront names the download, it never links it.
+   */
+  fileName: string | null
+  fileSize: number | null
   /** Display order; the first entry is the cover. Empty when there are none. */
   imageUrls: string[]
 }

@@ -33,7 +33,15 @@ export type Product = typeof productsTable.$inferSelect;
  */
 export type ProductWrite = Pick<
   typeof productsTable.$inferInsert,
-  "name" | "slug" | "tag" | "description" | "price" | "files" | "imageUrls"
+  | "name"
+  | "slug"
+  | "tag"
+  | "description"
+  | "price"
+  | "fileKey"
+  | "fileName"
+  | "fileSize"
+  | "imageUrls"
 >;
 
 /** What a write hands back — enough to build the product's URLs. */
@@ -56,7 +64,13 @@ const publicColumns = {
   description: productsTable.description,
   price: productsTable.price,
   currency: productsTable.currency,
-  files: productsTable.files,
+  // `file_key` is in a public read only because the selection has to satisfy
+  // `Product`. Nothing on a storefront renders it — the buyer sees the name and
+  // size, and the key is what a signed download URL will be minted from once
+  // that route exists.
+  fileKey: productsTable.fileKey,
+  fileName: productsTable.fileName,
+  fileSize: productsTable.fileSize,
   imageUrls: productsTable.imageUrls,
   createdAt: productsTable.createdAt,
   updatedAt: productsTable.updatedAt,
@@ -162,6 +176,48 @@ export async function listProductsByIds(
     .innerJoin(user, eq(user.id, productsTable.userId))
     .where(and(inArray(productsTable.id, [...ids]), isLive));
 }
+
+/** What the download route needs to serve a product: the file, and its name. */
+export type ProductFileRef = {
+  fileKey: string;
+  fileName: string;
+  fileSize: number | null;
+};
+
+/**
+ * The stored file behind a product, for the download route.
+ *
+ * **Deliberately not filtered by `isLive`** — the one read in this module that
+ * isn't, and the exception proves the rule. A creator retiring a product must
+ * not delete it out of the library of everyone who already paid for it; the
+ * same reasoning that keeps the soft-delete filter off `listPurchasesForBuyer`.
+ * Entitlement, not availability, is what decides whether this file may be
+ * served, and that is checked by the caller against `hasPurchasedProduct`.
+ *
+ * Returns null when the product has no file — a row created before product
+ * files existed. `file_key` and `file_name` are written together or not at all,
+ * but the columns are independently nullable, so this narrows both rather than
+ * trusting that invariant.
+ */
+export const getProductFile = cache(
+  async (id: number): Promise<ProductFileRef | null> => {
+    const [row] = await db
+      .select({
+        fileKey: productsTable.fileKey,
+        fileName: productsTable.fileName,
+        fileSize: productsTable.fileSize,
+      })
+      .from(productsTable)
+      .where(eq(productsTable.id, id))
+      .limit(1);
+
+    if (!row?.fileKey || !row.fileName) {
+      return null;
+    }
+
+    return { fileKey: row.fileKey, fileName: row.fileName, fileSize: row.fileSize };
+  },
+);
 
 /**
  * Does this id name a product someone can still buy?

@@ -6,16 +6,16 @@ import { useRouter, useSearchParams } from "next/navigation"
 import type { Route } from "next"
 import {
   ArrowLeftIcon,
-  CreditCardIcon,
   FileArrowDownIcon,
+  HouseIcon,
   LockSimpleIcon,
   ShoppingBagIcon,
   TrashIcon,
 } from "@phosphor-icons/react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { ProductCover } from "@/components/store/product-cover"
 import { strings } from "@/constants/strings"
@@ -31,53 +31,68 @@ import { CHECKOUT_INTENT_PARAM, signInToCheckoutHref } from "@/lib/utils"
  */
 export type CartItem = StoreProduct & { handle: string }
 
-/** Matches the platform fee shown in the single-product checkout flow. */
-const PLATFORM_FEE_RATE = 0.02
-
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium">{label}</label>
-      {children}
-    </div>
-  )
-}
-
 export function CartView({
   items,
   signedIn,
+  ownedIds,
+  purchasedIds,
   email,
 }: {
   items: CartItem[]
   signedIn: boolean
+  /** Ids of cart rows the viewer sells — not purchasable by them. */
+  ownedIds: number[]
+  /** Ids of cart rows the viewer already bought — a digital product sells once. */
+  purchasedIds: number[]
   email: string
 }) {
   const router = useRouter()
+
+  // A creator can't buy their own product, so a cart holding one can't be paid
+  // for at all — `checkoutCart` refuses the whole thing rather than quietly
+  // charging for less than the cart showed. These rows are marked below and the
+  // checkout button is blocked, so the fix is visible and one click away.
+  const owned = new Set(ownedIds)
+  const hasOwned = items.some((item) => owned.has(item.id))
+
+  // The same shape for the other thing that can't be paid for: something this
+  // buyer already bought. Kept as a separate set rather than folded into
+  // `owned`, because the two say different things to the reader — "you sell
+  // this" and "you already have this" — and each row needs the right one.
+  const purchased = new Set(purchasedIds)
+  const hasPurchased = items.some((item) => purchased.has(item.id))
+
+  /** Either rule blocking payment. `checkoutCart` refuses on both. */
+  const blocked = hasOwned || hasPurchased
+
   // Set when the buyer arrived back from signing in mid-checkout. Read at the
   // first render rather than in an effect, so the payment step is what paints —
   // an effect would show the cart for a frame and then swap under them.
+  //
+  // `!blocked` for the same reason the product page checks it: the flag comes
+  // from the URL, so without it `?checkout=1` would open a payment step for a
+  // cart the server is going to refuse.
   const resuming =
     useSearchParams().get(CHECKOUT_INTENT_PARAM) === "1" &&
     signedIn &&
-    items.length > 0
+    items.length > 0 &&
+    !blocked
   const [step, setStep] = React.useState<"cart" | "checkout">(
     resuming ? "checkout" : "cart",
   )
   const [pending, startTransition] = React.useTransition()
   const [error, setError] = React.useState<string | null>(null)
 
-  // Display-only arithmetic on a value the database keeps as `numeric`. Nothing
-  // here is persisted or charged, so the float round trip the single-product
-  // checkout already does is fine to mirror.
+  // Display-only arithmetic on a value the database keeps as `numeric`. The
+  // amount actually charged is recomputed server side from the same rows, in
+  // integer cents (lib/server/money.ts) — this float is never the figure that
+  // moves money, only the one shown while deciding to.
   const subtotal = items.reduce((sum, item) => sum + Number(item.price), 0)
-  const fee = subtotal * PLATFORM_FEE_RATE
-  const total = subtotal + fee
+  // The buyer pays the list price and nothing else. The 2% platform fee is the
+  // *creator's* — it comes out of their payout, exactly as the pricing page
+  // states — so adding it here would both overstate the price and disagree
+  // with what Stripe is about to charge, which is the sum of the line items.
+  const total = subtotal
 
   function remove(productId: number) {
     setError(null)
@@ -116,8 +131,12 @@ export function CartView({
         return
       }
 
-      router.push("/checkout/success")
-      router.refresh()
+      // `window.location`, not `router.push`: Stripe Checkout is a different
+      // origin, and the App Router can only navigate within this app. The
+      // transition is deliberately left pending — the button stays disabled
+      // until the browser leaves, so a slow redirect can't be clicked twice
+      // into two Checkout Sessions.
+      window.location.href = result.url
     })
   }
 
@@ -132,16 +151,29 @@ export function CartView({
             <ShoppingBagIcon className="size-[26px]" />
           </span>
           <p className="text-sm text-muted-foreground">{strings.cart.empty}</p>
-          {/* Home, not /explore — that page sits behind the app's auth gate and
-              a cart visitor may not be signed in. */}
-          <Button
-            variant="outline"
-            size="sm"
-            nativeButton={false}
-            render={<Link href="/" />}
-          >
-            {strings.cart.emptyAction}
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Home, not /explore — that page sits behind the app's auth gate and
+                a cart visitor may not be signed in. */}
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/" />}
+            >
+              {strings.cart.emptyAction}
+            </Button>
+            {signedIn && (
+              <Button
+                variant="outline"
+                size="sm"
+                nativeButton={false}
+                render={<Link href="/dashboard" />}
+              >
+                <HouseIcon />
+                {strings.cart.goToDashboard}
+              </Button>
+            )}
+          </div>
         </Card>
       </div>
     )
@@ -160,12 +192,6 @@ export function CartView({
             </span>
             <span className="font-mono">${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">
-              {strings.cart.platformFee}
-            </span>
-            <span className="font-mono">${fee.toFixed(2)}</span>
-          </div>
         </div>
         <Separator />
         <div className="flex items-baseline justify-between">
@@ -177,10 +203,29 @@ export function CartView({
 
         {step === "cart" &&
           (signedIn ? (
-            <Button size="lg" onClick={() => setStep("checkout")}>
-              <LockSimpleIcon />
-              {strings.cart.checkout}
-            </Button>
+            <>
+              <Button
+                size="lg"
+                disabled={blocked}
+                onClick={() => setStep("checkout")}
+              >
+                <LockSimpleIcon />
+                {strings.cart.checkout}
+              </Button>
+              {/* One reason at a time, own-products first — it's the one the
+                  viewer can act on without leaving the page. Both rules mark
+                  their own rows below, so the specific offenders are visible
+                  either way. */}
+              {hasOwned ? (
+                <p className="text-xs text-destructive">
+                  {strings.errors.cartHasOwnProducts}
+                </p>
+              ) : hasPurchased ? (
+                <p className="text-xs text-destructive">
+                  {strings.errors.cartHasPurchased}
+                </p>
+              ) : null}
+            </>
           ) : (
             // Say it before the payment form rather than after it. The action
             // is what actually enforces this — see checkoutCart.
@@ -225,6 +270,21 @@ export function CartView({
             ? strings.cart.oneItem
             : strings.cart.itemCount.replace("{count}", String(items.length))}
         </span>
+        {/* Only for a signed-in visitor: /dashboard sits behind the (app)
+            layout's auth gate, so offering it to an anonymous shopper would
+            just bounce them to /login. `ml-auto` keeps it off the title. */}
+        {signedIn && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto"
+            nativeButton={false}
+            render={<Link href="/dashboard" />}
+          >
+            <HouseIcon />
+            {strings.cart.goToDashboard}
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -257,8 +317,21 @@ export function CartView({
                         iconClassName="size-[22px]"
                       />
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-medium">
-                          {item.name}
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-medium">
+                            {item.name}
+                          </span>
+                          {/* Names the row blocking checkout, so "remove your
+                              own products" points at something specific. */}
+                          {owned.has(item.id) ? (
+                            <Badge variant="neutral" className="shrink-0">
+                              {strings.store.yourProduct}
+                            </Badge>
+                          ) : purchased.has(item.id) ? (
+                            <Badge variant="neutral" className="shrink-0">
+                              {strings.store.owned}
+                            </Badge>
+                          ) : null}
                         </div>
                         <div className="truncate text-xs text-muted-foreground">
                           @{item.handle} · {item.tag}
@@ -292,66 +365,44 @@ export function CartView({
               <h2 className="font-heading text-xl font-semibold">
                 {strings.cart.checkout}
               </h2>
-              <form
-                className="flex flex-col gap-4"
-                noValidate
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  // TODO: wire up Stripe payment.
-                  checkout()
-                }}
-              >
-                <Field label={strings.cart.email}>
-                  <Input
-                    type="email"
-                    autoComplete="email"
-                    defaultValue={email}
-                    placeholder="you@example.com"
-                  />
-                </Field>
-                <Separator />
-                <div className="text-sm font-semibold text-muted-foreground">
-                  {strings.cart.payingWith}
-                </div>
-                <Field label={strings.cart.cardNumber}>
-                  <div className="relative">
-                    <Input
-                      placeholder="1234 1234 1234 1234"
-                      className="pr-12"
-                    />
-                    <CreditCardIcon className="absolute top-1/2 right-3 size-[18px] -translate-y-1/2 text-muted-foreground" />
-                  </div>
-                </Field>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label={strings.cart.expiry}>
-                    <Input placeholder="MM / YY" />
-                  </Field>
-                  <Field label={strings.cart.cvc}>
-                    <Input placeholder="123" />
-                  </Field>
-                </div>
-                <Field label={strings.cart.nameOnCard}>
-                  <Input placeholder="Jane Creator" />
-                </Field>
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full"
-                  disabled={pending}
+              {/* No card fields. Payment details are entered on Stripe's own
+                  hosted page, which is the point of that integration: this app
+                  never sees, transmits or stores a card number, and the PCI
+                  burden stays with Stripe. What used to be here was a mock
+                  form that collected details and threw them away. */}
+              {error && (
+                <p
+                  role="alert"
+                  className="rounded-2xl bg-destructive/10 px-3 py-2 text-xs text-destructive"
                 >
-                  <LockSimpleIcon />
-                  {pending
-                    ? strings.cart.paying
-                    : strings.cart.pay.replace(
-                        "{total}",
-                        `$${total.toFixed(2)}`,
-                      )}
-                </Button>
-                <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                  <LockSimpleIcon className="size-3.5" />
-                  {strings.cart.securedBy}
-                </div>
-              </form>
+                  {error}
+                </p>
+              )}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium">
+                  {strings.cart.email}
+                </span>
+                <span className="text-sm text-muted-foreground">{email}</span>
+              </div>
+              <Separator />
+              <p className="text-sm text-muted-foreground">
+                {strings.cart.redirectNotice}
+              </p>
+              <Button
+                size="lg"
+                className="w-full"
+                disabled={pending}
+                onClick={checkout}
+              >
+                <LockSimpleIcon />
+                {pending
+                  ? strings.cart.paying
+                  : strings.cart.pay.replace("{total}", `$${total.toFixed(2)}`)}
+              </Button>
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                <LockSimpleIcon className="size-3.5" />
+                {strings.cart.securedBy}
+              </div>
             </div>
           </Card>
         )}

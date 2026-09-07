@@ -30,7 +30,27 @@ export const productsTable = pgTable(
     // float. Convert at the edges, not in the query layer.
     price: numeric({ precision: 10, scale: 2 }).notNull(),
     currency: varchar({ length: 3 }).notNull().default("USD"),
-    files: varchar({ length: 160 }),
+    // The digital product itself, uploaded through the `productFile` route in
+    // app/api/uploadthing/core.ts. Three columns rather than one URL:
+    //
+    //  - `file_key` is UploadThing's storage key, and the only one delivery
+    //    needs — a signed download URL is minted from it per request. The
+    //    public https://<appId>.ufs.sh/f/<key> address is derivable from it and
+    //    deliberately *not* stored, so no component can render an ungated
+    //    download link by reaching for a convenient column.
+    //  - `file_name` is the original filename. Shown to the buyer, and what the
+    //    download should be saved as — a key is opaque.
+    //  - `file_size` is bytes, capped at 100 MB (MAX_PRODUCT_FILE_BYTES in
+    //    lib/schemas/product.ts), so integer is three orders of magnitude
+    //    clear of overflowing.
+    //
+    // Nullable, though `productSchema` requires a file: products created before
+    // this existed have none, and a NOT NULL column would have needed a lie to
+    // backfill them. Every save from now on attaches one; a null means "predates
+    // the feature", which is what the storefront and /downloads say.
+    fileKey: varchar("file_key", { length: 512 }),
+    fileName: varchar("file_name", { length: 255 }),
+    fileSize: integer("file_size"),
     // Product images, uploaded through UploadThing (app/api/uploadthing/core.ts)
     // and stored in the `ufsUrl` form — https://<appId>.ufs.sh/f/<key> — since
     // the older `url`/`appUrl` fields are deprecated as of uploadthing v7.

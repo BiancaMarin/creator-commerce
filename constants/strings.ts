@@ -111,9 +111,27 @@ export const strings = {
       "What the buyer gets, who it's for, and what they can do with it.",
     price: "Price",
     pricePlaceholder: "48.00",
-    files: "Files",
-    filesPlaceholder: "12 files · .xmp, .dng · 84 MB",
-    filesHint: "Shown on the product page. Optional.",
+    file: "Product file",
+    // Mirrors MAX_PRODUCT_FILE_BYTES in lib/schemas/product.ts and the
+    // productFile route in app/api/uploadthing/core.ts — change them together.
+    fileHint: "Any file type, up to 100 MB. This is what the buyer downloads.",
+    fileUpload: "Choose file",
+    fileReplace: "Replace",
+    fileUploading: "Uploading…",
+    fileDrop: "Drop to upload",
+    // Prefixes the hint above, so it has to read as a complete sentence
+    // followed by another.
+    fileDropHint: "Drag the file here, or use the button.",
+    // {name} is the filename.
+    fileRemoveAria: "Remove {name}",
+    // A drop carrying more than one file: the product is a single download.
+    fileDropMultiple: "One file only — the product is a single download.",
+    fileTooLarge: "That file is over 100 MB. Zip it down or host it elsewhere.",
+    fileError: "That file couldn't be uploaded. Try again.",
+    // Same failure as imageNoCallback below, for the product file.
+    fileNoCallback:
+      "The upload finished but didn't come back. If you're running locally, use `npm run dev` rather than `npm run start`.",
+    fileMissing: "No file attached",
     images: "Images",
     imageUpload: "Add images",
     imageUploading: "Uploading…",
@@ -240,6 +258,15 @@ export const strings = {
     itemCount: "{count} items",
     noProducts: "This creator hasn't published any products yet.",
     buy: "Buy",
+    // Shown in place of "Buy" on a product the viewer sells.
+    yourProduct: "Your product",
+    // Shown in place of "Buy" on a product the viewer has already bought.
+    // Distinct from `yourProduct`: one is the seller, this is the buyer.
+    owned: "Owned",
+    goToDownloads: "Download",
+    editProduct: "Edit product",
+    // Replaces "Sign in" in the storefront nav for a signed-in visitor.
+    dashboard: "Dashboard",
     backToShop: "Back to shop",
     poweredBy: "Powered by",
     // {name} is replaced with the creator's name.
@@ -280,6 +307,7 @@ export const strings = {
     signInToCheckout: "Sign in to checkout",
     // The same requirement on the single-product "Buy now" path.
     signInToBuy: "Sign in to buy",
+    goToDashboard: "Go to dashboard",
     orderSummary: "Order summary",
     subtotal: "Subtotal",
     platformFee: "Platform fee (2%)",
@@ -289,6 +317,10 @@ export const strings = {
     pay: "Pay {total}",
     paying: "Processing…",
     securedBy: "Payments secured by Stripe",
+    // Shown in place of the card fields. Card details are entered on Stripe's
+    // hosted page, so the buyer is told they're about to leave the site.
+    redirectNotice:
+      "You'll be taken to Stripe to pay securely, then brought straight back to your download.",
     instantDownload: "Instant download after payment",
     email: "Email",
     cardNumber: "Card number",
@@ -415,7 +447,9 @@ export const strings = {
       "Describe the product in at least 10 characters (2000 max).",
     productPrice: "Enter a price like 48 or 48.00.",
     productPricePositive: "Price must be greater than 0.",
-    productFiles: "Keep the file summary under 160 characters.",
+    productFileRequired: "Upload the file buyers will download.",
+    productFile: "That file couldn't be attached. Upload it again.",
+    productFileSize: "The product file must be 100 MB or smaller.",
     productImage: "That doesn't look like a valid image URL.",
     // {count} is replaced with MAX_PRODUCT_IMAGES from lib/schemas/product.ts.
     productImageCount: "You can add up to {count} images.",
@@ -435,6 +469,20 @@ export const strings = {
     // session expired mid-checkout.
     signInToCheckout: "Please sign in to complete your purchase.",
     cartEmpty: "Your cart is empty.",
+    // A creator buying from their own storefront. Enforced in addToCart,
+    // checkoutProduct and checkoutCart; the UI hides the buttons first.
+    cannotBuyOwnProduct: "You can't buy your own product.",
+    cartHasOwnProducts:
+      "Your cart contains your own products. Remove them to check out.",
+    // A digital product is bought once — there is nothing a second copy would
+    // give the buyer. Enforced in addToCart, checkoutProduct and checkoutCart;
+    // the UI swaps the buy button for a download link first.
+    alreadyPurchased: "You already own this — find it in your downloads.",
+    cartHasPurchased:
+      "Your cart contains products you already own. Remove them to check out.",
+    // Stripe refused or was unreachable when opening a Checkout Session. The
+    // buyer's cart is untouched, so retrying is the right advice.
+    checkoutFailed: "We couldn't reach the payment provider. Please try again.",
     // {count} is replaced with MAX_CART_ITEMS from lib/schemas/cart.ts.
     cartFull: "A cart can hold up to {count} products.",
   },

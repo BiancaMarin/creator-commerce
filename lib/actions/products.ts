@@ -55,7 +55,12 @@ function toRow(values: ProductValues, slug: string): ProductWrite {
     // `numeric` is a string in Drizzle; normalise to 2dp so "48" and "48.00"
     // are stored identically.
     price: Number(values.price).toFixed(2),
-    files: values.files || null,
+    // Spread across three columns — see the schema. Non-null here because this
+    // takes the *parsed* values, where the file is guaranteed; the columns are
+    // nullable only for rows written before product files existed.
+    fileKey: values.file.key,
+    fileName: values.file.name,
+    fileSize: values.file.size,
     // Stored as-is, order included — the first image is the product's cover.
     // Removing every image writes `[]`, never NULL.
     imageUrls: values.imageUrls,

@@ -5,8 +5,13 @@ import { revalidatePath } from "next/cache";
 import { strings } from "@/constants/strings";
 import { MAX_CART_ITEMS } from "@/lib/schemas/cart";
 import { readCartIds, writeCartIds } from "@/lib/server/cart";
+import { startCheckout } from "@/lib/server/checkout";
 import { getSession } from "@/lib/server/dal/session";
-import { isLiveProduct, listProductsByIds } from "@/lib/server/dal/products";
+import {
+  hasPurchasedProduct,
+  listPurchasedProductIds,
+} from "@/lib/server/dal/orders";
+import { listProductsByIds } from "@/lib/server/dal/products";
 import { signInToCheckoutHref } from "@/lib/utils";
 
 /**
@@ -19,9 +24,16 @@ export type CartActionResult =
   | { ok: true; count: number }
   | { ok: false; error: string; signInHref?: string };
 
-/** Same contract, for a purchase that never touches the cart. */
+/**
+ * What a checkout hands back: the Stripe-hosted page to send the buyer to.
+ *
+ * A URL for the caller to navigate to rather than a `redirect()` from inside
+ * the action. `redirect` throws, which from a pending transition surfaces as an
+ * unexplained failure and gives the form no chance to leave its button disabled
+ * while the browser is still on this page.
+ */
 export type CheckoutResult =
-  | { ok: true }
+  | { ok: true; url: string }
   | { ok: false; error: string; signInHref?: string };
 
 /**
@@ -81,8 +93,30 @@ export async function addToCart(productId: number): Promise<CartActionResult> {
     };
   }
 
-  if (!(await isLiveProduct(productId))) {
+  const [product] = await listProductsByIds([productId]);
+
+  if (!product) {
     return { ok: false, error: strings.errors.productNotFound };
+  }
+
+  // A creator can't buy their own product, so there's no reason to let one into
+  // the cart — it would only fail at checkout, after they'd been shown a total
+  // including it. Checked here as a courtesy; `checkoutCart` is the gate that
+  // counts, since this action is reachable by an anonymous caller who has no
+  // owner to compare against.
+  const session = await getSession();
+
+  if (session && product.userId === session.user.id) {
+    return { ok: false, error: strings.errors.cannotBuyOwnProduct };
+  }
+
+  // Same courtesy for something already bought: a digital product is delivered
+  // once and there is nothing a second copy would give the buyer. Only
+  // checkable with a session — an anonymous visitor has no purchase history to
+  // compare against, which is exactly why `checkoutCart` re-checks after
+  // sign-in rather than trusting this.
+  if (session && (await hasPurchasedProduct(session.user.id, productId))) {
+    return { ok: false, error: strings.errors.alreadyPurchased };
   }
 
   const next = [...ids, productId];
@@ -117,20 +151,112 @@ export async function removeFromCart(
 }
 
 /**
- * Completes the purchase and empties the cart.
+ * Opens a Stripe Checkout Session for everything in the cart.
  *
- * **This is the sign-in gate.** The cart page also hides the payment form from
- * signed-out visitors, but that's a courtesy — Server Functions are reachable
- * by direct POST, not only through the UI
+ * **This is the sign-in gate.** The cart page also hides the payment button
+ * from signed-out visitors, but that's a courtesy — Server Functions are
+ * reachable by direct POST, not only through the UI
  * (node_modules/next/dist/docs/01-app/01-getting-started/07-mutating-data.md),
  * so the check that counts is the one here.
  *
- * No order row is written and no payment is taken: like the single-product
- * "Buy now" flow this stands in for a real checkout. Clearing the cart is the
- * only lasting effect, which is why it happens last — an error above it leaves
- * the buyer's cart intact.
+ * The cart is **not** cleared here. Nothing has been paid at this point — the
+ * buyer is only being sent to a payment page they may well abandon, and
+ * emptying their cart on the way out would lose it. It is cleared once the
+ * purchase is confirmed, by `clearPurchasedFromCart` on the receipt page.
+ *
+ * Prices come from `listProductsByIds`, never from the client. That read also
+ * drops soft-deleted products, so a cart holding a retired listing checks out
+ * with what's left rather than charging for something unbuyable.
  */
-export async function checkoutCart(): Promise<CartActionResult> {
+export async function checkoutCart(): Promise<CheckoutResult> {
+  const session = await getSession();
+
+  if (!session) {
+    return {
+      ok: false,
+      error: strings.errors.signInToCheckout,
+      signInHref: SIGN_IN_HREF,
+    };
+  }
+
+  const ids = await readCartIds();
+
+  if (ids.length === 0) {
+    return { ok: false, error: strings.errors.cartEmpty };
+  }
+
+  const products = await listProductsByIds(ids);
+
+  if (products.length === 0) {
+    return { ok: false, error: strings.errors.cartEmpty };
+  }
+
+  // A creator can't buy their own product. Refuse the whole cart rather than
+  // quietly dropping those lines: silently charging for less than the cart
+  // showed is the worse failure, and the cart page marks each offending row so
+  // the fix is one click. `addToCart` already turns these away — this catches
+  // a cart filled before the rule existed, or one built while signed out and
+  // paid for after signing in as the seller.
+  if (products.some((product) => product.userId === session.user.id)) {
+    return { ok: false, error: strings.errors.cartHasOwnProducts };
+  }
+
+  // Nothing in the cart may already be owned. **This is the check that counts**
+  // — `addToCart` can't make it, because the cart is open to anonymous
+  // visitors, so a cart filled while signed out and paid for after signing in
+  // reaches here having never been tested.
+  //
+  // Refuses the whole cart rather than dropping the owned lines, for the same
+  // reason as the rule above it: charging for less than the cart displayed is
+  // the worse failure. The cart page marks each offending row, so the fix is
+  // one click.
+  const purchased = await listPurchasedProductIds(
+    session.user.id,
+    products.map((product) => product.id),
+  );
+
+  if (purchased.size > 0) {
+    return { ok: false, error: strings.errors.cartHasPurchased };
+  }
+
+  try {
+    const url = await startCheckout({
+      buyerId: session.user.id,
+      email: session.user.email,
+      products,
+      cancelPath: "/cart",
+      // Only brand the receipt when the whole cart came from one storefront.
+      // A cart spanning creators has no single "back to shop" to return to.
+      storeHandle:
+        new Set(products.map((product) => product.handle)).size === 1
+          ? products[0].handle
+          : undefined,
+    });
+
+    return { ok: true, url };
+  } catch (error) {
+    // Stripe being unreachable, a missing key, a rejected line item. The buyer
+    // gets one sentence; the detail goes to the server log, where it can name
+    // the failure without handing an error string to whoever POSTed.
+    console.error("[checkout] could not start cart checkout", error);
+
+    return { ok: false, error: strings.errors.checkoutFailed };
+  }
+}
+
+/**
+ * Drops from the cart everything the buyer has now paid for.
+ *
+ * Called from the receipt page, which is the first moment this app knows a
+ * payment succeeded *and* is in a Server Action able to write a cookie —
+ * the webhook confirms the payment but has no access to the buyer's cookies,
+ * and a page render can't set one (lib/server/cart.ts).
+ *
+ * Filters by what was actually purchased rather than emptying the cart, so a
+ * cart the buyer added to in another tab while paying keeps those additions.
+ * Safe to call more than once: the second call finds nothing to remove.
+ */
+export async function clearPurchasedFromCart(): Promise<CartActionResult> {
   const session = await getSession();
 
   if (!session) {
@@ -140,14 +266,20 @@ export async function checkoutCart(): Promise<CartActionResult> {
   const ids = await readCartIds();
 
   if (ids.length === 0) {
-    return { ok: false, error: strings.errors.cartEmpty };
+    return { ok: true, count: 0 };
   }
 
-  // TODO: take payment and record an order before clearing the cart.
-  await writeCartIds([]);
+  const purchased = await listPurchasedProductIds(session.user.id, ids);
+  const next = ids.filter((id) => !purchased.has(id));
+
+  if (next.length === ids.length) {
+    return { ok: true, count: ids.length };
+  }
+
+  await writeCartIds(next);
   revalidatePath("/cart");
 
-  return { ok: true, count: 0 };
+  return { ok: true, count: next.length };
 }
 
 /**
@@ -182,10 +314,41 @@ export async function checkoutProduct(
     };
   }
 
-  if (!(await isLiveProduct(productId))) {
+  const [product] = await listProductsByIds([productId]);
+
+  // `listProductsByIds` already filters out soft-deleted rows, so a missing
+  // product here covers both "never existed" and "retired since the page
+  // rendered" — the same answer either way.
+  if (!product) {
     return { ok: false, error: strings.errors.productNotFound };
   }
 
-  // TODO: take payment and record an order.
-  return { ok: true };
+  // The "Buy now" half of the same rule. The product page hides the button for
+  // an owner, but this is the check that can't be clicked past.
+  if (product.userId === session.user.id) {
+    return { ok: false, error: strings.errors.cannotBuyOwnProduct };
+  }
+
+  // The "Buy now" half of buy-once. The page swaps the button for a download
+  // link, but this is the check that can't be clicked past — and the one that
+  // catches a product bought in another tab since this page rendered.
+  if (await hasPurchasedProduct(session.user.id, product.id)) {
+    return { ok: false, error: strings.errors.alreadyPurchased };
+  }
+
+  try {
+    const url = await startCheckout({
+      buyerId: session.user.id,
+      email: session.user.email,
+      products: [product],
+      cancelPath: `/${product.handle}/${product.id}/${product.slug}`,
+      storeHandle: product.handle,
+    });
+
+    return { ok: true, url };
+  } catch (error) {
+    console.error("[checkout] could not start product checkout", error);
+
+    return { ok: false, error: strings.errors.checkoutFailed };
+  }
 }

@@ -26,6 +26,7 @@ Base UI–based shadcn component layer.
 | Auth          | **Better Auth** ^1.7.0-rc (email + password, cookie sessions)     |
 | Database      | **Neon Postgres** via **Drizzle ORM** ^1.0.0-rc + drizzle-kit     |
 | File uploads  | **UploadThing** ^7.7 (`uploadthing` + `@uploadthing/react`)        |
+| Payments      | **Stripe** ^22.6 — hosted Checkout Sessions + webhook fulfilment   |
 | Class utils   | `clsx` + `tailwind-merge` (via `cn()`), `class-variance-authority` |
 
 Drizzle and Better Auth are on **prereleases**: `npm install` needs `--legacy-peer-deps`,
@@ -81,15 +82,18 @@ app/
     layout.tsx                    # requireUser() + SidebarProvider + AppSidebar + TooltipProvider
     dashboard/page.tsx            # "/dashboard" → KPI cards, recent orders, Account tab
     dashboard/actions.ts          # Server Actions for the dashboard (updateHandle)
-    products|orders|customers|analytics|wishlist|downloads/page.tsx   # placeholder screens
+    orders/page.tsx               # "/orders"    → the seller's sales, from order_items
+    downloads/page.tsx            # "/downloads" → the buyer's library; Stripe returns here
+    products|customers|analytics|wishlist/page.tsx   # placeholder screens
   (store)/                        # Public buyer-facing storefronts
     layout.tsx                    # bare flex shell only — no nav/footer (see StoreChrome)
     [handle]/layout.tsx           # resolves the creator from the DB, 404s if unknown
     [handle]/page.tsx             # "/:handle"             → creator profile + product grid
     [handle]/[id]/[slug]/page.tsx # "/:handle/:id/:slug"   → product detail + checkout
-    checkout/success/page.tsx     # "/checkout/success?p=&s="
+    checkout/success/page.tsx     # legacy Stripe return URL — redirects to /downloads
   api/auth/[...all]/route.ts      # Better Auth handler (GET/POST)
-  api/uploadthing/core.ts         # UploadThing FileRouter (productImage endpoint)
+  api/stripe/webhook/route.ts     # Stripe webhook — the ONLY place an order becomes paid
+  api/uploadthing/core.ts         # UploadThing FileRouter (productImage, productFile)
   api/uploadthing/route.ts        # UploadThing handler (GET/POST)
 components/
   ui/                     # shadcn primitives (Base UI wrappers) — treat as generated
@@ -273,10 +277,101 @@ Enumerating the combinations is a matrix that rots, and the controls sit directl
 the message. The search term is the one exception — it still gets echoed back, because
 it's what the reader most needs confirmed.
 
+## Payments (Stripe)
+
+Checkout is **Stripe-hosted**: the buyer leaves for Stripe's own page, pays, and is
+returned to `/downloads`. This app never sees a card number.
+
+The flow, and the order the steps must happen in:
+
+1. `checkoutCart()` / `checkoutProduct()` (`lib/actions/cart.ts`) check the session, read
+   prices **from the database**, and call `startCheckout()` (`lib/server/checkout.ts`).
+2. `startCheckout` writes a `pending` order **first**, then creates the Checkout Session
+   carrying `orderId` in its metadata, then stores `stripe_session_id` on the order. The
+   order must exist before the session, or a payment can complete against an order that
+   isn't there yet.
+3. The action returns a **URL**; the client navigates with `window.location.href`, not
+   `router.push` — Stripe is another origin.
+4. `app/api/stripe/webhook/route.ts` verifies the signature and calls `markOrderPaid()`.
+
+**Rules that are load-bearing:**
+
+- **The webhook is the only thing that may mark an order `paid`.** Never fulfil on the
+  success URL: the buyer can close the tab the moment the card clears, and that URL is a
+  plain GET anyone can type. `markOrderPaid` / `markOrderFailed` are the only writers of
+  `status`, and both live in `dal/orders.ts`.
+- **Idempotence is a WHERE clause, not a check-then-write.** Both writers require
+  `status = 'pending'`, so Stripe's redelivery (which *will* happen) updates zero rows
+  instead of re-stamping `paid_at` or double-counting revenue. A late
+  `checkout.session.expired` therefore can't revoke a paid download either.
+- **Verify the signature against the raw body.** `await request.text()`, never
+  `request.json()` — parsing and re-serializing invalidates the signature. Use
+  `constructEventAsync`; the sync form needs Node crypto.
+- **Money is integer cents in `orders`/`order_items`**, matching Stripe, while
+  `products.price` stays `numeric`. `lib/server/money.ts` is the only conversion point.
+- **Prices are never accepted from the client** — the same reasoning that keeps the cart
+  cookie holding nothing but ids.
+- **`order_items` snapshots name and price, and carries `seller_id`.** A cart can span
+  storefronts, so one order can owe money to several creators; the seller's Orders page
+  filters on `order_items.seller_id`, and there is no seller column on `orders` to get
+  wrong. Joining `products` for a name would let a rename rewrite order history.
+- **The buyer pays the list price.** The 2% platform fee is the creator's, out of their
+  payout — adding it to the buyer's total would disagree with what Stripe charges (the sum
+  of the line items). It is **not** yet deducted anywhere; that needs Stripe Connect.
+- **A product is sold once per buyer.** A digital product is delivered, not
+  consumed, so a second copy gives the buyer nothing — `hasPurchasedProduct`
+  (single) and `listPurchasedProductIds` (batched) gate `addToCart`,
+  `checkoutProduct` and `checkoutCart`. **`checkoutCart` is the check that
+  counts**: the cart is open to anonymous visitors, so a cart filled while
+  signed out and paid for after signing in reaches checkout never having been
+  tested. Like the own-products rule beside it, it refuses the whole cart
+  rather than dropping the owned lines — charging for less than the cart
+  displayed is the worse failure, and each offending row is marked.
+  - The UI mirrors it in three places (storefront grid, product page, cart) but
+    never enforces it. Note the two badges mean different things: "Your
+    product" is the seller, "Owned" is the buyer.
+  - **`hasPurchasedProduct` counts `paid` only**, so two checkouts for the same
+    product opened within the 30-minute TTL can both pay. Counting `pending`
+    too would lock a product behind an abandoned checkout for half an hour,
+    which is the worse trade. The clean fix is a refund, and refunds aren't
+    wired — see below. One buyer/product pair in the database was bought twice
+    before this rule existed; it is left alone, since deleting paid order rows
+    would falsify financial history.
+- **There is no `purchases` table, and nothing should recreate one.** An earlier
+  model wrote one row per buyer/product straight at checkout; it can't express a
+  cart spanning several storefronts, so `orders` + `order_items` replaced it.
+  The dead table outlived the code by a month because it had been created
+  outside the migration system — absent from every snapshot in `drizzle/meta`,
+  which is what drizzle-kit diffs against, so `generate` reported "No schema
+  changes" while it sat in the database. Dropped by a **custom** migration
+  (`20260907160853_drop_orphaned_purchases`), the only way that kind of drift
+  reaches an environment it wasn't pushed to. `PurchaseRow` and
+  `listPurchasesForBuyer` in `dal/orders.ts` are unrelated: they're a *view* of
+  the two live tables, not a table.
+- The cart is cleared **after** payment, by `clearPurchasedFromCart()` from
+  `ClearPurchasedCart` on /downloads — the webhook has no access to the buyer's cookies,
+  and a page render can't write one.
+
+**Local webhooks** need the Stripe CLI, or nothing is ever fulfilled:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+Put the `whsec_…` it prints in `STRIPE_WEBHOOK_SECRET`. A deployed endpoint has a
+*different* secret (Stripe dashboard); the wrong one 400s every delivery.
+
+**Still missing:** delivery. The product file is now really stored (see "The product
+file" below), but nothing serves it: /downloads names the file and says the download is
+coming. That needs a signed-URL route — `UTApi.getSignedURL(fileKey)` — gated on
+`hasPurchasedProduct()`, and ideally the `productFile` route switched to
+`acl: "private"` at the same time, since an UploadThing file is publicly addressable by
+default. Refunds aren't wired either (the `refunded` status is unused).
+
 ## File uploads (UploadThing)
 
-Product cover images upload straight from the browser to UploadThing — the file
-never passes through this server.
+Both a product's cover images and the product file itself upload straight from
+the browser to UploadThing — the bytes never pass through this server.
 
 - Endpoints live in `app/api/uploadthing/core.ts`; the handler is `route.ts`
   beside it. Add a route there, not a new API path.
@@ -312,6 +407,45 @@ never passes through this server.
   highlight flickers as the cursor crosses child elements.
 - `next.config.ts` pins `images.remotePatterns` to this app's own UploadThing
   subdomain and `/f/**`, so the optimizer can't be aimed at another tenant.
+
+### The product file
+
+The digital product itself goes through the **`productFile`** route, kept
+separate from `productImage` because almost none of the rules match: any file
+type, exactly one, ~25× the size cap. Sharing an endpoint would apply the
+loosest of each rule to both.
+
+- **100 MB is enforced twice, and by neither of the obvious places.**
+  UploadThing types `maxFileSize` as a *power of two* plus a unit, so `"100MB"`
+  doesn't compile and `"64MB"` would reject files the requirement allows. The
+  route declares `"128MB"` as UploadThing's own backstop; the real limit is
+  `MAX_PRODUCT_FILE_BYTES` in `lib/schemas/product.ts`, checked in the field
+  (so nobody watches 400 MB upload before it's refused) and again in the
+  route's `.middleware()`, which receives the declared `files` before any bytes
+  move and is the copy the browser can't skip. Change all three together.
+- **Three columns, and no URL:** `file_key`, `file_name`, `file_size`. The
+  public `https://<appId>.ufs.sh/f/<key>` address is derivable from the key and
+  deliberately not stored, so no component can render an ungated download link
+  by reaching for a convenient column. Delivery mints a signed URL from the key
+  per request.
+- **The columns are nullable but `productSchema` requires a file.** Products
+  created before this feature have none, and a NOT NULL column would have
+  needed a lie to backfill them. Every save from now on attaches one —
+  including editing an old product, which is the intended nudge.
+- **`file` is the one field whose zod input and output types differ.** In it's
+  going in it's `ProductFile | null` (a form starts empty); coming out the
+  refine rules null away, so
+  the server action gets a guaranteed file. That's why `ProductForm` is
+  `useForm<ProductInput, unknown, ProductValues>` and why the field components
+  take `Control<ProductInput>`.
+- Picking a second file **replaces** the first — the product is a single
+  download — and a multi-file drop is rejected rather than silently taking one.
+  Removing a file only detaches it; the upload stays on UploadThing, like a
+  removed image.
+- An UploadThing file is **publicly addressable by default**. Nothing links it
+  today, but the delivery work should set `acl: "private"` on this route
+  (needs the app's dashboard to allow private files) so the signed URL is the
+  only way in, not just the polite one.
 
 ### Rendering images
 

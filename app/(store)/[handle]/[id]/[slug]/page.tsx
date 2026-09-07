@@ -5,6 +5,7 @@ import { ProductCheckoutFlow } from "@/components/store/product-checkout-flow"
 import { strings } from "@/constants/strings"
 import { readCartIds } from "@/lib/server/cart"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
+import { hasPurchasedProduct } from "@/lib/server/dal/orders"
 import { getProductByHandleAndId } from "@/lib/server/dal/products"
 import { getSession } from "@/lib/server/dal/session"
 
@@ -71,12 +72,25 @@ export default async function ProductPage({
   // visitor to sign in. `checkoutProduct` is what enforces that either way.
   const [cartIds, session] = await Promise.all([readCartIds(), getSession()])
 
+  // Whether this buyer already owns it — a digital product sells once, so this
+  // decides between a buy button and a link to the file they already have.
+  // Sequential rather than in the Promise.all above: it needs the session.
+  // `checkoutProduct` re-checks it, which is what actually enforces the rule.
+  const hasPurchased = session
+    ? await hasPurchasedProduct(session.user.id, product.id)
+    : false
+
   return (
     <ProductCheckoutFlow
       product={product}
       storeHandle={handle}
       inCart={cartIds.includes(product.id)}
       signedIn={Boolean(session)}
+      // Compared against the product's own `user_id`, not the storefront's
+      // handle: this is the row that would be sold, so it's the row that
+      // decides. `checkoutProduct` re-checks exactly this server side.
+      isOwner={session?.user.id === product.userId}
+      hasPurchased={hasPurchased}
       email={session?.user.email ?? ""}
     />
   )

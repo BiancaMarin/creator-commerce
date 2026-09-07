@@ -28,93 +28,19 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { strings } from "@/constants/strings";
+import {
+  getSellerStats,
+  listOrdersForSeller,
+  listTopProductsForSeller,
+} from "@/lib/server/dal/orders";
 import { requireUser } from "@/lib/server/dal/session";
+import { formatCents } from "@/lib/server/money";
 import { cn, getInitials } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Dashboard · Creator Commerce",
   description: "Revenue, orders, and customer activity at a glance.",
 };
-
-const stats = [
-  {
-    label: "Revenue",
-    value: "$48,120",
-    delta: "+12.4%",
-    trend: "up" as const,
-    hint: "vs. last 30 days",
-    icon: CurrencyDollarIcon,
-  },
-  {
-    label: "Orders",
-    value: "1,204",
-    delta: "+8.1%",
-    trend: "up" as const,
-    hint: "vs. last 30 days",
-    icon: ReceiptIcon,
-  },
-  {
-    label: "New customers",
-    value: "318",
-    delta: "+4.7%",
-    trend: "up" as const,
-    hint: "vs. last 30 days",
-    icon: UsersIcon,
-  },
-  {
-    label: "Conversion",
-    value: "3.2%",
-    delta: "-0.4%",
-    trend: "down" as const,
-    hint: "vs. last 30 days",
-    icon: TrendUpIcon,
-  },
-];
-
-const recentOrders = [
-  {
-    id: "#3812",
-    customer: "Amara Okafor",
-    product: "Studio Preset Pack",
-    amount: "$48.00",
-    status: "paid" as const,
-  },
-  {
-    id: "#3811",
-    customer: "Leo Nakamura",
-    product: "Lightroom Masterclass",
-    amount: "$129.00",
-    status: "paid" as const,
-  },
-  {
-    id: "#3810",
-    customer: "Sofia Rossi",
-    product: "Brand Kit Templates",
-    amount: "$64.00",
-    status: "refunded" as const,
-  },
-  {
-    id: "#3809",
-    customer: "Daniel Weber",
-    product: "Studio Preset Pack",
-    amount: "$48.00",
-    status: "pending" as const,
-  },
-  {
-    id: "#3808",
-    customer: "Priya Menon",
-    product: "1:1 Coaching Call",
-    amount: "$220.00",
-    status: "paid" as const,
-  },
-];
-
-const topProducts = [
-  { name: "Studio Preset Pack", sales: 412, share: 82 },
-  { name: "Lightroom Masterclass", sales: 286, share: 57 },
-  { name: "Brand Kit Templates", sales: 173, share: 34 },
-  { name: "1:1 Coaching Call", sales: 64, share: 13 },
-];
 
 const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> =
   {
@@ -124,8 +50,77 @@ const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> =
     failed: "destructive",
   };
 
+/**
+ * Percent change between two windows, or null when there's nothing to compare
+ * against.
+ *
+ * A previous window of zero has no percentage — "up ∞%" from the first sale is
+ * noise, not information — so the card omits the delta rather than inventing
+ * one. That's also the normal state for a new creator.
+ */
+function deltaOf(current: number, previous: number): number | null {
+  if (previous === 0) {
+    return null;
+  }
+
+  return ((current - previous) / previous) * 100;
+}
+
+function formatDelta(delta: number) {
+  return `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%`;
+}
+
 export default async function DashboardPage() {
   const user = await requireUser();
+  const [stat, recentOrders, topProducts] = await Promise.all([
+    getSellerStats(user.id),
+    // Five, matching the card's own description.
+    listOrdersForSeller(user.id, 5),
+    listTopProductsForSeller(user.id),
+  ]);
+
+  // The average is over the window's orders, so it's undefined with none —
+  // show a dash rather than dividing by zero.
+  const averageOrder = stat.orders > 0 ? stat.revenue / stat.orders : null;
+
+  const stats = [
+    {
+      label: "Revenue",
+      value: formatCents(stat.revenue),
+      delta: deltaOf(stat.revenue, stat.revenuePrevious),
+      hint: "vs. previous 30 days",
+      icon: CurrencyDollarIcon,
+    },
+    {
+      label: "Orders",
+      value: stat.orders.toLocaleString(),
+      delta: deltaOf(stat.orders, stat.ordersPrevious),
+      hint: "vs. previous 30 days",
+      icon: ReceiptIcon,
+    },
+    {
+      label: "Customers",
+      value: stat.customers.toLocaleString(),
+      delta: deltaOf(stat.customers, stat.customersPrevious),
+      hint: "vs. previous 30 days",
+      icon: UsersIcon,
+    },
+    {
+      // Replaces the old "Conversion" tile. Conversion needs a view count, and
+      // nothing here records page views — the figure would have to be invented.
+      // Average order value comes from the same rows as the tiles beside it.
+      label: "Avg. order",
+      value: averageOrder === null ? "—" : formatCents(averageOrder),
+      delta: null,
+      hint: "last 30 days",
+      icon: TrendUpIcon,
+    },
+  ];
+
+  // Drives the bar widths: the best seller fills the track and the rest are
+  // drawn relative to it. Without this a top seller of 3 units would render as
+  // a 3%-wide sliver.
+  const topSales = topProducts[0]?.sales ?? 0;
 
   // "Alex Rivera" -> "Alex". Falls back to the whole string for mononyms,
   // and to the email local part if the name is somehow blank.
@@ -174,33 +169,38 @@ export default async function DashboardPage() {
 
         <TabsContent value="overview" className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat) => {
+            {stats.map((entry) => {
               const TrendIcon =
-                stat.trend === "up" ? TrendUpIcon : TrendDownIcon;
+                entry.delta !== null && entry.delta < 0
+                  ? TrendDownIcon
+                  : TrendUpIcon;
+
               return (
-                <Card key={stat.label} size="sm">
+                <Card key={entry.label} size="sm">
                   <CardHeader>
-                    <CardDescription>{stat.label}</CardDescription>
-                    <CardTitle className="text-2xl">{stat.value}</CardTitle>
+                    <CardDescription>{entry.label}</CardDescription>
+                    <CardTitle className="text-2xl">{entry.value}</CardTitle>
                     <CardAction>
                       <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                        <stat.icon className="size-4" />
+                        <entry.icon className="size-4" />
                       </span>
                     </CardAction>
                   </CardHeader>
                   <CardFooter className="gap-1.5 text-xs text-muted-foreground">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 font-medium",
-                        stat.trend === "up"
-                          ? "text-success"
-                          : "text-destructive",
-                      )}
-                    >
-                      <TrendIcon className="size-3.5" />
-                      {stat.delta}
-                    </span>
-                    {stat.hint}
+                    {/* No delta when the previous window was empty — see
+                        `deltaOf`. The hint still explains the period. */}
+                    {entry.delta !== null && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 font-medium",
+                          entry.delta >= 0 ? "text-success" : "text-destructive",
+                        )}
+                      >
+                        <TrendIcon className="size-3.5" />
+                        {formatDelta(entry.delta)}
+                      </span>
+                    )}
+                    {entry.hint}
                   </CardFooter>
                 </Card>
               );
@@ -227,35 +227,43 @@ export default async function DashboardPage() {
                 </CardAction>
               </CardHeader>
               <CardContent className="flex flex-col">
-                {recentOrders.map((order, index) => (
-                  <div key={order.id}>
-                    {index > 0 && <Separator />}
-                    <div className="flex items-center gap-3 py-3">
-                      <Avatar>
-                        <AvatarFallback className="text-xs font-medium">
-                          {getInitials(order.customer)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {order.customer}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {order.product} · {order.id}
-                        </p>
+                {recentOrders.length === 0 ? (
+                  <p className="rounded-2xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+                    No orders yet.
+                  </p>
+                ) : (
+                  recentOrders.map((order, index) => (
+                    // One order can hold several of this seller's products, so
+                    // the order id alone isn't unique across rows.
+                    <div key={`${order.orderId}-${order.productName}`}>
+                      {index > 0 && <Separator />}
+                      <div className="flex items-center gap-3 py-3">
+                        <Avatar>
+                          <AvatarFallback className="text-xs font-medium">
+                            {getInitials(order.buyerName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {order.buyerName}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {order.productName} · #{order.orderId}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={badgeFor[order.status] ?? "neutral"}
+                          className="capitalize"
+                        >
+                          {order.status}
+                        </Badge>
+                        <span className="w-16 text-right font-mono text-sm font-medium">
+                          {formatCents(order.amount, order.currency)}
+                        </span>
                       </div>
-                      <Badge
-                        variant={badgeFor[order.status]}
-                        className="capitalize"
-                      >
-                        {order.status}
-                      </Badge>
-                      <span className="w-16 text-right font-mono text-sm font-medium">
-                        {order.amount}
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -265,27 +273,38 @@ export default async function DashboardPage() {
                 <CardDescription>Best sellers this month.</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
-                {topProducts.map((product) => (
-                  <div key={product.name} className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <span className="flex min-w-0 items-center gap-2">
-                        <PackageIcon className="size-4 shrink-0 text-muted-foreground" />
-                        <span className="truncate font-medium">
-                          {product.name}
+                {topProducts.length === 0 ? (
+                  <p className="rounded-2xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+                    No sales yet.
+                  </p>
+                ) : (
+                  topProducts.map((product) => (
+                    <div key={product.productId} className="space-y-1.5">
+                      <div className="flex items-center justify-between gap-2 text-sm">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <PackageIcon className="size-4 shrink-0 text-muted-foreground" />
+                          <span className="truncate font-medium">
+                            {product.name}
+                          </span>
                         </span>
-                      </span>
-                      <span className="shrink-0 text-muted-foreground tabular-nums">
-                        {product.sales}
-                      </span>
+                        <span className="shrink-0 text-muted-foreground tabular-nums">
+                          {product.sales}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          // Relative to the best seller, not to 100 — see
+                          // `topSales`. Guarded because the list is empty-checked
+                          // above but the divisor still has to be non-zero.
+                          style={{
+                            width: `${topSales > 0 ? Math.round((product.sales / topSales) * 100) : 0}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${product.share}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </CardContent>
               <CardFooter>
                 <Button

@@ -4,6 +4,7 @@ import { CartView } from "@/components/store/cart-view"
 import { StoreChrome } from "@/components/store/store-chrome"
 import { strings } from "@/constants/strings"
 import { readCartIds } from "@/lib/server/cart"
+import { listPurchasedProductIds } from "@/lib/server/dal/orders"
 import { getSession } from "@/lib/server/dal/session"
 import { listProductsByIds } from "@/lib/server/dal/products"
 
@@ -31,6 +32,28 @@ export default async function CartPage() {
     .map((id) => byId.get(id))
     .filter((product) => product !== undefined)
 
+  // Which rows are the viewer's own products — they can't buy those, and
+  // `checkoutCart` refuses the whole cart while any are present. Resolved here
+  // because `CartItem` is the client-safe shape and carries no `userId`.
+  const ownedIds = session
+    ? items
+        .filter((product) => product.userId === session.user.id)
+        .map((product) => product.id)
+    : []
+
+  // Which rows the viewer has already bought. A digital product is delivered
+  // once, so these block checkout the same way the viewer's own products do —
+  // `checkoutCart` refuses the whole cart while any are present.
+  //
+  // Batched rather than asked per row: `listPurchasedProductIds` is the whole
+  // reason that function exists beside `hasPurchasedProduct`.
+  const purchasedIds = session
+    ? [...(await listPurchasedProductIds(
+        session.user.id,
+        items.map((product) => product.id),
+      ))]
+    : []
+
   return (
     // No creator: a cart spans storefronts, so the chrome falls back to
     // platform branding rather than claiming to belong to one shop.
@@ -38,6 +61,8 @@ export default async function CartPage() {
       <CartView
         items={items}
         signedIn={Boolean(session)}
+        ownedIds={ownedIds}
+        purchasedIds={purchasedIds}
         email={session?.user.email ?? ""}
       />
     </StoreChrome>

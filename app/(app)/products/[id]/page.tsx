@@ -58,7 +58,17 @@ export default async function EditProductPage({
             tag: product.tag,
             description: product.description,
             price: product.price,
-            files: product.files,
+            // The three columns become one object for the form, which holds
+            // the file as a unit — you can't attach a name without a key.
+            // Null when the product predates product files.
+            file:
+              product.fileKey && product.fileName && product.fileSize !== null
+                ? {
+                    key: product.fileKey,
+                    name: product.fileName,
+                    size: product.fileSize,
+                  }
+                : null,
             imageUrls: product.imageUrls,
           }}
         />

@@ -7,7 +7,7 @@ import { CircleNotchIcon, PlusIcon, XIcon } from "@phosphor-icons/react";
 import { ProductCover } from "@/components/store/product-cover";
 import { Button } from "@/components/ui/button";
 import { strings } from "@/constants/strings";
-import { MAX_PRODUCT_IMAGES, type ProductValues } from "@/lib/schemas/product";
+import { MAX_PRODUCT_IMAGES, type ProductInput } from "@/lib/schemas/product";
 import { useUploadThing } from "@/lib/uploadthing";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +30,7 @@ export function ProductImageField({
   productName,
   seed,
 }: {
-  control: Control<ProductValues>;
+  control: Control<ProductInput>;
   /** Used for the previews' alt text. */
   productName: string;
   /** Picks the placeholder gradient while there are no images. */

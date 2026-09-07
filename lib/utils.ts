@@ -17,6 +17,29 @@ export function getInitials(name: string) {
     .toUpperCase()
 }
 
+/**
+ * Bytes as something a person reads: 84 -> "84 B", 1_500_000 -> "1.4 MB".
+ *
+ * Binary units (1 KB = 1024 B), matching what `products.file_size` is compared
+ * against — MAX_PRODUCT_FILE_BYTES is 100 * 1024 * 1024, so a file the app
+ * calls "100 MB" is the same file the limit calls 100 MB. Decimal units would
+ * put a rejected file on screen as "104.9 MB" next to a rule saying 100.
+ *
+ * One decimal place above KB, none below: "1.4 MB" is useful, "512.0 B" is not.
+ */
+export function formatFileSize(bytes: number) {
+  const units = ["B", "KB", "MB", "GB"] as const
+  let value = bytes
+  let unit = 0
+
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit++
+  }
+
+  return `${unit === 0 ? value : Number(value.toFixed(1))} ${units[unit]}`
+}
+
 /** Where sign-in lands when there's no `?next=`, or the one given is unusable. */
 export const DEFAULT_SIGNED_IN_PATH = "/dashboard"
 

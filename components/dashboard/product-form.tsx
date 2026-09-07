@@ -8,6 +8,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { ArrowSquareOutIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
 import { DeleteProductDialog } from "@/components/dashboard/delete-product-dialog";
+import { ProductFileField } from "@/components/dashboard/product-file-field";
 import { ProductImageField } from "@/components/dashboard/product-image-field";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { strings } from "@/constants/strings";
 import { createProduct, updateProduct } from "@/lib/actions/products";
-import { productSchema, type ProductValues } from "@/lib/schemas/product";
+import {
+  productSchema,
+  type ProductFile,
+  type ProductInput,
+  type ProductValues,
+} from "@/lib/schemas/product";
 import { slugify } from "@/lib/utils";
 
 type SavedProduct = {
@@ -32,7 +38,8 @@ type SavedProduct = {
   tag: string;
   description: string;
   price: string;
-  files: string | null;
+  /** Null for a product created before product files existed. */
+  file: ProductFile | null;
   imageUrls: string[];
 };
 
@@ -55,14 +62,18 @@ export function ProductForm({
     reset,
     control,
     formState: { errors, isSubmitting },
-  } = useForm<ProductValues>({
+    // Three type arguments, not one: the form holds `ProductInput` (whose
+    // `file` may be null while it's being filled in) and `handleSubmit` hands
+    // the actions the parsed `ProductValues`, where it can't be. See the note
+    // on `file` in lib/schemas/product.ts.
+  } = useForm<ProductInput, unknown, ProductValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: product?.name ?? "",
       tag: product?.tag ?? "",
       description: product?.description ?? "",
       price: product?.price ?? "",
-      files: product?.files ?? "",
+      file: product?.file ?? null,
       imageUrls: product?.imageUrls ?? [],
     },
   });
@@ -212,25 +223,9 @@ export function ProductForm({
             seed={previewSlug || String(product?.id ?? "")}
           />
 
-          <div className="flex flex-col gap-2">
-            <label htmlFor="files" className="text-sm font-medium">
-              {strings.products.files}
-            </label>
-            <Input
-              id="files"
-              autoComplete="off"
-              placeholder={strings.products.filesPlaceholder}
-              aria-invalid={!!errors.files}
-              {...register("files")}
-            />
-            {errors.files ? (
-              <p className="text-xs text-destructive">{errors.files.message}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {strings.products.filesHint}
-              </p>
-            )}
-          </div>
+          {/* The digital product itself. Like the images above, the upload
+              writes a form value; the row only changes on submit. */}
+          <ProductFileField control={control} />
         </CardContent>
 
         <CardFooter className="justify-between border-t">

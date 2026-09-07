@@ -6,16 +6,16 @@ import { useRouter, useSearchParams } from "next/navigation"
 import type { Route } from "next"
 import {
   ArrowLeftIcon,
-  CreditCardIcon,
+  DownloadSimpleIcon,
   FileArrowDownIcon,
   LockSimpleIcon,
+  PencilSimpleIcon,
   ShieldCheckIcon,
 } from "@phosphor-icons/react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { AddToCartButton } from "@/components/store/add-to-cart-button"
 import { ProductCover } from "@/components/store/product-cover"
@@ -23,28 +23,19 @@ import { ProductGallery } from "@/components/store/product-gallery"
 import { strings } from "@/constants/strings"
 import { checkoutProduct } from "@/lib/actions/cart"
 import { formatPrice, type StoreProduct } from "@/lib/store-data"
-import { CHECKOUT_INTENT_PARAM, signInToCheckoutHref } from "@/lib/utils"
-
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium">{label}</label>
-      {children}
-    </div>
-  )
-}
+import {
+  CHECKOUT_INTENT_PARAM,
+  formatFileSize,
+  signInToCheckoutHref,
+} from "@/lib/utils"
 
 export function ProductCheckoutFlow({
   product,
   storeHandle,
   inCart,
   signedIn,
+  isOwner,
+  hasPurchased,
   email,
 }: {
   product: StoreProduct
@@ -53,14 +44,25 @@ export function ProductCheckoutFlow({
   inCart: boolean
   /** Buying needs an account; browsing doesn't. Enforced in `checkoutProduct`. */
   signedIn: boolean
+  /** The viewer owns this product, so it is not for sale to them. */
+  isOwner: boolean
+  /** The viewer already bought this. A digital product is sold once. */
+  hasPurchased: boolean
   email: string
 }) {
   const router = useRouter()
   // The buyer pressed "Buy now", was sent to sign in, and came back — reopen the
   // payment form instead of making them press it again. Resolved at the first
   // render so that step is what paints, not a flash of the product page.
+  //
+  // `!isOwner` matters: the flag comes from the URL, so without it a creator
+  // could type `?checkout=1` on their own product and land on a payment form
+  // that `checkoutProduct` would only refuse once they pressed Pay.
   const resuming =
-    useSearchParams().get(CHECKOUT_INTENT_PARAM) === "1" && signedIn
+    useSearchParams().get(CHECKOUT_INTENT_PARAM) === "1" &&
+    signedIn &&
+    !isOwner &&
+    !hasPurchased
   const [step, setStep] = React.useState<"product" | "checkout">(
     resuming ? "checkout" : "product",
   )
@@ -85,13 +87,17 @@ export function ProductCheckoutFlow({
         return
       }
 
-      router.push(`/checkout/success?p=${product.id}&s=${storeHandle}`)
+      // Stripe Checkout is another origin, so this can't be `router.push`.
+      // The transition stays pending until the browser leaves, which keeps the
+      // button disabled and stops a second click opening a second session.
+      window.location.href = result.url
     })
   }
 
   const price = Number(product.price)
-  const fee = price * 0.02
-  const total = price + fee
+  // What the buyer pays. The 2% platform fee comes out of the creator's payout
+  // rather than being added here — see the note in cart-view.tsx.
+  const total = price
 
   if (step === "product") {
     return (
@@ -126,10 +132,20 @@ export function ProductCheckoutFlow({
             <p className="leading-relaxed text-muted-foreground">
               {product.description}
             </p>
-            {product.files && (
+            {/* What the buyer gets, named from the actual upload rather than a
+                claim the creator typed. Not a link: the file is what is being
+                paid for, so it's only reachable through /downloads. */}
+            {product.fileName && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <FileArrowDownIcon className="size-4" />
-                {product.files}
+                <FileArrowDownIcon className="size-4 shrink-0" />
+                <span className="truncate" title={product.fileName}>
+                  {product.fileName}
+                </span>
+                {product.fileSize !== null && (
+                  <span className="shrink-0 font-mono text-xs">
+                    {formatFileSize(product.fileSize)}
+                  </span>
+                )}
               </div>
             )}
             <Separator />
@@ -140,39 +156,80 @@ export function ProductCheckoutFlow({
               {/* Two ways to buy: straight through the single-product checkout
                   below, or into the cart to pay for several at once. */}
               <div className="flex items-center gap-2">
-                <AddToCartButton productId={product.id} inCart={inCart} />
-                {signedIn ? (
-                  <Button size="lg" onClick={() => setStep("checkout")}>
-                    <LockSimpleIcon />
-                    Buy now
-                  </Button>
+                {isOwner ? (
+                  // The creator viewing their own listing. Neither buying nor
+                  // carting is on offer — both are refused server side — so the
+                  // page points at the one thing they can actually do here.
+                  <>
+                    <Badge variant="neutral">{strings.store.yourProduct}</Badge>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      nativeButton={false}
+                      render={<Link href={`/products/${product.id}`} />}
+                    >
+                      <PencilSimpleIcon />
+                      {strings.store.editProduct}
+                    </Button>
+                  </>
+                ) : hasPurchased ? (
+                  // Already bought. Same treatment as the owner case and for
+                  // the same reason: buying is refused server side, so the page
+                  // offers the thing they actually came back for instead of a
+                  // button that would fail. /downloads is where the file is.
+                  <>
+                    <Badge variant="neutral">{strings.store.owned}</Badge>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      nativeButton={false}
+                      render={<Link href="/downloads" />}
+                    >
+                      <DownloadSimpleIcon />
+                      {strings.store.goToDownloads}
+                    </Button>
+                  </>
                 ) : (
-                  // Adding to the cart stays open to anonymous visitors; paying
-                  // does not. Say so before the payment form rather than after
-                  // it — `checkoutProduct` refuses either way.
-                  <Button
-                    size="lg"
-                    nativeButton={false}
-                    render={
-                      <Link
-                        href={
-                          signInToCheckoutHref(
-                            `/${storeHandle}/${product.id}/${product.slug}`,
-                          ) as Route
+                  <>
+                    <AddToCartButton productId={product.id} inCart={inCart} />
+                    {signedIn ? (
+                      <Button size="lg" onClick={() => setStep("checkout")}>
+                        <LockSimpleIcon />
+                        Buy now
+                      </Button>
+                    ) : (
+                      // Adding to the cart stays open to anonymous visitors;
+                      // paying does not. Say so before the payment form rather
+                      // than after it — `checkoutProduct` refuses either way.
+                      <Button
+                        size="lg"
+                        nativeButton={false}
+                        render={
+                          <Link
+                            href={
+                              signInToCheckoutHref(
+                                `/${storeHandle}/${product.id}/${product.slug}`,
+                              ) as Route
+                            }
+                          />
                         }
-                      />
-                    }
-                  >
-                    <LockSimpleIcon />
-                    {strings.cart.signInToBuy}
-                  </Button>
+                      >
+                        <LockSimpleIcon />
+                        {strings.cart.signInToBuy}
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <ShieldCheckIcon className="size-4" />
-              Secure Stripe checkout · instant download
-            </div>
+            {/* Nothing to reassure an owner or an existing buyer about — this
+                listing isn't for sale to either of them. */}
+            {!isOwner && !hasPurchased && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <ShieldCheckIcon className="size-4" />
+                Secure Stripe checkout · instant download
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -202,58 +259,29 @@ export function ProductCheckoutFlow({
                 {error}
               </p>
             )}
-            <form
-              className="flex flex-col gap-4"
-              noValidate
-              onSubmit={(event) => {
-                event.preventDefault()
-                // TODO: wire up Stripe payment.
-                pay()
-              }}
+            {/* Card details are collected on Stripe's hosted page, never
+                here — see the note on the same panel in cart-view.tsx. */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium">Email</span>
+              <span className="text-sm text-muted-foreground">{email}</span>
+            </div>
+            <Separator />
+            <p className="text-sm text-muted-foreground">
+              {strings.cart.redirectNotice}
+            </p>
+            <Button
+              size="lg"
+              className="w-full"
+              disabled={pending}
+              onClick={pay}
             >
-              <Field label="Email">
-                <Input
-                  type="email"
-                  autoComplete="email"
-                  defaultValue={email}
-                  placeholder="you@example.com"
-                />
-              </Field>
-              <Separator />
-              <div className="text-sm font-semibold text-muted-foreground">
-                Payment details
-              </div>
-              <Field label="Card number">
-                <div className="relative">
-                  <Input placeholder="1234 1234 1234 1234" className="pr-12" />
-                  <CreditCardIcon className="absolute top-1/2 right-3 size-[18px] -translate-y-1/2 text-muted-foreground" />
-                </div>
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Expiry">
-                  <Input placeholder="MM / YY" />
-                </Field>
-                <Field label="CVC">
-                  <Input placeholder="123" />
-                </Field>
-              </div>
-              <Field label="Name on card">
-                <Input placeholder="Jane Creator" />
-              </Field>
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full"
-                disabled={pending}
-              >
-                <LockSimpleIcon />
-                {pending ? strings.cart.paying : `Pay $${total.toFixed(2)}`}
-              </Button>
-              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                <LockSimpleIcon className="size-3.5" />
-                Payments secured by Stripe
-              </div>
-            </form>
+              <LockSimpleIcon />
+              {pending ? strings.cart.paying : `Pay $${total.toFixed(2)}`}
+            </Button>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+              <LockSimpleIcon className="size-3.5" />
+              {strings.cart.securedBy}
+            </div>
           </div>
         </Card>
 
@@ -283,10 +311,6 @@ export function ProductCheckoutFlow({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-mono">${price.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Platform fee (2%)</span>
-                <span className="font-mono">${fee.toFixed(2)}</span>
               </div>
             </div>
             <Separator />

@@ -1,0 +1,24 @@
+-- Retires `purchases`, an orphaned table that no longer models anything.
+--
+-- It was the first pass at fulfilment: one row per buyer/product, written
+-- directly at checkout. That model can't express a cart spanning several
+-- storefronts, so it was replaced by `orders` + `order_items` — where the money
+-- is integer cents, the seller is carried per line item, and the webhook is the
+-- only writer of `paid`. Every read in the app goes through those two tables;
+-- `hasPurchasedProduct()` and /downloads included.
+--
+-- This is a **custom** migration because a generated one is impossible here.
+-- The table was created outside the migration system (a `push`, or hand SQL),
+-- so it appears in no snapshot under drizzle/meta — and drizzle-kit diffs the
+-- schema against those snapshots, not against the live database. There is
+-- nothing for it to notice, so `generate` reports "No schema changes" no matter
+-- how long the table sits there. Writing the DROP by hand is the only way it
+-- ever reaches an environment other than the one it was pushed to.
+--
+-- Verified before writing this: no view, function or foreign key depends on the
+-- table (its only constraints point *outward*, at `user` and `products`), and
+-- the two rows in it are pre-orders test data — no `stripe_payment_intent_id`
+-- on either, so neither was ever a real payment, and neither has a counterpart
+-- in `order_items`. Nothing the app can see is lost.
+
+DROP TABLE "purchases";

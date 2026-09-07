@@ -3,12 +3,15 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ProductCover } from "@/components/store/product-cover"
 import { strings } from "@/constants/strings"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
+import { listPurchasedProductIds } from "@/lib/server/dal/orders"
 import { listProductsByHandle } from "@/lib/server/dal/products"
+import { getSession } from "@/lib/server/dal/session"
 import { formatPrice } from "@/lib/store-data"
 
 export async function generateMetadata({
@@ -42,7 +45,34 @@ export default async function StorefrontPage({
     notFound()
   }
 
-  const products = await listProductsByHandle(creator.handle)
+  // The storefront is public, so this is the first look at the session on this
+  // route. It only decides whether the cards invite a purchase — the server
+  // actions in lib/actions/cart.ts are what actually refuse one.
+  const [products, session] = await Promise.all([
+    listProductsByHandle(creator.handle),
+    getSession(),
+  ])
+  // Compared by handle rather than user id, because `Creator` is deliberately
+  // the public slice of the row and carries no id. Both sides come from the
+  // database, so they're already in the stored casing — the case-insensitive
+  // lookup happens on the URL segment, above.
+  //
+  // Every product on this page belongs to this one creator, so one comparison
+  // settles the whole grid. A missing session or a null handle both compare
+  // false against a non-null column, which is the answer we want anyway.
+  const isOwner = session?.user.handle === creator.handle
+
+  // Which of these the viewer already bought. One batched query for the grid
+  // rather than `hasPurchasedProduct` per card — that is what
+  // `listPurchasedProductIds` is for. Skipped entirely for the creator's own
+  // storefront, where every card already says "Your product".
+  const purchased =
+    session && !isOwner
+      ? await listPurchasedProductIds(
+          session.user.id,
+          products.map((product) => product.id),
+        )
+      : new Set<number>()
 
   return (
     <>
@@ -113,9 +143,19 @@ export default async function StorefrontPage({
                     <span className="font-mono text-base font-semibold">
                       {formatPrice(product.price)}
                     </span>
-                    <span className={buttonVariants({ size: "sm" })}>
-                      {strings.store.buy}
-                    </span>
+                    {/* The pill is decorative — the whole card is the link.
+                        On the creator's own storefront, and on something the
+                        viewer already bought, it says so rather than inviting
+                        a purchase the server would refuse. */}
+                    {isOwner ? (
+                      <Badge variant="neutral">{strings.store.yourProduct}</Badge>
+                    ) : purchased.has(product.id) ? (
+                      <Badge variant="neutral">{strings.store.owned}</Badge>
+                    ) : (
+                      <span className={buttonVariants({ size: "sm" })}>
+                        {strings.store.buy}
+                      </span>
+                    )}
                   </div>
                 </div>
               </Link>
