@@ -26,3 +26,38 @@ export const loginSchema = z.object({
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;
+
+/**
+ * The "email me a link" form. Just an address, and deliberately nothing else:
+ * the server answers the same way whether or not an account exists, so there
+ * is nothing here to validate against.
+ */
+export const forgotPasswordSchema = z.object({
+  email: z.email(strings.validation.invalidEmail),
+});
+
+export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
+
+/**
+ * The new password, typed twice.
+ *
+ * Matches `signupSchema`'s minimum rather than `loginSchema`'s laxness — this
+ * is a password being *set*, so it's the rule that applies to new passwords
+ * that matters. Better Auth enforces its own minimum server-side as well;
+ * keeping them equal means the browser catches it first and the two never
+ * disagree about what's acceptable.
+ *
+ * The confirmation error is attached to the second field with `path`, so it
+ * renders under the input the reader has to change.
+ */
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, strings.validation.passwordMin),
+    confirmPassword: z.string(),
+  })
+  .refine((values) => values.password === values.confirmPassword, {
+    message: strings.validation.passwordMismatch,
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;

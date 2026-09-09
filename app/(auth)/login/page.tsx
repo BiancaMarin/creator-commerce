@@ -127,9 +127,8 @@ export default function LoginPage() {
                 <label htmlFor="password" className="text-sm font-medium">
                   {strings.login.password}
                 </label>
-                {/* TODO: link to /forgot-password once that route exists. */}
                 <Link
-                  href="/login"
+                  href="/forgot-password"
                   className="text-xs font-medium text-muted-foreground hover:text-foreground"
                 >
                   {strings.login.forgotPassword}

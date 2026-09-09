@@ -8,6 +8,8 @@ import { CheckIcon, ShoppingBagIcon } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { strings } from "@/constants/strings"
 import { addToCart } from "@/lib/actions/cart"
+import { capture } from "@/lib/analytics/capture"
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
 
 /**
  * `inCart` is resolved on the server from the cart cookie, so the button knows
@@ -48,6 +50,10 @@ export function AddToCartButton({
 
         return
       }
+
+      // Funnel step 3, and only on success — a refused add is not a step
+      // forward. Optional in the funnel: "Buy now" skips the cart entirely.
+      capture(ANALYTICS_EVENTS.productAddedToCart, { product_id: productId })
 
       router.refresh()
     })

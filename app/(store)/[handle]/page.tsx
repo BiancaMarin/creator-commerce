@@ -2,12 +2,14 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { TrackEvent } from "@/components/analytics/track-event"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ProductCover } from "@/components/store/product-cover"
 import { strings } from "@/constants/strings"
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
 import { listPurchasedProductIds } from "@/lib/server/dal/orders"
 import { listProductsByHandle } from "@/lib/server/dal/products"
@@ -76,6 +78,18 @@ export default async function StorefrontPage({
 
   return (
     <>
+      {/* Funnel step 1. The session was already read above, so identifying the
+          viewer here costs nothing extra; an anonymous browser is expected and
+          gets merged in when they later sign in. */}
+      <TrackEvent
+        event={ANALYTICS_EVENTS.storefrontViewed}
+        userId={session?.user.id}
+        properties={{
+          handle: creator.handle,
+          products: products.length,
+          is_owner: isOwner,
+        }}
+      />
       <section className="mx-auto flex max-w-[1000px] items-center gap-5 px-8 pt-12 pb-8">
         <Avatar size="lg" className="size-18">
           {creator.image ? (

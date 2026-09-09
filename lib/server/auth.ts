@@ -12,6 +12,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 
 import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schemas/auth";
+import { sendPasswordResetEmail } from "@/lib/server/emails/password-reset";
 import { generateUniqueHandle } from "@/lib/server/handle";
 
 export const auth = betterAuth({
@@ -21,6 +22,27 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    // Declaring this is what *enables* password reset. Without it Better Auth
+    // refuses /request-password-reset with RESET_PASSWORD_DISABLED, so the
+    // route and this function are one feature, not two.
+    //
+    // `url` already contains the token and points at Better Auth's own
+    // callback, which validates the token before redirecting on to
+    // /reset-password. Don't rebuild it from `token` — the callback is what
+    // turns an expired link into a clean error page instead of a form that
+    // fails on submit.
+    sendResetPassword: async ({ user, url }) => {
+      await sendPasswordResetEmail({ to: user.email, name: user.name, url });
+    },
+    // One hour, stated explicitly because the copy in
+    // `strings.forgotPassword.sent` and `strings.resetPassword` promises it.
+    // It happens to match Better Auth's default; leaving it implicit would let
+    // a future default change make the app lie to its users.
+    resetPasswordTokenExpiresIn: 60 * 60,
+    // A reset is what someone does when they suspect they've lost control of
+    // the account. Leaving other sessions alive would leave whoever prompted
+    // the reset signed in on their own machine.
+    revokeSessionsOnPasswordReset: true,
   },
   user: {
     additionalFields: {

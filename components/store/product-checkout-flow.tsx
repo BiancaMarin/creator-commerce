@@ -22,6 +22,8 @@ import { ProductCover } from "@/components/store/product-cover"
 import { ProductGallery } from "@/components/store/product-gallery"
 import { strings } from "@/constants/strings"
 import { checkoutProduct } from "@/lib/actions/cart"
+import { capture } from "@/lib/analytics/capture"
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
 import { formatPrice, type StoreProduct } from "@/lib/store-data"
 import {
   CHECKOUT_INTENT_PARAM,
@@ -86,6 +88,16 @@ export function ProductCheckoutFlow({
 
         return
       }
+
+      // Funnel step 4, captured before the navigation. PostHog sends it with
+      // `navigator.sendBeacon`, which survives the page being torn down — but
+      // only if it was queued while the page still existed.
+      capture(ANALYTICS_EVENTS.checkoutStarted, {
+        product_id: product.id,
+        handle: storeHandle,
+        price: product.price,
+        source: "product_page",
+      })
 
       // Stripe Checkout is another origin, so this can't be `router.push`.
       // The transition stays pending until the browser leaves, which keeps the

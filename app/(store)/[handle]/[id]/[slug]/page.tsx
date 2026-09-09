@@ -1,8 +1,10 @@
 import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 
+import { TrackEvent } from "@/components/analytics/track-event"
 import { ProductCheckoutFlow } from "@/components/store/product-checkout-flow"
 import { strings } from "@/constants/strings"
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
 import { readCartIds } from "@/lib/server/cart"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
 import { hasPurchasedProduct } from "@/lib/server/dal/orders"
@@ -81,17 +83,36 @@ export default async function ProductPage({
     : false
 
   return (
-    <ProductCheckoutFlow
-      product={product}
-      storeHandle={handle}
+    <>
+      {/* Funnel step 2. Fired after the slug redirect above, so a canonicalised
+          URL counts one view rather than two. */}
+      <TrackEvent
+        event={ANALYTICS_EVENTS.productViewed}
+        userId={session?.user.id}
+        properties={{
+          product_id: product.id,
+          product_name: product.name,
+          handle,
+          price: product.price,
+          // Both exclude the viewer from the funnel's later steps by design —
+          // the buy button isn't offered — so the drop-off is explainable
+          // rather than mysterious.
+          is_owner: session?.user.id === product.userId,
+          has_purchased: hasPurchased,
+        }}
+      />
+      <ProductCheckoutFlow
+        product={product}
+        storeHandle={handle}
       inCart={cartIds.includes(product.id)}
       signedIn={Boolean(session)}
       // Compared against the product's own `user_id`, not the storefront's
       // handle: this is the row that would be sold, so it's the row that
       // decides. `checkoutProduct` re-checks exactly this server side.
-      isOwner={session?.user.id === product.userId}
-      hasPurchased={hasPurchased}
-      email={session?.user.email ?? ""}
-    />
+        isOwner={session?.user.id === product.userId}
+        hasPurchased={hasPurchased}
+        email={session?.user.email ?? ""}
+      />
+    </>
   )
 }

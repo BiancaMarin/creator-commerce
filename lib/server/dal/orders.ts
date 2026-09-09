@@ -354,6 +354,53 @@ export const getOrderForBuyerBySession = cache(
   },
 );
 
+/**
+ * The same order and lines, looked up **without** a buyer.
+ *
+ * For the receipt email, which is composed on a path that has no session to
+ * scope by: the webhook is a request from Stripe, not from the buyer. The
+ * buyer-scoped variant above exists because *that* caller's session id arrives
+ * in a query parameter anyone can retype; here the id came from a
+ * signature-verified Stripe payload and never crosses a URL, and the address
+ * mailed is the order's own `email` column rather than anything supplied.
+ *
+ * Keep it that way. This function must not gain a caller that takes its
+ * argument from a request the buyer controls — the scoping in
+ * `getOrderForBuyerBySession` is the authorization for those.
+ */
+export const getOrderBySession = cache(
+  async (stripeSessionId: string): Promise<OrderReceipt | null> => {
+    const [order] = await db
+      .select({
+        id: ordersTable.id,
+        status: ordersTable.status,
+        amountTotal: ordersTable.amountTotal,
+        currency: ordersTable.currency,
+        email: ordersTable.email,
+        createdAt: ordersTable.createdAt,
+      })
+      .from(ordersTable)
+      .where(eq(ordersTable.stripeSessionId, stripeSessionId))
+      .limit(1);
+
+    if (!order) {
+      return null;
+    }
+
+    const items = await db
+      .select({
+        productId: orderItemsTable.productId,
+        name: orderItemsTable.name,
+        unitAmount: orderItemsTable.unitAmount,
+      })
+      .from(orderItemsTable)
+      .where(eq(orderItemsTable.orderId, order.id))
+      .orderBy(orderItemsTable.id);
+
+    return { ...order, items };
+  },
+);
+
 /** A row of the seller's Orders table: one line, with who bought it. */
 export type SellerOrderRow = {
   orderId: number;

@@ -20,6 +20,8 @@ import { Separator } from "@/components/ui/separator"
 import { ProductCover } from "@/components/store/product-cover"
 import { strings } from "@/constants/strings"
 import { checkoutCart, removeFromCart } from "@/lib/actions/cart"
+import { capture } from "@/lib/analytics/capture"
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
 import { formatPrice, type StoreProduct } from "@/lib/store-data"
 import { CHECKOUT_INTENT_PARAM, signInToCheckoutHref } from "@/lib/utils"
 
@@ -130,6 +132,14 @@ export function CartView({
 
         return
       }
+
+      // Funnel step 4, from the cart rather than a product page. Same event
+      // name — the step is "went to pay", and `source` is what separates the
+      // two routes to it when that distinction is wanted.
+      capture(ANALYTICS_EVENTS.checkoutStarted, {
+        items: items.length,
+        source: "cart",
+      })
 
       // `window.location`, not `router.push`: Stripe Checkout is a different
       // origin, and the App Router can only navigate within this app. The

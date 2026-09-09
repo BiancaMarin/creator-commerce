@@ -2,12 +2,17 @@ import "server-only";
 
 import type Stripe from "stripe";
 
+import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { captureServerEvent } from "@/lib/server/analytics";
+import { sendOrderReceipt } from "@/lib/server/emails/order-receipt";
 import { toCents } from "@/lib/server/money";
+import { appOrigin } from "@/lib/server/origin";
 import { stripe } from "@/lib/server/stripe";
 import {
   attachCheckoutSession,
   createPendingOrder,
   deletePendingOrder,
+  getOrderBySession,
   getOrderForBuyerBySession,
   listStalePendingOrders,
   markOrderPaid,
@@ -39,24 +44,6 @@ export const PURCHASE_PARAM = "purchase";
  * hours, which is why this has to be set explicitly.
  */
 export const CHECKOUT_TTL_MINUTES = 30;
-
-/**
- * The origin Stripe sends the buyer back to.
- *
- * Reuses `BETTER_AUTH_URL` rather than introducing a second "where does this
- * app live" variable: the two must always agree — a redirect back to a
- * different origin than the one holding the session cookie lands the buyer on
- * their receipt signed out — and one variable can't disagree with itself.
- */
-function appOrigin(): string {
-  const origin = process.env.BETTER_AUTH_URL;
-
-  if (!origin) {
-    throw new Error("BETTER_AUTH_URL is required to build checkout URLs");
-  }
-
-  return origin.replace(/\/$/, "");
-}
 
 /**
  * Turns live product rows into the lines of an order.
@@ -223,6 +210,42 @@ export async function fulfillCheckoutSession(
 
   if (promoted) {
     console.info(`[checkout] fulfilled session ${resolved.id}`);
+
+    // Inside the `promoted` branch on purpose: this is the only point in the
+    // app that runs exactly once per paid order, so it is the only safe place
+    // to send anything. Stripe redelivers events by design, and a receipt sent
+    // outside this branch would be sent again on every redelivery.
+    //
+    // Awaited rather than fired and forgotten. On a serverless runtime the
+    // process can be frozen the moment this handler returns, which would leave
+    // an in-flight SMTP conversation unfinished. The cost is a webhook that
+    // takes as long as an SMTP round trip; the alternative is mail that
+    // silently doesn't arrive in production while working locally.
+    const order = await getOrderBySession(resolved.id);
+
+    if (order) {
+      await sendOrderReceipt(order);
+    }
+
+    // Funnel step 5, in the same once-per-order branch and for the same reason.
+    // Captured here rather than in the browser because the buyer can close the
+    // tab the moment the card clears: a client-side "purchase" event would
+    // measure who waited for a redirect, not who paid.
+    //
+    // `buyerId` comes from the session metadata Stripe echoes back, and is the
+    // id the browser identified with while browsing — which is what puts this
+    // event in the same funnel as the four before it.
+    const buyerId = resolved.metadata?.buyerId;
+
+    if (buyerId) {
+      await captureServerEvent(buyerId, ANALYTICS_EVENTS.purchaseCompleted, {
+        order_id: order?.id,
+        // Stripe's figures, not the order's — Stripe is what charged the card.
+        amount: (resolved.amount_total ?? 0) / 100,
+        currency: (resolved.currency ?? "usd").toUpperCase(),
+        items: order?.items.length,
+      });
+    }
   } else {
     // Not an error: the expected result of a redelivered event, a double
     // fulfilment race, or a session with no order row.

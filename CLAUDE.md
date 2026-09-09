@@ -78,6 +78,8 @@ app/
   (auth)/                         # Chrome-free auth shell; redirects to /dashboard if signed in
     login/page.tsx                # "/login"
     signup/page.tsx               # "/signup"
+    forgot-password/page.tsx      # "/forgot-password"  → request a reset link
+    reset-password/page.tsx       # "/reset-password"   → set a new password from the link
   (app)/                          # Seller app. layout.tsx gates the whole group on a session
     layout.tsx                    # requireUser() + SidebarProvider + AppSidebar + TooltipProvider
     dashboard/page.tsx            # "/dashboard" → KPI cards, recent orders, Account tab
@@ -108,14 +110,18 @@ hooks/                    # e.g. use-mobile.ts
 lib/
   utils.ts                # cn() class-merge helper, getInitials(), slugify()
   auth-client.ts          # Better Auth React client (browser)
-  uploadthing.ts          # useUploadThing hook, typed off the FileRouter
+  analytics/              # funnel event names + browser capture helpers (see "Analytics")
   schemas/                # ALL zod schemas — shared client + server (see "Forms & validation")
-    auth.ts               # signupSchema, loginSchema
+    auth.ts               # signupSchema, loginSchema, forgot/resetPasswordSchema
     handle.ts             # handleSchema + HANDLE_MIN/MAX_LENGTH
     product.ts            # productSchema
   store-data.ts           # PLACEHOLDER product data (not from the DB yet)
   server/                 # server-only modules (see "Server-only code")
     auth.ts               # Better Auth config (Drizzle adapter, handle generation hook)
+    email.ts              # sendEmail() — Gmail SMTP, console fallback (see "Email")
+    emails/               # one file per message (order-receipt.ts, password-reset.ts)
+    origin.ts             # appOrigin() — absolute URLs, from BETTER_AUTH_URL
+    analytics.ts          # captureServerEvent() — PostHog from the webhook
     handle.ts             # generateUniqueHandle(), isHandleTaken()
     db/index.ts           # Drizzle client (Neon HTTP)
     db/schemas/           # auth.ts (user/session/account/verification), product.ts
@@ -179,6 +185,34 @@ Auth **is implemented** with **Better Auth** (email + password) on Drizzle/Neon.
   pre-hook validation doesn't reject signups — the column is still NOT NULL, and the
   `user.create.before` hook fills it. Consequence: **`user.handle` is typed
   `string | null | undefined`** on the session user even though it's always present.
+
+### Password reset
+
+Reset is **Better Auth's own flow**, wired to this app's mailer. Nothing about it is
+hand-rolled — no custom token table, no custom expiry.
+
+- **Declaring `sendResetPassword` is what enables the feature.** Without that function in
+  `emailAndPassword`, `/request-password-reset` refuses with `RESET_PASSWORD_DISABLED`.
+  The config and `lib/server/emails/password-reset.ts` are one feature, not two.
+- **Email the `url` Better Auth hands you; never rebuild it from `token`.** That URL points
+  at Better Auth's *callback* (`/api/auth/reset-password/:token`), which validates the token
+  and only then redirects to `/reset-password?token=…`, or `?error=INVALID_TOKEN` when it's
+  spent. Linking straight to the form would swap a clean error page for a form that fails
+  on submit.
+- **Both password pages answer the same way for every failure.** Missing token, expired
+  token, already-used token: one message, because the reader's next step is identical.
+- **`/forgot-password` never reveals whether an account exists**, and its submit handler
+  deliberately ignores the response. Better Auth returns the same body either way and even
+  does dummy token work to keep the timing alike; branching on the result here would undo
+  that and turn the form into a way to enumerate registered addresses.
+- **`resetPasswordTokenExpiresIn` is set explicitly** to the hour the UI copy promises,
+  even though it matches the current default. A default that changed later would make the
+  app lie to its users.
+- **`revokeSessionsOnPasswordReset: true`.** A reset is what someone does when they think
+  they've lost control of the account, so leaving other sessions alive defeats the point.
+- Verified end to end: token issued, callback redirect carrying the token, password
+  updated, replay of the same token refused with `INVALID_TOKEN`, sign-in with the new
+  password.
 
 ### Storefront handles
 
@@ -348,6 +382,9 @@ The flow, and the order the steps must happen in:
   reaches an environment it wasn't pushed to. `PurchaseRow` and
   `listPurchasesForBuyer` in `dal/orders.ts` are unrelated: they're a *view* of
   the two live tables, not a table.
+- **The buyer's receipt email is sent from the `promoted` branch of
+  `fulfillCheckoutSession`** — the one place that runs exactly once per paid order. See
+  "Email" for why nothing may be sent outside it.
 - The cart is cleared **after** payment, by `clearPurchasedFromCart()` from
   `ClearPurchasedCart` on /downloads — the webhook has no access to the buyer's cookies,
   and a page render can't write one.
@@ -367,6 +404,127 @@ coming. That needs a signed-URL route — `UTApi.getSignedURL(fileKey)` — gate
 `hasPurchasedProduct()`, and ideally the `productFile` route switched to
 `acl: "private"` at the same time, since an UploadThing file is publicly addressable by
 default. Refunds aren't wired either (the `refunded` status is unused).
+
+## Email (nodemailer + Gmail)
+
+Outbound mail goes through **one function**, `sendEmail()` in `lib/server/email.ts`.
+Callers describe *what* to send and never *how*, so replacing Gmail with a real sending
+service later touches that file only.
+
+- **Two transports, chosen from the environment.** `GMAIL_USER` + `GMAIL_APP_PASSWORD`
+  both set → SMTP through Gmail; anything else → the **console transport**, which prints
+  the full envelope and body to the terminal and sends nothing. `EMAIL_TRANSPORT=console`
+  forces the fallback even with credentials present, for working against production-shaped
+  config without mailing real people.
+- **The fallback is the development default, not a stub.** A developer with no credentials
+  gets a working app whose emails land in the terminal, so copy and merge fields can be
+  checked before any account exists. Nothing about a missing credential may block the
+  signup or checkout that triggered the email.
+- **`sendEmail` never throws.** Every caller sits on a path where mail is the least
+  important thing happening — an order was just paid, an account was just created — and a
+  mail server having a bad minute must not fail the write that earned the email. A refused
+  send is logged and returns `{ sent: false }`.
+- **That swallowing is why `verifyEmailTransport()` exists.** A wrong app password would
+  otherwise be invisible until real messages quietly stopped arriving; `verify()` opens and
+  closes an SMTP connection and gives a straight answer.
+- **The credential is a Google *app password*, not the account password.** Google refuses
+  plain passwords over SMTP. Generate a 16-character one under Account → Security →
+  2-Step Verification → App passwords (2-Step Verification must be on).
+- **`EMAIL_FROM` sets the display name, not the sender.** Gmail rewrites the address to the
+  authenticated account unless it's a verified alias — don't expect it to change who the
+  mail appears to come from.
+- **The transporter is a module-level singleton.** A transporter per send would mean a
+  fresh TLS handshake and Gmail login for every message; module scope survives across
+  requests in a warm server and is simply rebuilt on a cold start.
+- `text` is required and `html` optional. A plain-text part is what every client renders
+  and what keeps a message out of the spam folder an HTML-only body invites.
+
+**Testing it:** `app/api/dev/test-email/route.ts` sends one throwaway message.
+
+```bash
+curl "localhost:3000/api/dev/test-email?to=you@example.com"
+```
+
+It **404s in production** rather than 403ing: an endpoint that mails an arbitrary address
+on an unauthenticated GET is an open relay for whoever finds it, and the safest deployed
+version of it is one that doesn't appear to exist.
+
+### What sends mail
+
+**One thing today: the buyer's order receipt**, composed in
+`lib/server/emails/order-receipt.ts`. Email bodies live under `lib/server/emails/`, one
+file per message, and their copy lives in `strings.email.*` with the rest of the
+user-facing text — an email is read by a person exactly like a page is.
+
+- **It is sent from the `promoted` branch of `fulfillCheckoutSession`, and nowhere else.**
+  That branch is the only point in the app that runs exactly once per paid order, because
+  the webhook and the return-URL reconciliation both funnel through `markOrderPaid` and its
+  `status = 'pending'` predicate lets only one of them win. Move the call outside it and
+  Stripe's ordinary event redelivery mails the buyer the same receipt again.
+- **It goes to `orders.email`**, the address recorded at checkout, not the account address —
+  the buyer can change the recipient on Stripe's own page and the receipt should follow.
+- **The send is awaited, not fired and forgotten.** A serverless runtime can freeze the
+  process the moment the handler returns, which would cut off an in-flight SMTP
+  conversation. The cost is a webhook as slow as one SMTP round trip.
+- **It reads through `getOrderBySession()`, the un-scoped lookup.** The webhook is a request
+  from Stripe and has no session to scope by. That function must not gain a caller whose
+  argument comes from a request the buyer controls — the buyer-scoped
+  `getOrderForBuyerBySession` exists for those.
+- **This is not the charge receipt.** Stripe sends that one if enabled in the dashboard.
+  This is the delivery notice, and its job is the link to the library.
+- **The HTML part escapes product names and styles inline.** Names are seller-controlled
+  free text and this is the one place in the app where such a string is concatenated into
+  markup instead of rendered by React. Mail clients strip `<style>` blocks and load no
+  external stylesheet, so the app's Tailwind tokens cannot reach here.
+
+Also wired: the password reset link, from Better Auth's `sendResetPassword` hook — see
+"Password reset" under Authentication.
+
+Not wired: a seller "you made a sale" notice, and welcome mail. The seller one needs a new
+query, since the order lines aren't grouped by `seller_id` at the moment fulfilment runs.
+
+## Analytics (PostHog)
+
+**One funnel, five events, declared in `lib/analytics/events.ts`** — the shared vocabulary
+both the browser and the server import. An event name is the join between a client capture
+and a server one, and a typo in either half doesn't fail a build; it produces a funnel step
+that is silently always zero.
+
+```
+storefront_viewed → product_viewed → product_added_to_cart → checkout_started → purchase_completed
+```
+
+- **`purchase_completed` is captured on the server**, in the same `promoted` branch of
+  `fulfillCheckoutSession` as the receipt email, and for the same reason: the buyer can
+  close the tab the moment the card clears. A browser-side purchase event measures who
+  waited for a redirect, not who paid.
+- **The distinct id is the user id on both sides.** `analyticsDistinctId()` exists so there
+  is one place that decides that. The browser identifies with it while browsing; the
+  webhook captures step 5 with the `buyerId` Stripe echoes back in session metadata. Break
+  this and every funnel drops to zero at the last step while raw event counts look fine.
+- **`captureImmediate`, not `capture`, on the server.** The queued form flushes later,
+  which on a serverless host means never — the process is frozen when the handler returns.
+  The only caller is the webhook, so the wrong one would work locally and lose every
+  purchase in production.
+- **Identity is attached by pages, not by the provider.** `TrackEvent` takes a `userId`
+  from pages that already read the session for their own reasons, so no page gains a query
+  or a fetch. Reading the session in the root provider would add one to every route in the
+  app to serve a funnel spanning four of them.
+- **`TrackEvent` fires once, guarded by a ref.** Strict mode invokes effects twice, which
+  would double the view steps while leaving the later ones alone — a conversion rate wrong
+  by half, visible only in development.
+- **Autocapture and automatic pageviews are off.** Every step is captured explicitly at the
+  moment the thing happened; a stream of unanalysed clicks would only make the five events
+  that matter harder to find.
+- **No key means console logging, not breakage.** Same posture as the mail transport: the
+  funnel can be walked and checked before a PostHog project exists. Nothing user-facing may
+  depend on a capture having happened — ad blockers make a failed capture the normal case,
+  which is also why both helpers swallow their errors.
+- `NEXT_PUBLIC_POSTHOG_KEY` is reused server-side rather than adding a second variable. A
+  project API key is write-only and already ships in the browser bundle, so a private copy
+  would protect nothing and would let the two halves of one funnel point at different
+  projects.
+- `checkout_started` carries `source` (`product_page` or `cart`), since two routes reach it.
 
 ## File uploads (UploadThing)
 
@@ -593,4 +751,8 @@ since that primitive isn't installed). Pattern — see `app/(auth)/signup/page.t
 - **Auth checks live in layouts**; read sessions through `lib/server/dal/session.ts`.
 - **Server Actions take identity from the session**, never from client-supplied ids.
 - **Queries live in `lib/server/dal/`**, wrapped in React `cache()`.
+- **Funnel events come from `ANALYTICS_EVENTS`** in `lib/analytics/events.ts` — never a
+  literal string, and `purchase_completed` is captured server-side only.
 - **Zod schemas live in `lib/schemas/`** — never inline in a page, component or action.
+- **Email goes through `sendEmail()`** in `lib/server/email.ts` — never a transporter of
+  your own; it falls back to the terminal when Gmail credentials are absent.

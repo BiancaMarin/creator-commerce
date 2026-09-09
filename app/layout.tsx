@@ -4,6 +4,7 @@ import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin";
 import { extractRouterConfig } from "uploadthing/server";
 import "./globals.css";
 import { uploadRouter } from "@/app/api/uploadthing/core";
+import { PostHogProvider } from "@/components/analytics/posthog-provider";
 import { cn } from "@/lib/utils";
 
 const publicSans = Public_Sans({ subsets: ["latin"], variable: "--font-sans" });
@@ -46,7 +47,10 @@ export default function RootLayout({
             on mount and sits disabled for a beat. `extractRouterConfig` strips
             the middleware — only the public constraints cross to the client. */}
         <NextSSRPlugin routerConfig={extractRouterConfig(uploadRouter)} />
-        {children}
+        {/* Boots PostHog for every route. It renders nothing and reads no
+            session — see the component for why identity is attached by pages
+            instead. */}
+        <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
   );

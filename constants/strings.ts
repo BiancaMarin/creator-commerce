@@ -46,6 +46,43 @@ export const strings = {
     footerLink: "Sign in",
   },
 
+  forgotPassword: {
+    title: "Reset your password",
+    subtitle: "We'll email you a link to choose a new one.",
+    paragraph: "Enter the address you signed up with.",
+    email: "Email",
+    emailPlaceholder: "you@example.com",
+    submit: "Send reset link",
+    submitting: "Sending…",
+    // Shown whether or not an account exists. Saying "no such account" would
+    // turn this form into a way to test which addresses are registered, so the
+    // wording has to be true in both cases — and it is: nothing was sent if
+    // there was nobody to send to.
+    sentTitle: "Check your email",
+    sent: "If that address has an account, a reset link is on its way. The link is good for one hour.",
+    footerPrompt: "Remembered it?",
+    footerLink: "Back to sign in",
+  },
+
+  resetPassword: {
+    title: "Choose a new password",
+    subtitle: "This link works once, and only for the next hour.",
+    password: "New password",
+    confirmPassword: "Confirm new password",
+    passwordPlaceholder: "••••••••",
+    submit: "Update password",
+    submitting: "Updating…",
+    // The link was missing, already used, or older than an hour. All three are
+    // one message on purpose — the reader's next step is identical.
+    invalidTitle: "This link has expired",
+    invalid:
+      "Reset links work once and last an hour. Request a fresh one to continue.",
+    invalidCta: "Request a new link",
+    doneTitle: "Password updated",
+    done: "You can sign in with your new password now.",
+    doneCta: "Go to sign in",
+  },
+
   nav: {
     // Every account is both a seller and a buyer, so the sidebar splits by
     // activity rather than by account type. The labels name what you're doing —
@@ -438,6 +475,7 @@ export const strings = {
     required: "This field is required.",
     invalidEmail: "Please enter a valid email address.",
     passwordMin: "Password must contain at least 8 characters.",
+    passwordMismatch: "Both passwords must match.",
     handleLength: "Handles must be between 3 and 30 characters.",
     handleFormat:
       "Use lowercase letters, numbers and single hyphens between them.",
@@ -485,5 +523,45 @@ export const strings = {
     checkoutFailed: "We couldn't reach the payment provider. Please try again.",
     // {count} is replaced with MAX_CART_ITEMS from lib/schemas/cart.ts.
     cartFull: "A cart can hold up to {count} products.",
+  },
+
+  // Copy for outbound email (lib/server/emails/*). It lives here with the rest
+  // of the user-facing text rather than inside the sending code: an email is
+  // read by a person exactly like a page is, and splitting the two would mean
+  // two places to keep a tone consistent.
+  email: {
+    receipt: {
+      // {order} is the order id. Deliberately in the subject — it's what a
+      // buyer quotes when they write in about a purchase.
+      subject: "Your Creator Commerce order #{order}",
+      heading: "Thanks for your purchase",
+      // Says the money moved and where the goods are, in that order. Nothing
+      // else in the message needs to be read for the buyer to act.
+      intro:
+        "Your payment went through. Your files are in your downloads library.",
+      itemsHeading: "What you bought",
+      total: "Total",
+      // {url} is an absolute link to /downloads — email has no notion of a
+      // site-relative path.
+      cta: "View your downloads: {url}",
+      footer:
+        "You're receiving this because you bought something on Creator Commerce.",
+    },
+
+    passwordReset: {
+      subject: "Reset your Creator Commerce password",
+      heading: "Reset your password",
+      // {name} is the account holder's name.
+      intro:
+        "Hi {name}, someone asked to reset the password on your Creator Commerce account.",
+      // {url} is the one-time reset link Better Auth generated.
+      cta: "Choose a new password: {url}",
+      linkLabel: "Choose a new password",
+      expiry: "The link works once and expires in one hour.",
+      // The one line that matters to someone who didn't ask for this. No
+      // action is required precisely because the link alone changes nothing.
+      ignore:
+        "If you didn't ask for this, you can ignore this email. Your password stays as it is.",
+    },
   },
 } as const;
