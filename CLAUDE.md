@@ -513,9 +513,18 @@ storefront_viewed → product_viewed → product_added_to_cart → checkout_star
 - **`TrackEvent` fires once, guarded by a ref.** Strict mode invokes effects twice, which
   would double the view steps while leaving the later ones alone — a conversion rate wrong
   by half, visible only in development.
-- **Autocapture and automatic pageviews are off.** Every step is captured explicitly at the
-  moment the thing happened; a stream of unanalysed clicks would only make the five events
-  that matter harder to find.
+- **Autocapture is off, and dead clicks are turned off separately.** Every funnel step is
+  captured explicitly at the moment the thing happened; a stream of unanalysed clicks would
+  only make the five events that matter harder to find. `capture_dead_clicks` defaults to
+  `undefined`, which means "ask the project's remote config" — so `autocapture: false`
+  does **not** stop `$dead_click`, and the same is true of heatmaps and rageclicks. Each
+  has to be named to be silenced.
+- **Pageviews are on, as `capture_pageview: "history_change"`.** PostHog's Web Analytics
+  (Visitors, sessions, bounce rate) is built entirely from `$pageview` and is empty without
+  it, however many funnel events arrive. Plain `true` fires once per full page load, and
+  the App Router navigates client-side — a visitor going from storefront to product would
+  count once. `$pageleave` follows automatically, which is what gives a session a duration
+  rather than leaving every visit open-ended.
 - **No key means console logging, not breakage.** Same posture as the mail transport: the
   funnel can be walked and checked before a PostHog project exists. Nothing user-facing may
   depend on a capture having happened — ad blockers make a failed capture the normal case,

@@ -26,13 +26,28 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
     posthog.init(key, {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com",
-      // Both off on purpose. This project tracks **one funnel**, declared in
-      // lib/analytics/events.ts, and every step of it is captured explicitly at
-      // the moment the thing actually happened. Autocapture would add a stream
-      // of clicks and pageviews that nothing here analyses, and would make it
-      // harder to see the five events that matter.
+      // Off on purpose. The funnel in lib/analytics/events.ts captures every
+      // step explicitly, at the moment the thing actually happened. Autocapture
+      // would add a stream of clicks that nothing here analyses, and would make
+      // the five events that matter harder to find.
       autocapture: false,
-      capture_pageview: false,
+      // Separate from `autocapture`, and enabled by the *project's* remote
+      // config rather than by anything here — its default is `undefined`, which
+      // means "ask the server". So turning autocapture off does not stop
+      // `$dead_click` events; only saying so explicitly does.
+      capture_dead_clicks: false,
+      // **`'history_change'`, not `true`.** PostHog's Web Analytics — the
+      // Visitors, sessions and bounce figures — is built entirely from
+      // `$pageview`, so without this it stays empty however many funnel events
+      // arrive. Plain `true` fires once per full page load, and the App Router
+      // navigates client-side, so a visitor moving from a storefront to a
+      // product would count as one pageview. `'history_change'` hooks the
+      // History API and counts each route change.
+      //
+      // `$pageleave` follows automatically (its default is
+      // `'if_capture_pageview'`), which is what gives sessions a duration and a
+      // bounce rate rather than leaving every visit open-ended.
+      capture_pageview: "history_change",
       // The buyer leaves for Stripe mid-funnel. Without this, the return from
       // another origin can start a fresh session and split one purchase across
       // two, which is precisely the join the funnel depends on.
