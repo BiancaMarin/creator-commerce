@@ -14,8 +14,16 @@ import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schemas/auth";
 import { sendPasswordResetEmail } from "@/lib/server/emails/password-reset";
 import { generateUniqueHandle } from "@/lib/server/handle";
+import { appOrigin } from "@/lib/server/origin";
 
 export const auth = betterAuth({
+  // Passed explicitly rather than left to Better Auth's own `BETTER_AUTH_URL`
+  // lookup, so this and `appOrigin()` cannot resolve differently. On Vercel that
+  // variable is usually unset — the origin comes from `VERCEL_URL` — and Better
+  // Auth reading the environment itself would fall back to the request host on
+  // previews while Stripe redirects and emailed links used the resolver. See
+  // lib/server/origin.ts for why one answer matters more than which answer.
+  baseURL: appOrigin(),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,

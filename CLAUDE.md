@@ -120,7 +120,7 @@ lib/
     auth.ts               # Better Auth config (Drizzle adapter, handle generation hook)
     email.ts              # sendEmail() — Gmail SMTP, console fallback (see "Email")
     emails/               # one file per message (order-receipt.ts, password-reset.ts)
-    origin.ts             # appOrigin() — absolute URLs, from BETTER_AUTH_URL
+    origin.ts             # appOrigin() — absolute URLs; BETTER_AUTH_URL or Vercel's
     analytics.ts          # captureServerEvent() — PostHog from the webhook
     handle.ts             # generateUniqueHandle(), isHandleTaken()
     db/index.ts           # Drizzle client (Neon HTTP)
@@ -169,6 +169,19 @@ Auth **is implemented** with **Better Auth** (email + password) on Drizzle/Neon.
 
 - Config: `lib/server/auth.ts`. Handler: `app/api/auth/[...all]/route.ts`.
   Browser client: `lib/auth-client.ts` (`authClient.signUp` / `signIn` / `signOut`).
+- **`appOrigin()` (`lib/server/origin.ts`) is the single answer to "where does this
+  app live", and Better Auth is given it as `baseURL`** rather than reading
+  `BETTER_AUTH_URL` itself. Stripe's success/cancel URLs and every emailed link
+  come from the same function, and they all have to match whatever holds the
+  session cookie — a redirect to a different origin lands the buyer signed out.
+  Two readers of two variables is precisely how that drifts, so there is one
+  reader. It resolves `BETTER_AUTH_URL` → `VERCEL_PROJECT_PRODUCTION_URL` (on a
+  production deployment) → `VERCEL_URL`, and throws if none are set.
+  - **On Vercel, leave `BETTER_AUTH_URL` unset.** Pinning it to the production
+    URL makes every *preview* deployment redirect to production — buyers and
+    auth callbacks leave the branch under test. Unset, a preview resolves to
+    itself. Set it there only to pin a custom domain, which is the one case
+    where the derived `.vercel.app` address is wrong.
 - Schema: `lib/server/db/schemas/auth.ts` — `user`, `session`, `account`, `verification`.
   Object keys must match Better Auth's camelCase field names; the adapter resolves columns
   by key, not by column name.
@@ -388,17 +401,28 @@ The flow, and the order the steps must happen in:
 - The cart is cleared **after** payment, by `clearPurchasedFromCart()` from
   `ClearPurchasedCart` on /downloads — the webhook has no access to the buyer's cookies,
   and a page render can't write one.
-- **An abandoned checkout is a `pending` row nobody will ever finish**, and
-  `expireStalePendingOrders` is the only thing that clears it. It runs from two
-  places: the scheduled sweep (`app/api/cron/expire-orders`, scheduled by
-  `vercel.json` every 15 minutes) and an opportunistic seller-scoped sweep on
-  /orders that exists so expiry works in development. **Every candidate is asked
-  about at Stripe before it is touched** — age alone is equally the signature of
-  a late webhook, and a deleted paid order cannot be healed by one.
-  - The cron schedule needs a Vercel **Pro** plan; Hobby caps cron invocations
-    at once a day, which is far longer than `CHECKOUT_TTL_MINUTES`. On Hobby the
-    opportunistic sweep is the only real mechanism and pending rows linger until
-    a seller opens /orders.
+- **An abandoned checkout is a `pending` row nobody will ever finish**, and three
+  separate things clear it. In order of which actually does the work:
+  1. **Stripe's `checkout.session.expired` webhook** — the real mechanism in
+     production. Stripe raises it ~`CHECKOUT_TTL_MINUTES` after the buyer walks
+     away and the handler deletes the order. No polling, no schedule.
+     **It only arrives if the endpoint is subscribed to that event** in the
+     Stripe dashboard; an endpoint created with only `checkout.session.completed`
+     selected silently loses the entire abandoned-checkout path.
+  2. The opportunistic seller-scoped sweep on /orders, which is what makes
+     expiry work in development, where no webhook is forwarded.
+  3. The **daily** cron (`app/api/cron/expire-orders`, scheduled in
+     `vercel.json`) as a backstop for webhooks that never landed.
+  **Every candidate is asked about at Stripe before it is touched** — age alone
+  is equally the signature of a late webhook, and a deleted paid order cannot be
+  healed by one.
+  - The cron is daily because Vercel's **Hobby** plan triggers cron jobs once a
+    day and rejects a finer expression. Don't "upgrade" it back to `*/15`
+    without the Pro plan, and don't reach for an external scheduler to beat the
+    limit: a pending row that outlives its session is invisible and harmless.
+    `hasPurchasedProduct` counts `paid` only so it locks nothing, the seller's
+    /orders page sweeps before rendering so it is never displayed, and no money
+    was taken. Lag costs the row and nothing else.
   - `npm run reconcile:orders` (`scripts/reconcile-orders.ts`) is the read-only
     view of all this: it classifies every pending order against Stripe, and
     separately scans Stripe for **paid sessions with no paid order** — the one

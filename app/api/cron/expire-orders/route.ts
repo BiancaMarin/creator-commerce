@@ -9,10 +9,22 @@ import { expireStalePendingOrders } from "@/lib/server/checkout";
  * asking Stripe, because a late webhook looks exactly like an abandoned
  * checkout from here. See `expireStalePendingOrders`.
  *
- * Wire it to a scheduler that runs at least as often as the TTL. On Vercel that
- * is a `vercel.json` entry:
+ * **This is the backstop, not the mechanism.** In production the thing that
+ * actually closes an abandoned checkout is Stripe's own
+ * `checkout.session.expired` event, which arrives at the webhook about
+ * `CHECKOUT_TTL_MINUTES` after the buyer walks away and deletes the order there
+ * — no polling involved. What this sweep is for is the cases a webhook can't
+ * cover: a delivery that failed every retry, a deploy that was down, an order
+ * that never got a session to raise an event about.
  *
- *     { "crons": [{ "path": "/api/cron/expire-orders", "schedule": "*\/15 * * * *" }] }
+ * So it runs **daily** (`vercel.json`), not every 15 minutes. That is Vercel's
+ * Hobby limit — the plan triggers cron jobs once a day and rejects anything
+ * finer — but it is also the right frequency for a backstop, and worth
+ * understanding before anyone "fixes" it: a pending row that outlives its
+ * session is invisible and harmless. `hasPurchasedProduct` counts `paid` only,
+ * so it locks nothing; the seller's /orders page sweeps its own rows before
+ * rendering, so it is never shown; and the money was never taken. Lag here
+ * costs nothing but the row.
  *
  * Nothing schedules it in development. The opportunistic sweep on /orders
  * covers that case, and this route can be called by hand:
