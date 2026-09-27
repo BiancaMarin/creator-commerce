@@ -58,6 +58,40 @@ export function appOrigin(): string {
   );
 }
 
+/**
+ * Every origin this deployment may legitimately be reached at.
+ *
+ * `appOrigin()` returns one answer, which is what absolute links have to be
+ * built from — but on Vercel a single deployment answers to several hostnames,
+ * and Better Auth rejects a request whose `Origin` is not one it trusts. A
+ * preview is the case that bites: `VERCEL_URL` is the immutable per-deployment
+ * address (`app-7g3k9x.vercel.app`) while the link in a pull request is usually
+ * the branch alias (`app-git-my-branch.vercel.app`). Sign in through the alias
+ * with only the deployment URL trusted and the request is refused — which looks
+ * exactly like "the session doesn't work" rather than like a rejected origin.
+ *
+ * Production is included for the same reason: a custom domain pinned through
+ * `BETTER_AUTH_URL` would otherwise leave the project's own `.vercel.app`
+ * address untrusted.
+ *
+ * Widening trust only to hostnames Vercel itself reports for this project, so
+ * this cannot be broadened by anything an attacker controls.
+ */
+export function trustedAppOrigins(): string[] {
+  const origins = [
+    appOrigin(),
+    vercelOrigin(process.env.VERCEL_URL),
+    vercelOrigin(process.env.VERCEL_BRANCH_URL),
+    vercelOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+  ].filter((origin): origin is string => Boolean(origin));
+
+  return [...new Set(origins)];
+}
+
+function vercelOrigin(host: string | undefined): string | null {
+  return host ? `https://${stripTrailingSlash(host)}` : null;
+}
+
 function stripTrailingSlash(value: string): string {
   return value.replace(/\/$/, "");
 }

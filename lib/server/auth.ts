@@ -14,7 +14,7 @@ import db from "@/lib/server/db";
 import * as schema from "@/lib/server/db/schemas/auth";
 import { sendPasswordResetEmail } from "@/lib/server/emails/password-reset";
 import { generateUniqueHandle } from "@/lib/server/handle";
-import { appOrigin } from "@/lib/server/origin";
+import { appOrigin, trustedAppOrigins } from "@/lib/server/origin";
 
 export const auth = betterAuth({
   // Passed explicitly rather than left to Better Auth's own `BETTER_AUTH_URL`
@@ -24,6 +24,11 @@ export const auth = betterAuth({
   // previews while Stripe redirects and emailed links used the resolver. See
   // lib/server/origin.ts for why one answer matters more than which answer.
   baseURL: appOrigin(),
+  // One deployment, several hostnames — see `trustedAppOrigins`. Without the
+  // branch alias in here, signing in from the link Vercel puts on a pull request
+  // is refused as an untrusted origin, which presents as a session that never
+  // sticks rather than as an error.
+  trustedOrigins: trustedAppOrigins(),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema,
