@@ -119,8 +119,8 @@ export function ProductFileField({
 
   function onRemove() {
     // Only detaches the file from the product — the upload stays on
-    // UploadThing, like a removed image. Reaping orphans needs UTApi and isn't
-    // wired up. Saving now fails validation, which is the point: a product
+    // UploadThing, like a removed image, until `npm run cleanup:orphans` reaps
+    // it. Saving now fails validation, which is the point: a product
     // without a file isn't one.
     field.onChange(null);
     setError(null);

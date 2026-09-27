@@ -126,7 +126,7 @@ export function ProductImageField({
 
   function onRemove(index: number) {
     // Only detaches the image from the product. The uploaded file is left on
-    // UploadThing — reaping orphans needs UTApi and isn't wired up yet.
+    // UploadThing until `npm run cleanup:orphans` reaps it.
     field.onChange(images.filter((_, at) => at !== index));
     setError(null);
   }

@@ -388,6 +388,24 @@ The flow, and the order the steps must happen in:
 - The cart is cleared **after** payment, by `clearPurchasedFromCart()` from
   `ClearPurchasedCart` on /downloads — the webhook has no access to the buyer's cookies,
   and a page render can't write one.
+- **An abandoned checkout is a `pending` row nobody will ever finish**, and
+  `expireStalePendingOrders` is the only thing that clears it. It runs from two
+  places: the scheduled sweep (`app/api/cron/expire-orders`, scheduled by
+  `vercel.json` every 15 minutes) and an opportunistic seller-scoped sweep on
+  /orders that exists so expiry works in development. **Every candidate is asked
+  about at Stripe before it is touched** — age alone is equally the signature of
+  a late webhook, and a deleted paid order cannot be healed by one.
+  - The cron schedule needs a Vercel **Pro** plan; Hobby caps cron invocations
+    at once a day, which is far longer than `CHECKOUT_TTL_MINUTES`. On Hobby the
+    opportunistic sweep is the only real mechanism and pending rows linger until
+    a seller opens /orders.
+  - `npm run reconcile:orders` (`scripts/reconcile-orders.ts`) is the read-only
+    view of all this: it classifies every pending order against Stripe, and
+    separately scans Stripe for **paid sessions with no paid order** — the one
+    failure neither the webhook nor the sweep can see, because both start from a
+    row and that case is the row being missing. It exits non-zero when it finds
+    any. It deliberately writes nothing: the delete/fulfil logic, with its
+    `status = 'pending'` catches, must keep exactly one implementation.
 
 **Local webhooks** need the Stripe CLI, or nothing is ever fulfilled:
 
@@ -559,8 +577,16 @@ the browser to UploadThing — the bytes never pass through this server.
   the server action is the real ceiling.
 - Uploads write into a *form value*, never a row: nothing is persisted until the
   creator submits, so an abandoned form doesn't mutate the catalog. Removing an
-  image only drops it from the array — the file stays on UploadThing (reaping
-  orphans needs `UTApi` and isn't wired up).
+  image only drops it from the array — the file stays on UploadThing. Reaping
+  those leftovers is a **separate, manual** job: `npm run cleanup:orphans`
+  (`scripts/cleanup-orphans.ts`) diffs `UTApi.listFiles()` against every key the
+  DB still names and deletes the difference. It is a dry run unless passed
+  `-- --delete`. Two rules in it are load-bearing and easy to "fix" wrongly: it
+  reads `products` **without** the `deleted_at is null` filter, because a
+  soft-deleted product's file is still served to buyers who paid for it, and it
+  spares anything uploaded in the last 24h (`--grace-hours`), because a creator
+  with a half-filled form is holding uploads that are unreferenced only until
+  they hit Save.
 - Client code uses `useUploadThing` from `lib/uploadthing.ts`, whose
   `UploadRouter` import **must stay `import type`** — a value import would drag
   `lib/server/*` into the browser bundle. The prebuilt `UploadButton` /
