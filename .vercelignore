@@ -1,0 +1,12 @@
+# The Vercel CLI uploads the working directory as-is and does not read
+# .gitignore, so without this file every `vercel` deploy shipped the local .env
+# — including BETTER_AUTH_URL=http://localhost:3000, which sent Stripe redirects
+# and email links to localhost. Deployed env comes from the project's
+# Environment Variables only.
+.env*
+!.env.example
+
+# Scratch files and local build artifacts.
+*.tmp
+*.tmp.*
+*.tsbuildinfo
