@@ -220,6 +220,32 @@ export const getProductFile = cache(
 );
 
 /**
+ * Is this file key the product file of someone *else's* product?
+ *
+ * The guard before the server reads a key the client sent. An upload that no
+ * row names yet belongs to whoever has the form open, so reading it is fine; a
+ * key another creator sells is paid content, and reading it would let anyone
+ * who got hold of the key have it summarised back to them.
+ *
+ * Not filtered by `isLive`, for the same reason as `getProductFile`: a retired
+ * product's file is still someone's paid download.
+ */
+export async function isFileKeyOfOtherSeller(
+  fileKey: string,
+  userId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: productsTable.id })
+    .from(productsTable)
+    .where(
+      and(eq(productsTable.fileKey, fileKey), ne(productsTable.userId, userId)),
+    )
+    .limit(1);
+
+  return Boolean(row);
+}
+
+/**
  * Does this id name a product someone can still buy?
  *
  * The validation behind `addToCart`: the cart is a cookie the server writes on

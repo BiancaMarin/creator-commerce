@@ -130,9 +130,10 @@ export const productSchema = z.object({
 });
 
 /**
- * What the product form sends to have a description written for it. Either a
- * name worth writing about or an image to look at is enough — the refine
- * requires at least one — so the creator can start from whichever they have.
+ * What the product form sends to have a description written for it. A name
+ * worth writing about, an image to look at, or the product file itself is
+ * enough — the refine requires at least one — so the creator can start from
+ * whichever they have.
  *
  * Deliberately looser than `productSchema`: the form is half-filled when this
  * runs, so `tag` may be empty and nothing here is required on its own.
@@ -144,15 +145,47 @@ export const productDescriptionRequestSchema = z
     // Checked again server-side against this app's own UploadThing host — the
     // model fetches it, so it must not be an arbitrary address.
     imageUrl: z.url().max(512).nullable(),
+    // The uploaded product. Its key is checked server-side against other
+    // creators' products before the file is read — see draftProduct.
+    file: productFileSchema.nullable(),
   })
   .refine(
-    (value) => value.name.length >= 3 || value.imageUrl !== null,
+    (value) =>
+      value.name.length >= 3 || value.imageUrl !== null || value.file !== null,
     strings.validation.productDescriptionSource,
   );
 
 export type ProductDescriptionRequest = z.infer<
   typeof productDescriptionRequestSchema
 >;
+
+/**
+ * What the model returns for a draft: all three text fields at once, so one
+ * call fills the details section. Also the structured-output schema handed to
+ * the AI SDK — the `.describe()` texts are what the model reads as field
+ * instructions.
+ *
+ * Deliberately without `productSchema`'s length rules. A model that returns a
+ * two-letter type shouldn't fail the whole draft; the server trims and clamps,
+ * and the form's own validation still runs before anything is saved.
+ */
+export const productDraftSchema = z.object({
+  name: z
+    .string()
+    .describe(
+      "Product title, 3 to 60 characters, no quotes. If a name was given, return it unchanged.",
+    ),
+  tag: z
+    .string()
+    .describe(
+      'Product type in 1 to 3 words, e.g. "Lightroom presets" or "Video course". If a type was given, return it unchanged; otherwise prefer one of the existing types listed.',
+    ),
+  description: z
+    .string()
+    .describe("The product description, following the writing rules."),
+});
+
+export type ProductDraft = z.infer<typeof productDraftSchema>;
 
 /** What the form holds while it's being filled in — see `file` above. */
 export type ProductInput = z.input<typeof productSchema>;

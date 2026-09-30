@@ -7,14 +7,17 @@ import {
   productDescriptionRequestSchema,
   productSchema,
   type ProductDescriptionRequest,
+  type ProductDraft,
   type ProductValues,
 } from "@/lib/schemas/product";
-import { generateProductDescription } from "@/lib/server/ai";
+import { generateProductDraft } from "@/lib/server/ai";
 import { requireUser } from "@/lib/server/dal/session";
 import {
   createProductForUser,
   deleteProductForUser,
+  isFileKeyOfOtherSeller,
   isSlugTaken,
+  listProductTypes,
   updateProductForUser,
   type ProductWrite,
 } from "@/lib/server/dal/products";
@@ -165,21 +168,22 @@ export async function deleteProduct(id: number): Promise<ProductActionResult> {
   return { ok: true, id: row.id, slug: row.slug };
 }
 
-export type DescriptionActionResult =
-  | { ok: true; description: string }
+export type DraftActionResult =
+  | { ok: true; draft: ProductDraft }
   | { ok: false; error: string };
 
 /**
- * Drafts a description for the product form. Writes nothing: the text goes
- * back into the form, and only reaches the row if the creator saves it.
+ * Drafts a name, type and description for the product form. Writes nothing:
+ * the text goes back into the form, and only reaches the row if the creator
+ * saves it. Which fields the form actually fills is its own decision.
  *
  * Signed-in only (`requireUser`), because every call spends AI Gateway credit
  * — an open endpoint would let anyone drain the balance.
  */
-export async function generateDescription(
+export async function draftProduct(
   input: ProductDescriptionRequest,
-): Promise<DescriptionActionResult> {
-  await requireUser();
+): Promise<DraftActionResult> {
+  const user = await requireUser();
   const parsed = productDescriptionRequestSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -195,11 +199,24 @@ export async function generateDescription(
     return { ok: false, error: strings.validation.productImage };
   }
 
-  const description = await generateProductDescription(parsed.data);
+  // The server downloads this file and hands its contents to the model. A key
+  // that is another creator's product is their paid download, so it's refused
+  // rather than summarised back to whoever sent it.
+  if (
+    parsed.data.file &&
+    (await isFileKeyOfOtherSeller(parsed.data.file.key, user.id))
+  ) {
+    return { ok: false, error: strings.validation.productFile };
+  }
 
-  if (!description) {
+  // The labels /explore already filters on, so a new product can join one of
+  // them rather than start a near-duplicate spelling.
+  const knownTypes = (await listProductTypes()).map((facet) => facet.type);
+  const draft = await generateProductDraft(parsed.data, knownTypes);
+
+  if (!draft) {
     return { ok: false, error: strings.errors.descriptionGeneration };
   }
 
-  return { ok: true, description };
+  return { ok: true, draft };
 }

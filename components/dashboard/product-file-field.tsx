@@ -36,10 +36,22 @@ import { cn, formatFileSize } from "@/lib/utils";
  */
 export function ProductFileField({
   control,
+  onUploaded,
+  onUploadingChange,
 }: {
   // `ProductInput`, not `ProductValues`: while the form is open the field is
   // allowed to hold nothing, which is the whole reason the two types differ.
   control: Control<ProductInput>;
+  /**
+   * Called after a finished upload is in the form value. The product form uses
+   * it to draft a description from the new file.
+   */
+  onUploaded?: () => void;
+  /**
+   * Told when an upload starts and ends, so the form can hold Save until the
+   * value it's waiting for has actually arrived.
+   */
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -71,6 +83,7 @@ export function ProductFileField({
 
       setError(null);
       field.onChange(uploaded);
+      onUploaded?.();
     },
     onUploadError: (uploadError) => {
       // Messages thrown from the route's middleware — the signed-out case and
@@ -102,7 +115,8 @@ export function ProductFileField({
     }
 
     setError(null);
-    void startUpload([candidate]);
+    onUploadingChange?.(true);
+    void startUpload([candidate]).finally(() => onUploadingChange?.(false));
   }
 
   function onPick(event: React.ChangeEvent<HTMLInputElement>) {

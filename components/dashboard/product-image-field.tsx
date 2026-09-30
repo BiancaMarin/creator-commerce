@@ -30,6 +30,7 @@ export function ProductImageField({
   productName,
   seed,
   onUploaded,
+  onUploadingChange,
 }: {
   control: Control<ProductInput>;
   /** Used for the previews' alt text. */
@@ -41,6 +42,11 @@ export function ProductImageField({
    * value. The product form uses it to draft a description from a new cover.
    */
   onUploaded?: (imageUrls: string[]) => void;
+  /**
+   * Told when an upload starts and ends, so the form can hold Save until the
+   * value it's waiting for has actually arrived.
+   */
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -116,7 +122,10 @@ export function ProductImageField({
     setError(null);
     // Trimmed to what still fits, so the cap is enforced before spending an
     // upload rather than by rejecting the form afterwards.
-    void startUpload(accepted.slice(0, remaining));
+    onUploadingChange?.(true);
+    void startUpload(accepted.slice(0, remaining)).finally(() =>
+      onUploadingChange?.(false),
+    );
   }
 
   function onPick(event: React.ChangeEvent<HTMLInputElement>) {
@@ -200,7 +209,12 @@ export function ProductImageField({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium">{strings.products.images}</span>
+      <span className="text-sm font-medium">
+        {strings.products.images}{" "}
+        <span className="font-normal text-muted-foreground">
+          · {strings.products.optional}
+        </span>
+      </span>
 
       {/* The whole field is the drop target, not just the add tile — dropping
           onto the thumbnails is the obvious gesture once images exist. */}

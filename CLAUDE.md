@@ -122,7 +122,7 @@ lib/
     emails/               # one file per message (order-receipt.ts, password-reset.ts)
     origin.ts             # appOrigin() — absolute URLs; BETTER_AUTH_URL or Vercel's
     analytics.ts          # captureServerEvent() — PostHog from the webhook
-    ai.ts                 # generateProductDescription() — AI Gateway (see "AI descriptions")
+    ai.ts                 # generateProductDraft() — AI Gateway (see "AI product drafts")
     handle.ts             # generateUniqueHandle(), isHandleTaken()
     db/index.ts           # Drizzle client (Neon HTTP)
     db/schemas/           # auth.ts (user/session/account/verification), product.ts
@@ -706,14 +706,24 @@ client bundle. If a Client Component needs something from there, either pass it 
 from a Server Component, or extract the shared part to a neutral module — that's exactly
 why `lib/schemas/` sits outside `lib/server/`.
 
-## AI descriptions (Vercel AI Gateway)
+## AI product drafts (Vercel AI Gateway)
 
-The product form's **Write with AI** button drafts a description from the name,
-type and cover image. The first image uploaded onto an empty description also
-triggers it. The draft goes into the form only; nothing is saved until submit.
+The product form is laid out in the order a creator works: **Your product**
+(file, then images), **Details** (name, type, description), **Price**. Once
+the product file is uploaded, AI drafts the Details section from it and the
+cover; the **Fill in with AI** button there does the same on demand. The draft
+goes into the form only; nothing is saved until submit.
 
-- Flow: `ProductForm` → `generateDescription` (`lib/actions/products.ts`,
-  signed-in only) → `generateProductDescription` (`lib/server/ai.ts`) →
+- **One call returns name, type and description**, via `Output.object` with
+  `productDraftSchema` (`lib/schemas/product.ts`). The form fills name and
+  type **only when empty**, never renaming a product; the button replaces the
+  description, the automatic run only fills an empty one.
+- **Existing `/explore` types are passed to the model** (`listProductTypes()`)
+  so a new product reuses "Lightroom presets" instead of starting a
+  near-duplicate spelling.
+
+- Flow: `ProductForm` → `draftProduct` (`lib/actions/products.ts`,
+  signed-in only) → `generateProductDraft` (`lib/server/ai.ts`) →
   `generateText` from the `ai` package with a plain `"provider/model"` string,
   which the SDK routes through the Gateway.
 - **The model is a Gateway free-tier one** (`google/gemini-2.5-flash`). Free
@@ -726,6 +736,14 @@ triggers it. The draft goes into the form only; nothing is saved until submit.
 - **The image URL comes from the client and the Gateway fetches it**, so the
   action checks it with `isOwnStorageUrl()` (this app's `<appId>.ufs.sh/f/`)
   before passing it on. Keep that check if you add image inputs.
+- **The product file is read server-side and sent as bytes**, never as a URL:
+  `storageUrl()` is a paid product's permanent address and must not reach a
+  model provider. Only types a model can read are sent (PDF, images, and
+  txt/md/csv/json inlined as text, by extension), up to 10 MB; anything else
+  (zip, video, presets) is described from its name and size.
+- **`isFileKeyOfOtherSeller()` gates that read.** The key comes from the
+  client, and a key another creator sells is their paid download. An upload no
+  row names yet is fine, since it belongs to whoever has the form open.
 - The automatic run never overwrites text. It rechecks emptiness when the draft
   arrives, since the creator may have typed in the meantime. The button does
   replace the text, and its hint says so.

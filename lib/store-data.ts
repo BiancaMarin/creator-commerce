@@ -81,5 +81,18 @@ export function visualsFor(seed: string): ProductVisuals {
 export function formatPrice(value: number | string) {
   const amount = typeof value === "string" ? Number(value) : value
 
-  return `$${Number.isInteger(amount) ? amount : amount.toFixed(2)}`
+  return `${Number.isInteger(amount) ? amount : amount.toFixed(2)}`
+}
+
+/**
+ * The platform's cut of each sale, as the landing page and pricing copy state
+ * it ("2% flat fee"). The seller pays it out of their payout; the buyer pays
+ * the list price. Not yet deducted anywhere — that needs Stripe Connect — so
+ * today this only powers the estimate on the product form.
+ */
+export const PLATFORM_FEE_PERCENT = 2
+
+/** What the seller keeps from one sale at `price`, rounded to the cent. */
+export function sellerPayout(price: number) {
+  return Math.round(price * (100 - PLATFORM_FEE_PERCENT)) / 100
 }

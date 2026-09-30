@@ -143,16 +143,33 @@ export const strings = {
     namePlaceholder: "Studio Preset Pack",
     tag: "Type",
     tagPlaceholder: "Lightroom presets",
+    // Section headings of the product form, in the order a creator fills it.
+    sectionProduct: "Your product",
+    sectionProductHint:
+      "Upload what buyers get. Once the file is in, AI drafts the details below for you to review.",
+    sectionDetails: "Details",
+    sectionDetailsHint: "How the product appears on your storefront.",
+    sectionPrice: "Price",
+    sectionPriceHint: "What buyers pay, in US dollars.",
+    // Only optional fields are marked; the note says the rest are required.
+    optional: "Optional",
+    requiredNote: "Every field is required unless it's marked optional.",
+    // {amount} is the formatted payout, {percent} the platform fee.
+    payout: "You receive {amount} per sale after the {percent}% platform fee.",
+    // Shown after an AI draft has filled fields the creator left empty.
+    aiFilled: "Drafted with AI from your upload — review it before saving.",
+    // Replaces the Save label while an image or the product file is uploading.
+    waitingForUpload: "Uploading…",
     description: "Description",
     descriptionPlaceholder:
       "What the buyer gets, who it's for, and what they can do with it.",
-    descriptionGenerate: "Write with AI",
+    descriptionGenerate: "Fill in with AI",
     descriptionRegenerate: "Rewrite with AI",
     descriptionGenerating: "Writing…",
     // Under the button. Says what the draft is built from and that it
     // replaces what's in the box, so a click is never a surprise.
     descriptionGenerateHint:
-      "Drafted from the name, type and cover image. Replaces the text above — edit it before saving.",
+      "Uses the product file, cover image, name and type. Fills in an empty name and type, and replaces the description — edit it before saving.",
     price: "Price",
     pricePlaceholder: "48.00",
     file: "Product file",
@@ -500,7 +517,7 @@ export const strings = {
     productImageCount: "You can add up to {count} images.",
     // Asking AI for a description with nothing to go on.
     productDescriptionSource:
-      "Add a name or an image first, so there's something to describe.",
+      "Add a name, an image or the product file first, so there's something to describe.",
   },
 
   errors: {
