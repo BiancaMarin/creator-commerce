@@ -29,12 +29,18 @@ export function ProductImageField({
   control,
   productName,
   seed,
+  onUploaded,
 }: {
   control: Control<ProductInput>;
   /** Used for the previews' alt text. */
   productName: string;
   /** Picks the placeholder gradient while there are no images. */
   seed: string;
+  /**
+   * Called with the URLs a finished upload added, after they're in the form
+   * value. The product form uses it to draft a description from a new cover.
+   */
+  onUploaded?: (imageUrls: string[]) => void;
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -85,6 +91,7 @@ export function ProductImageField({
       field.onChange(
         [...(field.value ?? []), ...uploaded].slice(0, MAX_PRODUCT_IMAGES),
       );
+      onUploaded?.(uploaded);
     },
     onUploadError: (uploadError) => {
       // UploadThingError messages thrown in the router's middleware arrive

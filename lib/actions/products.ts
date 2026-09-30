@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 
 import { strings } from "@/constants/strings";
-import { productSchema, type ProductValues } from "@/lib/schemas/product";
+import {
+  productDescriptionRequestSchema,
+  productSchema,
+  type ProductDescriptionRequest,
+  type ProductValues,
+} from "@/lib/schemas/product";
+import { generateProductDescription } from "@/lib/server/ai";
 import { requireUser } from "@/lib/server/dal/session";
 import {
   createProductForUser,
@@ -12,6 +18,7 @@ import {
   updateProductForUser,
   type ProductWrite,
 } from "@/lib/server/dal/products";
+import { isOwnStorageUrl } from "@/lib/server/uploadthing";
 import { slugify } from "@/lib/utils";
 
 export type ProductActionResult =
@@ -156,4 +163,43 @@ export async function deleteProduct(id: number): Promise<ProductActionResult> {
   revalidateProduct(user.handle, row.id, row.slug);
 
   return { ok: true, id: row.id, slug: row.slug };
+}
+
+export type DescriptionActionResult =
+  | { ok: true; description: string }
+  | { ok: false; error: string };
+
+/**
+ * Drafts a description for the product form. Writes nothing: the text goes
+ * back into the form, and only reaches the row if the creator saves it.
+ *
+ * Signed-in only (`requireUser`), because every call spends AI Gateway credit
+ * — an open endpoint would let anyone drain the balance.
+ */
+export async function generateDescription(
+  input: ProductDescriptionRequest,
+): Promise<DescriptionActionResult> {
+  await requireUser();
+  const parsed = productDescriptionRequestSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? strings.errors.generic,
+    };
+  }
+
+  // The Gateway fetches this URL, so it has to be one of this app's own
+  // uploads rather than whatever address the client sent.
+  if (parsed.data.imageUrl && !isOwnStorageUrl(parsed.data.imageUrl)) {
+    return { ok: false, error: strings.validation.productImage };
+  }
+
+  const description = await generateProductDescription(parsed.data);
+
+  if (!description) {
+    return { ok: false, error: strings.errors.descriptionGeneration };
+  }
+
+  return { ok: true, description };
 }

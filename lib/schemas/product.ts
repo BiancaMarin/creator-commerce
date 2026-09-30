@@ -129,6 +129,31 @@ export const productSchema = z.object({
     ),
 });
 
+/**
+ * What the product form sends to have a description written for it. Either a
+ * name worth writing about or an image to look at is enough — the refine
+ * requires at least one — so the creator can start from whichever they have.
+ *
+ * Deliberately looser than `productSchema`: the form is half-filled when this
+ * runs, so `tag` may be empty and nothing here is required on its own.
+ */
+export const productDescriptionRequestSchema = z
+  .object({
+    name: z.string().trim().max(255),
+    tag: z.string().trim().max(60),
+    // Checked again server-side against this app's own UploadThing host — the
+    // model fetches it, so it must not be an arbitrary address.
+    imageUrl: z.url().max(512).nullable(),
+  })
+  .refine(
+    (value) => value.name.length >= 3 || value.imageUrl !== null,
+    strings.validation.productDescriptionSource,
+  );
+
+export type ProductDescriptionRequest = z.infer<
+  typeof productDescriptionRequestSchema
+>;
+
 /** What the form holds while it's being filled in — see `file` above. */
 export type ProductInput = z.input<typeof productSchema>;
 

@@ -122,6 +122,7 @@ lib/
     emails/               # one file per message (order-receipt.ts, password-reset.ts)
     origin.ts             # appOrigin() — absolute URLs; BETTER_AUTH_URL or Vercel's
     analytics.ts          # captureServerEvent() — PostHog from the webhook
+    ai.ts                 # generateProductDescription() — AI Gateway (see "AI descriptions")
     handle.ts             # generateUniqueHandle(), isHandleTaken()
     db/index.ts           # Drizzle client (Neon HTTP)
     db/schemas/           # auth.ts (user/session/account/verification), product.ts
@@ -704,6 +705,30 @@ Anything under `lib/server/` starts with `import "server-only"` and must never r
 client bundle. If a Client Component needs something from there, either pass it as a prop
 from a Server Component, or extract the shared part to a neutral module — that's exactly
 why `lib/schemas/` sits outside `lib/server/`.
+
+## AI descriptions (Vercel AI Gateway)
+
+The product form's **Write with AI** button drafts a description from the name,
+type and cover image. The first image uploaded onto an empty description also
+triggers it. The draft goes into the form only; nothing is saved until submit.
+
+- Flow: `ProductForm` → `generateDescription` (`lib/actions/products.ts`,
+  signed-in only) → `generateProductDescription` (`lib/server/ai.ts`) →
+  `generateText` from the `ai` package with a plain `"provider/model"` string,
+  which the SDK routes through the Gateway.
+- **The model is a Gateway free-tier one** (`google/gemini-2.5-flash`). Free
+  credits reject larger models, Claude included, with "Free tier users do not
+  have access to this model". Override with `AI_DESCRIPTION_MODEL`; it must
+  accept images.
+- **Auth:** `AI_GATEWAY_API_KEY` locally (the SDK reads only that name). On
+  Vercel it can stay unset, because the SDK falls back to the injected
+  `VERCEL_OIDC_TOKEN`. Smoke test: `npm run ai:hello`.
+- **The image URL comes from the client and the Gateway fetches it**, so the
+  action checks it with `isOwnStorageUrl()` (this app's `<appId>.ufs.sh/f/`)
+  before passing it on. Keep that check if you add image inputs.
+- The automatic run never overwrites text. It rechecks emptiness when the draft
+  arrives, since the creator may have typed in the meantime. The button does
+  replace the text, and its hint says so.
 
 ## UI components (shadcn — Base UI variant)
 

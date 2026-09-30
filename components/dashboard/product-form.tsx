@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
-import { ArrowSquareOutIcon, CheckCircleIcon } from "@phosphor-icons/react";
+import {
+  ArrowSquareOutIcon,
+  CheckCircleIcon,
+  CircleNotchIcon,
+  SparkleIcon,
+} from "@phosphor-icons/react";
 
 import { DeleteProductDialog } from "@/components/dashboard/delete-product-dialog";
 import { ProductFileField } from "@/components/dashboard/product-file-field";
@@ -22,7 +27,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { strings } from "@/constants/strings";
-import { createProduct, updateProduct } from "@/lib/actions/products";
+import {
+  createProduct,
+  generateDescription,
+  updateProduct,
+} from "@/lib/actions/products";
 import {
   productSchema,
   type ProductFile,
@@ -55,12 +64,16 @@ export function ProductForm({
   const isEdit = Boolean(product);
   const [formError, setFormError] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
+  const [isDrafting, setIsDrafting] = React.useState(false);
+  const [draftError, setDraftError] = React.useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     reset,
     control,
+    getValues,
+    setValue,
     formState: { errors, isSubmitting },
     // Three type arguments, not one: the form holds `ProductInput` (whose
     // `file` may be null while it's being filled in) and `handleSubmit` hands
@@ -87,6 +100,51 @@ export function ProductForm({
   const storeUrl = previewSlug
     ? `/${handle}/${product?.id ?? "…"}/${previewSlug}`
     : null;
+
+  const imageUrls = useWatch({ control, name: "imageUrls" });
+  const description = useWatch({ control, name: "description" });
+  // Mirrors the refine on productDescriptionRequestSchema: a name worth
+  // writing about, or an image to look at.
+  const canDraft =
+    (name ?? "").trim().length >= 3 || (imageUrls ?? []).length > 0;
+
+  /**
+   * Asks the AI Gateway for a description built from the name, type and cover
+   * image, and writes it into the field. Nothing is saved — the creator still
+   * edits and submits it like text they typed.
+   *
+   * `onlyIfEmpty` is the automatic run after an upload: it must never replace
+   * words the creator wrote, including ones typed while the model was working,
+   * so emptiness is checked again when the draft arrives.
+   */
+  async function draftDescription({ onlyIfEmpty = false } = {}) {
+    const [currentName, tag, images] = getValues(["name", "tag", "imageUrls"]);
+
+    setIsDrafting(true);
+    setDraftError(null);
+
+    const result = await generateDescription({
+      name: currentName ?? "",
+      tag: tag ?? "",
+      imageUrl: images?.[0] ?? null,
+    });
+
+    setIsDrafting(false);
+
+    if (!result.ok) {
+      setDraftError(result.error);
+      return;
+    }
+
+    if (onlyIfEmpty && getValues("description")?.trim()) {
+      return;
+    }
+
+    setValue("description", result.description, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
@@ -198,9 +256,29 @@ export function ProductForm({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              {strings.products.description}
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="description" className="text-sm font-medium">
+                {strings.products.description}
+              </label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                disabled={!canDraft || isDrafting}
+                onClick={() => void draftDescription()}
+              >
+                {isDrafting ? (
+                  <CircleNotchIcon className="animate-spin" />
+                ) : (
+                  <SparkleIcon />
+                )}
+                {isDrafting
+                  ? strings.products.descriptionGenerating
+                  : description?.trim()
+                    ? strings.products.descriptionRegenerate
+                    : strings.products.descriptionGenerate}
+              </Button>
+            </div>
             <Textarea
               id="description"
               rows={5}
@@ -213,6 +291,17 @@ export function ProductForm({
                 {errors.description.message}
               </p>
             )}
+            {draftError ? (
+              <p role="alert" className="text-xs text-destructive">
+                {draftError}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {canDraft
+                  ? strings.products.descriptionGenerateHint
+                  : strings.validation.productDescriptionSource}
+              </p>
+            )}
           </div>
 
           {/* Uploads append to the `imageUrls` form value; nothing reaches the
@@ -221,6 +310,13 @@ export function ProductForm({
             control={control}
             productName={name ?? ""}
             seed={previewSlug || String(product?.id ?? "")}
+            // A first photo on an empty description drafts one from it. Never
+            // over text the creator has written — see draftDescription.
+            onUploaded={() => {
+              if (!getValues("description")?.trim()) {
+                void draftDescription({ onlyIfEmpty: true });
+              }
+            }}
           />
 
           {/* The digital product itself. Like the images above, the upload

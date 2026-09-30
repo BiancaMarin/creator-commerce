@@ -66,3 +66,25 @@ function getAppId() {
 export function storageUrl(fileKey: string) {
   return `https://${getAppId()}.ufs.sh/f/${encodeURIComponent(fileKey)}`;
 }
+
+/**
+ * Whether a URL is a file in *this* app's UploadThing storage — the same
+ * `<appId>.ufs.sh/f/…` shape `next.config.ts` allows for the image optimizer.
+ *
+ * For URLs that arrive from the client and are then fetched by someone else on
+ * the server's behalf (the AI Gateway reading a product image). Without it, a
+ * form value is an open "fetch any address" primitive.
+ */
+export function isOwnStorageUrl(value: string) {
+  try {
+    const url = new URL(value);
+
+    return (
+      url.protocol === "https:" &&
+      url.hostname === `${getAppId()}.ufs.sh` &&
+      url.pathname.startsWith("/f/")
+    );
+  } catch {
+    return false;
+  }
+}

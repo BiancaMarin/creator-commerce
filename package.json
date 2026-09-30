@@ -11,15 +11,18 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "cleanup:orphans": "node --env-file=.env scripts/cleanup-orphans.ts",
-    "reconcile:orders": "node --env-file=.env scripts/reconcile-orders.ts"
+    "reconcile:orders": "node --env-file=.env scripts/reconcile-orders.ts",
+    "ai:hello": "node --env-file=.env scripts/ai-hello.mts"
   },
   "dependencies": {
+    "@ai-sdk/react": "^4.0.126",
     "@base-ui/react": "^1.6.0",
     "@better-auth/drizzle-adapter": "^1.7.0-rc.1",
     "@hookform/resolvers": "^5.4.0",
     "@neondatabase/serverless": "^1.1.0",
     "@phosphor-icons/react": "^2.1.10",
     "@uploadthing/react": "^7.3.3",
+    "ai": "^7.0.123",
     "better-auth": "^1.7.0-rc.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

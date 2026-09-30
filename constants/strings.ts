@@ -146,6 +146,13 @@ export const strings = {
     description: "Description",
     descriptionPlaceholder:
       "What the buyer gets, who it's for, and what they can do with it.",
+    descriptionGenerate: "Write with AI",
+    descriptionRegenerate: "Rewrite with AI",
+    descriptionGenerating: "Writing…",
+    // Under the button. Says what the draft is built from and that it
+    // replaces what's in the box, so a click is never a surprise.
+    descriptionGenerateHint:
+      "Drafted from the name, type and cover image. Replaces the text above — edit it before saving.",
     price: "Price",
     pricePlaceholder: "48.00",
     file: "Product file",
@@ -491,6 +498,9 @@ export const strings = {
     productImage: "That doesn't look like a valid image URL.",
     // {count} is replaced with MAX_PRODUCT_IMAGES from lib/schemas/product.ts.
     productImageCount: "You can add up to {count} images.",
+    // Asking AI for a description with nothing to go on.
+    productDescriptionSource:
+      "Add a name or an image first, so there's something to describe.",
   },
 
   errors: {
@@ -523,6 +533,10 @@ export const strings = {
     checkoutFailed: "We couldn't reach the payment provider. Please try again.",
     // {count} is replaced with MAX_CART_ITEMS from lib/schemas/cart.ts.
     cartFull: "A cart can hold up to {count} products.",
+    // The AI Gateway call failed or came back empty. Not the creator's fault,
+    // and the description they had is left untouched.
+    descriptionGeneration:
+      "Couldn't write a description right now. Try again, or write one yourself.",
   },
 
   // Copy for outbound email (lib/server/emails/*). It lives here with the rest
