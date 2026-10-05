@@ -90,6 +90,69 @@ export const listProductsForUser = cache(
   },
 );
 
+/** How many of the seller's own products to return from a name lookup. */
+const OWN_PRODUCT_MATCH_LIMIT = 20;
+
+/**
+ * The seller's own products whose name contains `query`, newest first.
+ *
+ * For CECE (lib/server/cece/tools.ts), which has to turn "my preset pack" into
+ * a product id before it can say anything about it. A substring match on the
+ * name only: the seller is naming something they already know, so the
+ * description would only add false positives.
+ *
+ * No `MIN_SEARCH_LENGTH` floor, unlike `searchProducts`: the scan is bounded by
+ * `user_id` to one creator's catalog, not the whole platform, so a short term
+ * costs nothing worth guarding. An empty query returns the latest products.
+ */
+export const searchProductsForUser = cache(
+  async (userId: string, query: string): Promise<Product[]> => {
+    const term = query.trim();
+
+    return db
+      .select()
+      .from(productsTable)
+      .where(
+        and(
+          eq(productsTable.userId, userId),
+          isLive,
+          term ? ilike(productsTable.name, `%${escapeLike(term)}%`) : undefined,
+        ),
+      )
+      .orderBy(desc(productsTable.createdAt))
+      .limit(OWN_PRODUCT_MATCH_LIMIT);
+  },
+);
+
+/** What's incomplete in a seller's catalog. */
+export type CatalogHealth = {
+  /** Live products. */
+  products: number;
+  /** Live products with no downloadable file — a buyer would get nothing. */
+  missingFile: number;
+  /** Live products with no image, which show a generated cover instead. */
+  missingImages: number;
+};
+
+/**
+ * Counts the gaps in a seller's catalog in one pass, so CECE can say "two of
+ * your products have no file" without loading every row into the prompt.
+ */
+export const getCatalogHealthForUser = cache(
+  async (userId: string): Promise<CatalogHealth> => {
+    const [row] = await db
+      .select({
+        products: sql<number>`count(*)::int`,
+        missingFile: sql<number>`count(*) filter (where ${productsTable.fileKey} is null)::int`,
+        missingImages: sql<number>`count(*) filter (where cardinality(${productsTable.imageUrls}) = 0)::int`,
+      })
+      .from(productsTable)
+      .where(and(eq(productsTable.userId, userId), isLive));
+
+    return row ?? { products: 0, missingFile: 0, missingImages: 0 };
+  },
+);
+
 /**
  * One product, scoped to its owner. Ownership is part of the lookup rather
  * than a check afterwards, so an edit page can never load someone else's row.

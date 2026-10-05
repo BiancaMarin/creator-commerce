@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";
@@ -31,6 +31,30 @@ export const getCreatorByHandle = cache(
       .select({ name: user.name, handle: user.handle, image: user.image })
       .from(user)
       .where(sql`lower(${user.handle}) = ${handle.toLowerCase()}`)
+      .limit(1);
+
+    if (!row) {
+      return null;
+    }
+
+    return { ...row, initials: getInitials(row.name) };
+  },
+);
+
+/**
+ * The same public slice, by user id — for callers that know who someone is
+ * but not their handle, such as CECE's tools (lib/server/cece/tools.ts).
+ *
+ * Read fresh rather than taken from the session: a handle can be renamed in
+ * the middle of a conversation, and a storefront link built from a stale one
+ * 404s.
+ */
+export const getCreatorById = cache(
+  async (userId: string): Promise<Creator | null> => {
+    const [row] = await db
+      .select({ name: user.name, handle: user.handle, image: user.image })
+      .from(user)
+      .where(eq(user.id, userId))
       .limit(1);
 
     if (!row) {

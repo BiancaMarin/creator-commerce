@@ -13,10 +13,12 @@ import {
   PackageIcon,
   ReceiptIcon,
   ShoppingBagIcon,
+  SparkleIcon,
   UsersIcon,
   type Icon,
 } from "@phosphor-icons/react"
 
+import { useCece } from "@/components/cece/cece-provider"
 import { LogoMark } from "@/components/marketing/logo"
 import { NavUser, type NavUserProps } from "@/components/nav-user"
 import {
@@ -33,6 +35,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { strings } from "@/constants/strings"
 
@@ -72,6 +75,8 @@ export function AppSidebar({
   cartCount: number
 }) {
   const pathname = usePathname()
+  const cece = useCece()
+  const { setOpenMobile } = useSidebar()
 
   const isActive = (href: string) => pathname.startsWith(href)
 
@@ -175,6 +180,23 @@ export function AppSidebar({
 
       <SidebarFooter>
         <SidebarMenu>
+          {/* In the footer rather than a nav group: it isn't a page, and it
+              should sit in the same place whichever page someone is stuck on. */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip={strings.cece.navLabel}
+              isActive={cece.open}
+              onClick={() => {
+                // On mobile the sidebar is itself a sheet; leaving it open
+                // would stack two sheets.
+                setOpenMobile(false)
+                cece.setOpen(true)
+              }}
+            >
+              <SparkleIcon weight="fill" className="text-primary" />
+              <span>{strings.cece.navLabel}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <NavUser {...user} />
           </SidebarMenuItem>

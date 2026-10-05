@@ -1,4 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { CecePanel } from "@/components/cece/cece-panel";
+import { CeceProvider } from "@/components/cece/cece-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { readCartIds } from "@/lib/server/cart";
@@ -21,15 +23,20 @@ export default async function AppLayout({
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <AppSidebar
-          user={{ name: user.name, email: user.email, image: user.image }}
-          cartCount={cartCount}
-        />
-        <SidebarInset>
-          <div className="flex flex-1 flex-col">{children}</div>
-        </SidebarInset>
-      </SidebarProvider>
+      {/* Above the sidebar, so the conversation outlives the mobile sidebar,
+          which unmounts when it closes. */}
+      <CeceProvider>
+        <SidebarProvider>
+          <AppSidebar
+            user={{ name: user.name, email: user.email, image: user.image }}
+            cartCount={cartCount}
+          />
+          <SidebarInset>
+            <div className="flex flex-1 flex-col">{children}</div>
+          </SidebarInset>
+        </SidebarProvider>
+        <CecePanel />
+      </CeceProvider>
     </TooltipProvider>
   );
 }

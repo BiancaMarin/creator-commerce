@@ -390,6 +390,54 @@ export const strings = {
     nameOnCard: "Name on card",
   },
 
+  // CECE, the in-app assistant (components/cece/). The name is always written
+  // in capitals — it's a name, not an acronym anyone expands.
+  cece: {
+    name: "CECE",
+    navLabel: "Ask CECE",
+    title: "Ask CECE",
+    description:
+      "Your Creator Commerce assistant. Ask how something works, or about your products and sales.",
+    // Shown in place of the conversation until the first message.
+    emptyTitle: "How can I help?",
+    emptyHint: "CECE can look up your store and explain how the platform works.",
+    // Starter questions, sent as-is when clicked. Each exercises a different
+    // tool, so the empty state doubles as a tour of what CECE can do.
+    suggestions: [
+      "How do I add my first product?",
+      "How are my sales this month?",
+      "Is anything missing from my products?",
+      "Where can I download what I bought?",
+    ],
+    inputPlaceholder: "Ask anything about Creator Commerce…",
+    inputLabel: "Message CECE",
+    send: "Send",
+    stop: "Stop",
+    newChat: "New chat",
+    thinking: "Thinking…",
+    retry: "Try again",
+    // The request itself failed (network, 401, 413). Errors *inside* a reply
+    // arrive as text from the server — see lib/server/cece/chat.ts.
+    error: "Something went wrong. Please try again.",
+    // Labels for the lookups CECE makes, keyed by tool name, shown as a chip
+    // while the tool runs and after. Mirrors CECE_TOOLS in
+    // lib/server/cece/tools.ts; a tool missing here falls back to `toolFallback`.
+    tools: {
+      get_help: "Checked the help guide",
+      get_account_overview: "Looked at your account",
+      list_my_products: "Looked at your products",
+      get_my_product: "Opened a product",
+      get_sales_summary: "Checked your sales",
+      list_recent_orders: "Checked recent orders",
+      list_top_customers: "Checked your customers",
+      list_my_purchases: "Checked your purchases",
+      search_marketplace: "Searched the marketplace",
+    },
+    toolFallback: "Looked something up",
+    toolFailed: "Couldn't load this",
+    disclaimer: "CECE can make mistakes. It can look things up but can't change anything.",
+  },
+
   marketing: {
     meta: {
       title: "Creator Commerce — Sell your digital products",

@@ -97,6 +97,7 @@ app/
   api/stripe/webhook/route.ts     # Stripe webhook — the ONLY place an order becomes paid
   api/uploadthing/core.ts         # UploadThing FileRouter (productImage, productFile)
   api/uploadthing/route.ts        # UploadThing handler (GET/POST)
+  api/cece/route.ts               # CECE chat stream (session-gated)
 components/
   ui/                     # shadcn primitives (Base UI wrappers) — treat as generated
   app-sidebar.tsx         # Seller left nav (client; usePathname for active state)
@@ -104,6 +105,7 @@ components/
   dashboard/              # Dashboard-only pieces (handle-form.tsx)
   marketing/              # Landing page sections + LogoMark
   store/                  # Storefront chrome + product/checkout UI
+  cece/                   # CECE chat: provider (useChat), panel (sheet), text renderer
 constants/
   strings.ts              # Centralized user-facing copy (see "Copy & UI strings")
 hooks/                    # e.g. use-mobile.ts
@@ -123,6 +125,7 @@ lib/
     origin.ts             # appOrigin() — absolute URLs; BETTER_AUTH_URL or Vercel's
     analytics.ts          # captureServerEvent() — PostHog from the webhook
     ai.ts                 # generateProductDraft() — AI Gateway (see "AI product drafts")
+    cece/                 # CECE assistant: tools.ts (MCP-ready defs), guide.ts, chat.ts
     handle.ts             # generateUniqueHandle(), isHandleTaken()
     db/index.ts           # Drizzle client (Neon HTTP)
     db/schemas/           # auth.ts (user/session/account/verification), product.ts
@@ -747,6 +750,47 @@ goes into the form only; nothing is saved until submit.
 - The automatic run never overwrites text. It rechecks emptiness when the draft
   arrives, since the creator may have typed in the meantime. The button does
   replace the text, and its hint says so.
+
+## CECE — the in-app assistant
+
+"Ask CECE" (sidebar footer) opens a chat sheet where a signed-in user can ask how the
+platform works or about their own store. Three layers, deliberately separable:
+
+- **Tools — `lib/server/cece/tools.ts` (`CECE_TOOLS`).** Transport-neutral definitions:
+  `title`, `description`, a zod `inputSchema` (from `lib/schemas/cece.ts`) and
+  `execute(input, { userId })`. Nothing there imports the AI SDK — it's the shape of an
+  MCP tool, so the **planned MCP server** registers the same objects
+  (`server.registerTool(name, { title, description, inputSchema }, (input) =>
+  def.execute(input, { userId: <from its token> }))`) and neither transport owns them.
+- **Chat — `lib/server/cece/chat.ts` → `app/api/cece/route.ts`.** Adapts the definitions to
+  AI SDK tools, validates the browser-sent history with `safeValidateUIMessages`, and
+  streams with `streamText` + `toUIMessageStream` (AI SDK **v7**: `stopWhen:
+  isStepCount(n)`, not v5's `stepCountIs`/`toUIMessageStreamResponse`). Model is
+  `google/gemini-2.5-flash` (free tier), overridable with `AI_ASSISTANT_MODEL`.
+- **UI — `components/cece/`.** `CeceProvider` (in `(app)/layout.tsx`, above the sidebar)
+  owns `useChat` so the conversation survives closing the sheet, navigating, and the mobile
+  sidebar unmounting. `CeceText` renders replies without a markdown library or raw HTML.
+
+Rules that are load-bearing:
+
+- **Identity comes from `CeceContext`, never from tool input.** The model fills the input
+  and can be talked into anything; no CECE schema has a user id in it. Scope every new
+  tool's DAL call by `context.userId`, the same way `getProductForUser` scopes by owner.
+- **Read-only.** A write tool needs a confirmation the user sees before it runs (AI SDK
+  `needsApproval`; MCP elicitation). Until then CECE explains and links to the page.
+- **Help lives in `lib/server/cece/guide.ts`, and must describe only what's built.** A tool,
+  not system prompt, so MCP clients get it too. When a feature ships or changes, update its
+  topic in the same change. Analytics, Wishlist and Settings are placeholders and say so.
+- **Don't send what the model doesn't need.** Buyer emails are omitted on purpose; other
+  creators' descriptions are truncated and the prompt tells the model to treat tool content
+  as data. Tool errors are replaced with a generic message before the model sees them.
+- **The history is untrusted input.** The browser sends the whole conversation, including
+  "past" tool results; validation rejects forged tool parts (verified: bad topic → 400).
+  The client trims to `CECE_MAX_HISTORY`; the server re-trims and starts on a user turn.
+- Adding a tool: schema in `lib/schemas/cece.ts`, definition in `CECE_TOOLS`, a chip label
+  in `strings.cece.tools`. The UI types (`CeceUIMessage`) follow automatically.
+- **No rate limit yet.** Each message costs Gateway credits; steps and output tokens are
+  capped per turn, but nothing caps turns per user.
 
 ## UI components (shadcn — Base UI variant)
 

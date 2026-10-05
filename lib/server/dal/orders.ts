@@ -685,6 +685,49 @@ export const listTopProductsForSeller = cache(
   },
 );
 
+/** How one product has sold. Paid orders only. */
+export type ProductSales = {
+  /** Units sold, all time. */
+  sales: number;
+  /** Minor units earned. */
+  revenue: number;
+  lastSoldAt: Date | null;
+};
+
+/**
+ * Sales of a single product, scoped to its seller — for CECE's product lookup.
+ *
+ * `seller_id` is part of the predicate, not just `product_id`: that is the
+ * authorization, the same way it is for `getProductForUser`. Another creator's
+ * product id matches nothing and reads as zero sales rather than leaking theirs.
+ */
+export const getProductSalesForSeller = cache(
+  async (sellerId: string, productId: number): Promise<ProductSales> => {
+    const [row] = await db
+      .select({
+        sales: sql<number>`count(*)::int`,
+        revenue: sql<number>`coalesce(sum(${orderItemsTable.unitAmount}), 0)::int`,
+        // An aggregate, so it skips Drizzle's mapper — see `toDate`.
+        lastSoldAt: sql<string | null>`max(${ordersTable.paidAt})`,
+      })
+      .from(orderItemsTable)
+      .innerJoin(ordersTable, eq(ordersTable.id, orderItemsTable.orderId))
+      .where(
+        and(
+          eq(orderItemsTable.sellerId, sellerId),
+          eq(orderItemsTable.productId, productId),
+          eq(ordersTable.status, ORDER_STATUS.paid),
+        ),
+      );
+
+    return {
+      sales: row?.sales ?? 0,
+      revenue: row?.revenue ?? 0,
+      lastSoldAt: toDate(row?.lastSoldAt ?? null),
+    };
+  },
+);
+
 /** A row of the buyer's Downloads page — something they own and can fetch. */
 export type PurchaseRow = {
   orderId: number;
