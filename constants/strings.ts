@@ -150,7 +150,7 @@ export const strings = {
     sectionDetails: "Details",
     sectionDetailsHint: "How the product appears on your storefront.",
     sectionPrice: "Price",
-    sectionPriceHint: "What buyers pay, in US dollars.",
+    sectionPriceHint: "What buyers pay, in Romanian lei (RON).",
     // Only optional fields are marked; the note says the rest are required.
     optional: "Optional",
     requiredNote: "Every field is required unless it's marked optional.",
@@ -593,6 +593,10 @@ export const strings = {
     alreadyPurchased: "You already own this — find it in your downloads.",
     cartHasPurchased:
       "Your cart contains products you already own. Remove them to check out.",
+    // Products priced before the switch to lei are still in USD, and one
+    // Stripe payment can only be in one currency.
+    cartMixedCurrency:
+      "Your cart mixes products priced in lei and in dollars. Check them out separately.",
     // Stripe refused or was unreachable when opening a Checkout Session. The
     // buyer's cart is untouched, so retrying is the right advice.
     checkoutFailed: "We couldn't reach the payment provider. Please try again.",

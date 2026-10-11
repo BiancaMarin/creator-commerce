@@ -3,6 +3,8 @@
  * database — see `lib/server/dal/products.ts`.
  */
 
+import { DEFAULT_CURRENCY, formatMoney } from "@/lib/currency"
+
 /**
  * The client-safe view of a product. Client Components can't import the row
  * type from `lib/server/dal/products` (it's `server-only`), so storefront UI
@@ -17,6 +19,8 @@ export type StoreProduct = {
   tag: string
   description: string
   price: string
+  /** ISO code `price` is in — "RON" for new products, "USD" for older ones. */
+  currency: string
   /**
    * The digital product's filename and size in bytes, or null for a product
    * created before product files existed. The storage key is deliberately
@@ -75,13 +79,16 @@ export function visualsFor(seed: string): ProductVisuals {
 }
 
 /**
- * Whole prices render as `$48`; anything with cents keeps two decimals.
- * Accepts the string Drizzle returns for `numeric` columns.
+ * A list price in its own currency: whole prices render as `48 RON` (or `$48`
+ * for a USD product), anything with cents keeps two decimals. Accepts the
+ * string Drizzle returns for `numeric` columns. Pass the row's `currency` —
+ * the default only covers figures that have none, like a payout estimate on a
+ * product not saved yet.
  */
-export function formatPrice(value: number | string) {
+export function formatPrice(value: number | string, currency: string = DEFAULT_CURRENCY) {
   const amount = typeof value === "string" ? Number(value) : value
 
-  return `${Number.isInteger(amount) ? amount : amount.toFixed(2)}`
+  return formatMoney(amount, currency, { wholeWithoutDecimals: true })
 }
 
 /**

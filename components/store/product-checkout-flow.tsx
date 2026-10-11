@@ -24,6 +24,7 @@ import { strings } from "@/constants/strings"
 import { checkoutProduct } from "@/lib/actions/cart"
 import { capture } from "@/lib/analytics/capture"
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
+import { formatMoney } from "@/lib/currency"
 import { formatPrice, type StoreProduct } from "@/lib/store-data"
 import {
   CHECKOUT_INTENT_PARAM,
@@ -163,7 +164,7 @@ export function ProductCheckoutFlow({
             <Separator />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="font-mono text-[28px] font-bold">
-                {formatPrice(product.price)}
+                {formatPrice(product.price, product.currency)}
               </span>
               {/* Two ways to buy: straight through the single-product checkout
                   below, or into the cart to pay for several at once. */}
@@ -288,7 +289,9 @@ export function ProductCheckoutFlow({
               onClick={pay}
             >
               <LockSimpleIcon />
-              {pending ? strings.cart.paying : `Pay $${total.toFixed(2)}`}
+              {pending
+                ? strings.cart.paying
+                : strings.cart.pay.replace("{total}", formatMoney(total, product.currency))}
             </Button>
             <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
               <LockSimpleIcon className="size-3.5" />
@@ -322,14 +325,14 @@ export function ProductCheckoutFlow({
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-mono">${price.toFixed(2)}</span>
+                <span className="font-mono">{formatMoney(price, product.currency)}</span>
               </div>
             </div>
             <Separator />
             <div className="flex items-baseline justify-between">
               <span className="font-semibold">Total</span>
               <span className="font-mono text-[22px] font-bold">
-                ${total.toFixed(2)}
+                {formatMoney(total, product.currency)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">

@@ -42,7 +42,7 @@ export const ordersTable = pgTable(
     // from what Stripe actually charged, not from what the cart hoped to
     // charge — the two can differ, and Stripe is the one holding the money.
     amountTotal: integer("amount_total").notNull(),
-    currency: varchar({ length: 3 }).notNull().default("USD"),
+    currency: varchar({ length: 3 }).notNull().default("RON"),
     // The email the receipt went to. Denormalized from the buyer on purpose:
     // it records where the receipt was actually sent, which stays true after
     // they later change their account email.
@@ -121,7 +121,7 @@ export const orderItemsTable = pgTable(
     // Snapshots — see the note above.
     name: varchar({ length: 255 }).notNull(),
     unitAmount: integer("unit_amount").notNull(),
-    currency: varchar({ length: 3 }).notNull().default("USD"),
+    currency: varchar({ length: 3 }).notNull().default("RON"),
   },
   (table) => [
     // The join back from an order to its lines.

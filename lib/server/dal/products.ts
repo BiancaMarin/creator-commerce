@@ -20,6 +20,7 @@ import {
   type ProductTypeFacet,
   type SearchSort,
 } from "@/lib/schemas/search";
+import { DEFAULT_CURRENCY } from "@/lib/currency";
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";
 import { productsTable } from "@/lib/server/db/schemas/product";
@@ -471,7 +472,10 @@ export async function createProductForUser(
 ): Promise<ProductRef | null> {
   const [row] = await db
     .insert(productsTable)
-    .values({ ...values, userId })
+    // Explicit rather than left to the column default, so a new product is in
+    // lei even on a database whose default migration hasn't run yet. Updates
+    // never touch it: a price only means something in the currency it was set in.
+    .values({ ...values, userId, currency: DEFAULT_CURRENCY })
     .returning({ id: productsTable.id, slug: productsTable.slug });
 
   return row ?? null;

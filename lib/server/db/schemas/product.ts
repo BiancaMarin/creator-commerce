@@ -29,7 +29,7 @@ export const productsTable = pgTable(
     // numeric maps to string in Drizzle: money never round-trips through a
     // float. Convert at the edges, not in the query layer.
     price: numeric({ precision: 10, scale: 2 }).notNull(),
-    currency: varchar({ length: 3 }).notNull().default("USD"),
+    currency: varchar({ length: 3 }).notNull().default("RON"),
     // The digital product itself, uploaded through the `productFile` route in
     // app/api/uploadthing/core.ts. Three columns rather than one URL:
     //

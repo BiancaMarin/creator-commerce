@@ -1,5 +1,7 @@
 import "server-only";
 
+import { DEFAULT_CURRENCY, formatMoney } from "@/lib/currency";
+
 /**
  * The two money representations in this app, and the only place they meet.
  *
@@ -29,15 +31,10 @@ export function toCents(price: string): number {
 }
 
 /**
- * Integer cents to a display string, e.g. 4800 → "$48.00".
- *
- * Fixed to `en-US` rather than the request's locale: the currency is a property
- * of the sale, not of who's reading the page, and a seller's revenue figures
- * shouldn't reformat depending on the viewer.
+ * Integer cents to a display string, e.g. 4800 → "48,00 RON", or "$48.00" for
+ * a USD row. The locale follows the currency, never the viewer — see
+ * `formatMoney` in lib/currency.ts, which this shares with client code.
  */
-export function formatCents(cents: number, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(cents / 100);
+export function formatCents(cents: number, currency = DEFAULT_CURRENCY): string {
+  return formatMoney(cents / 100, currency);
 }

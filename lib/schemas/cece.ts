@@ -94,7 +94,7 @@ export const searchMarketplaceInput = z.object({
     // `numeric(10,2)`'s ceiling. Also keeps `toFixed` out of exponent notation.
     .max(99_999_999)
     .optional()
-    .describe("Highest price in USD, inclusive."),
+    .describe("Highest price, inclusive, in the product's own currency (RON for new products)."),
 });
 
 /** Most messages the route will pass to the model: older ones are dropped. */

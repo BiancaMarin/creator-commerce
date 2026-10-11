@@ -155,7 +155,7 @@ export default async function StorefrontPage({
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-base font-semibold">
-                      {formatPrice(product.price)}
+                      {formatPrice(product.price, product.currency)}
                     </span>
                     {/* The pill is decorative — the whole card is the link.
                         On the creator's own storefront, and on something the

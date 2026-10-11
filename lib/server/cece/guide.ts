@@ -55,7 +55,7 @@ export const HELP_ARTICLES: Record<CeceHelpTopic, HelpArticle> = {
       "Go to Products and click New product.",
       `Your product: upload the file buyers will download (up to ${maxFileSize}), then add up to ${MAX_PRODUCT_IMAGES} images. The first image is the cover.`,
       "Details: a name (3+ characters), a type such as \"Lightroom presets\", and a description (10 to 2,000 characters). AI can fill these in for you from the file.",
-      "Price: a positive amount in USD with at most two decimals. The form shows what you keep after the platform fee.",
+      "Price: a positive amount in Romanian lei (RON) with at most two decimals. The form shows what you keep after the platform fee.",
       "Save. The product is live on your storefront immediately.",
     ],
     links: [{ label: "New product", href: "/products/new" }],
@@ -106,7 +106,7 @@ export const HELP_ARTICLES: Record<CeceHelpTopic, HelpArticle> = {
   pricing_and_fees: {
     title: "Pricing and fees",
     steps: [
-      "Prices are set per product in USD.",
+      "New products are priced in Romanian lei (RON). Products created earlier keep the currency they were priced in (USD), and a cart can only be paid in one currency at a time.",
       `The platform fee is a flat ${PLATFORM_FEE_PERCENT}% of each sale. Buyers pay the list price; the product form shows your estimated take-home.`,
       "Payments are taken by Stripe Checkout. An order only counts as paid, and only shows up in revenue, once Stripe confirms the payment.",
     ],

@@ -125,7 +125,7 @@ export default async function ProductsPage() {
                     /{user.handle}/{product.id}/{product.slug}
                   </TableCell>
                   <TableCell className="px-5 py-3 text-right font-mono">
-                    {formatPrice(product.price)}
+                    {formatPrice(product.price, product.currency)}
                   </TableCell>
                   <TableCell className="px-5 py-3">
                     <div className="flex items-center justify-end gap-1">

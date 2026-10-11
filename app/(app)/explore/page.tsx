@@ -142,7 +142,7 @@ export default async function ExplorePage({
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-base font-semibold">
-                        {formatPrice(product.price)}
+                        {formatPrice(product.price, product.currency)}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {product.tag}

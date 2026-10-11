@@ -22,6 +22,7 @@ import { strings } from "@/constants/strings"
 import { checkoutCart, removeFromCart } from "@/lib/actions/cart"
 import { capture } from "@/lib/analytics/capture"
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
+import { DEFAULT_CURRENCY, formatMoney } from "@/lib/currency"
 import { formatPrice, type StoreProduct } from "@/lib/store-data"
 import { CHECKOUT_INTENT_PARAM, signInToCheckoutHref } from "@/lib/utils"
 
@@ -95,6 +96,10 @@ export function CartView({
   // states — so adding it here would both overstate the price and disagree
   // with what Stripe is about to charge, which is the sum of the line items.
   const total = subtotal
+  // The first line's currency. A cart mixing lei and dollars can't be paid in
+  // one go — `checkoutCart` refuses it with a message — so its sum is only
+  // ever shown, never charged.
+  const currency = items[0]?.currency ?? DEFAULT_CURRENCY
 
   function remove(productId: number) {
     setError(null)
@@ -200,14 +205,14 @@ export function CartView({
             <span className="text-muted-foreground">
               {strings.cart.subtotal}
             </span>
-            <span className="font-mono">${subtotal.toFixed(2)}</span>
+            <span className="font-mono">{formatMoney(subtotal, currency)}</span>
           </div>
         </div>
         <Separator />
         <div className="flex items-baseline justify-between">
           <span className="font-semibold">{strings.cart.total}</span>
           <span className="font-mono text-[22px] font-bold">
-            ${total.toFixed(2)}
+            {formatMoney(total, currency)}
           </span>
         </div>
 
@@ -349,7 +354,7 @@ export function CartView({
                       </div>
                     </Link>
                     <span className="font-mono text-sm font-semibold">
-                      {formatPrice(item.price)}
+                      {formatPrice(item.price, item.currency)}
                     </span>
                     <Button
                       variant="ghost"
@@ -407,7 +412,7 @@ export function CartView({
                 <LockSimpleIcon />
                 {pending
                   ? strings.cart.paying
-                  : strings.cart.pay.replace("{total}", `$${total.toFixed(2)}`)}
+                  : strings.cart.pay.replace("{total}", formatMoney(total, currency))}
               </Button>
               <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
                 <LockSimpleIcon className="size-3.5" />

@@ -1,5 +1,5 @@
 import {
-  CurrencyDollarIcon,
+  CoinsIcon,
   ReceiptIcon,
   TrendUpIcon,
   UsersIcon,
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { strings } from "@/constants/strings"
 
 const previewStats = [
-  { label: "Revenue", value: "$48,120", icon: CurrencyDollarIcon },
+  { label: "Revenue", value: "48.120 RON", icon: CoinsIcon },
   { label: "Orders", value: "1,204", icon: ReceiptIcon },
   { label: "Customers", value: "318", icon: UsersIcon },
 ]

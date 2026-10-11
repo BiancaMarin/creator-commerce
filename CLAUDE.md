@@ -398,6 +398,23 @@ The flow, and the order the steps must happen in:
   `constructEventAsync`; the sync form needs Node crypto.
 - **Money is integer cents in `orders`/`order_items`**, matching Stripe, while
   `products.price` stays `numeric`. `lib/server/money.ts` is the only conversion point.
+- **New products are priced in lei (RON); every row keeps its own `currency`.**
+  `DEFAULT_CURRENCY` in `lib/currency.ts` is set explicitly by
+  `createProductForUser` (not left to the column default, so it holds before the
+  default migration runs anywhere); updates never change it. Products and orders
+  from before the switch stay USD — a price only means something in the currency
+  it was set in, and an order records what Stripe charged. So **display money
+  with the row's currency** (`formatPrice(price, currency)`, `formatCents(cents,
+  currency)`, `formatMoney` on the client), never a hard-coded symbol. The locale
+  follows the currency ("19,00 RON", "$19.00"), not the viewer.
+  - One Checkout Session is one currency: `checkoutCart` refuses a cart mixing
+    lei and dollars (`errors.cartMixedCurrency`) rather than letting Stripe's
+    refusal surface as "couldn't reach the payment provider".
+  - **Aggregates assume one currency.** Dashboard revenue and customer lifetime
+    value sum cents across rows and format them as RON; a seller with old USD
+    sales sees those summed in as if they were lei.
+  - Stripe's minimum charge for RON is 2.00 lei; `productSchema` doesn't enforce
+    it, so a cheaper product fails at checkout.
 - **Prices are never accepted from the client** — the same reasoning that keeps the cart
   cookie holding nothing but ids.
 - **`order_items` snapshots name and price, and carries `seller_id`.** A cart can span

@@ -93,7 +93,7 @@ function truncate(text: string, length: number) {
   return text.length > length ? `${text.slice(0, length).trimEnd()}…` : text;
 }
 
-/** A `numeric` product price as money, e.g. "48.00" → "$48.00". */
+/** A `numeric` product price as money in its own currency, e.g. "48.00" → "48,00 RON". */
 function formatPrice(price: string, currency: string) {
   return formatCents(toCents(price), currency);
 }

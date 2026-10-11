@@ -19,8 +19,13 @@ describe("toCents", () => {
 });
 
 describe("formatCents", () => {
-  it("formats as en-US currency", () => {
-    expect(formatCents(4800)).toBe("$48.00");
-    expect(formatCents(123456)).toBe("$1,234.56");
+  it("defaults to lei", () => {
+    expect(formatCents(4800)).toBe("48,00 RON");
+    expect(formatCents(123456)).toBe("1.234,56 RON");
+  });
+
+  it("keeps a USD row in dollars", () => {
+    expect(formatCents(4800, "USD")).toBe("$48.00");
+    expect(formatCents(123456, "usd")).toBe("$1,234.56");
   });
 });

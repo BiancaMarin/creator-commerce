@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowUpRightIcon,
-  CurrencyDollarIcon,
+  CoinsIcon,
   ExportIcon,
   PackageIcon,
   PlusIcon,
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       value: formatCents(stat.revenue),
       delta: deltaOf(stat.revenue, stat.revenuePrevious),
       hint: "vs. previous 30 days",
-      icon: CurrencyDollarIcon,
+      icon: CoinsIcon,
     },
     {
       label: "Orders",

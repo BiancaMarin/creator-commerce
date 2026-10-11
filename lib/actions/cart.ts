@@ -219,6 +219,14 @@ export async function checkoutCart(): Promise<CheckoutResult> {
     return { ok: false, error: strings.errors.cartHasPurchased };
   }
 
+  // A Checkout Session charges in exactly one currency, and Stripe rejects
+  // line items that disagree. Products created before the switch to lei are
+  // still in USD, so a cart can mix the two; say so instead of the generic
+  // "couldn't reach the payment provider" Stripe's refusal would turn into.
+  if (new Set(products.map((product) => product.currency)).size > 1) {
+    return { ok: false, error: strings.errors.cartMixedCurrency };
+  }
+
   try {
     const url = await startCheckout({
       buyerId: session.user.id,

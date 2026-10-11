@@ -32,6 +32,7 @@ import {
   draftProduct,
   updateProduct,
 } from "@/lib/actions/products";
+import { DEFAULT_CURRENCY } from "@/lib/currency";
 import {
   productSchema,
   type ProductFile,
@@ -55,6 +56,8 @@ type SavedProduct = {
   tag: string;
   description: string;
   price: string;
+  /** What `price` is in. Kept on edit — the form never converts a price. */
+  currency: string;
   /** Null for a product created before product files existed. */
   file: ProductFile | null;
   imageUrls: string[];
@@ -100,6 +103,9 @@ export function ProductForm({
 }) {
   const router = useRouter();
   const isEdit = Boolean(product);
+  // A new product is created in lei (createProductForUser); an existing one
+  // stays in the currency it was priced in.
+  const currency = product?.currency ?? DEFAULT_CURRENCY;
   const [formError, setFormError] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
   const [isDrafting, setIsDrafting] = React.useState(false);
@@ -421,14 +427,14 @@ export function ProductForm({
               <div className="relative">
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground"
+                  className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-muted-foreground"
                 >
-                  $
+                  {currency}
                 </span>
                 <Input
                   id="price"
                   inputMode="decimal"
-                  className="pl-7"
+                  className="pr-14"
                   placeholder={strings.products.pricePlaceholder}
                   aria-invalid={!!errors.price}
                   {...register("price")}
@@ -443,7 +449,7 @@ export function ProductForm({
             {priceAmount > 0 && (
               <p className="-mt-2 text-xs text-muted-foreground">
                 {strings.products.payout
-                  .replace("{amount}", formatPrice(sellerPayout(priceAmount)))
+                  .replace("{amount}", formatPrice(sellerPayout(priceAmount), currency))
                   .replace("{percent}", String(PLATFORM_FEE_PERCENT))}
               </p>
             )}

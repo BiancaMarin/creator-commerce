@@ -3,6 +3,7 @@ import "server-only";
 import type Stripe from "stripe";
 
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
+import { DEFAULT_CURRENCY } from "@/lib/currency";
 import { captureServerEvent } from "@/lib/server/analytics";
 import { sendOrderReceipt } from "@/lib/server/emails/order-receipt";
 import { toCents } from "@/lib/server/money";
@@ -205,7 +206,7 @@ export async function fulfillCheckoutSession(
     // Nullable in the type for sessions that never priced anything. A settled
     // payment always has one; fall back rather than crash.
     amountTotal: resolved.amount_total ?? 0,
-    currency: resolved.currency ?? "usd",
+    currency: resolved.currency ?? DEFAULT_CURRENCY.toLowerCase(),
   });
 
   if (promoted) {
@@ -242,7 +243,7 @@ export async function fulfillCheckoutSession(
         order_id: order?.id,
         // Stripe's figures, not the order's — Stripe is what charged the card.
         amount: (resolved.amount_total ?? 0) / 100,
-        currency: (resolved.currency ?? "usd").toUpperCase(),
+        currency: (resolved.currency ?? DEFAULT_CURRENCY).toUpperCase(),
         items: order?.items.length,
       });
     }
