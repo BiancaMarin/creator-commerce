@@ -42,11 +42,49 @@ npm run lint         # eslint (eslint-config-next)
 npm run db:generate  # drizzle-kit generate — write a migration from schema changes
 npm run db:migrate   # drizzle-kit migrate — apply migrations to Neon
 npm run db:studio    # drizzle-kit studio — interactive DB browser
+npm test             # vitest in watch mode (unit + browser projects)
+npm run test:run     # vitest, single run
+npm run test:browser # component tests only, in a visible Chromium window
+npm run test:e2e     # playwright (end-to-end, Chromium)
 ```
 
-There is no test runner configured. **`npm run build` is the verification gate**: it runs
-TypeScript, regenerates typed-route definitions, and prerenders every page. Run it after
-non-trivial changes.
+**`npm run build` is the verification gate**: it runs TypeScript, regenerates typed-route
+definitions, and prerenders every page. Run it after non-trivial changes, along with the
+tests.
+
+### Tests
+
+- **Vitest** (`vitest.config.mts`) has two projects, **split by file extension**. Test
+  files sit beside their source.
+  - `*.test.ts` → **`unit`**, in Node. Plain logic (e.g. `lib/utils.test.ts`).
+    `server-only` is aliased to an empty stub (`test/server-only.ts`), so `lib/server/*`
+    modules are importable — but anything that touches the DB, Stripe or auth belongs in
+    an e2e test, not a unit test with mocks.
+  - `*.test.tsx` → **`browser`**: Vitest Browser Mode in a real headless Chromium (the
+    Playwright one), rendering with **`vitest-browser-react`** and asserting with
+    `expect.element(…)`. `test/browser-setup.ts` loads `app/globals.css`, so components
+    render with the real Tailwind styles and computed styles are checkable. Pattern:
+    `components/dashboard/kpi-card.test.tsx`. There is no jsdom / Testing Library.
+  - **Locator gotcha:** a *string* `getByText` must match an element's whole text, so
+    text that shares an element with a sibling (e.g. a badge) needs a regex. Testing
+    Library's old behaviour of matching own text nodes does not carry over.
+  - To test UI that lives inline in an `async` page, extract it into a synchronous
+    component that takes plain props, as `KpiCard` was out of the dashboard page. Vitest
+    can't render `async` Server Components; those are e2e territory.
+  - A failing browser test saves a screenshot under `.vitest/attachments/` (ignored).
+- **E2E — Playwright** (`playwright.config.ts`, specs in `e2e/`). Runs against port 3000 and
+  **reuses an already-running `npm run dev`**, because Next 16 refuses a second `next dev`
+  in the same project. With none running, it starts one. `E2E_PROD=1` (or `CI`) builds and
+  serves the production bundle instead, with the dev server stopped.
+- **E2E tests must be read-only for now.** The server reads `.env`, which is the shared
+  Neon database — there is no test database. Signup, checkout and anything else that
+  writes a row waits until there is one.
+- Specs import copy from `@/constants/strings` rather than repeating literals, so a copy
+  change doesn't break a test that was really checking structure.
+- `npm install` doesn't install peer dependencies here (`legacy-peer-deps`, see `.npmrc`),
+  which is why `vite` is a direct devDependency — Vitest 5 only declares it as a peer.
+  Vite 8 resolves the `@/*` alias itself (`resolve.tsconfigPaths`), so the
+  `vite-tsconfig-paths` plugin the Next docs mention isn't needed.
 
 `npm run lint` currently reports **3 pre-existing errors** (`hooks/use-mobile.ts` and other
 untouched files). Don't treat those as regressions from your change; do keep the files you
@@ -884,7 +922,7 @@ since that primitive isn't installed). Pattern — see `app/(auth)/signup/page.t
 ## Project-specific rules (quick reference)
 
 - **Obey `@AGENTS.md`:** read `node_modules/next/dist/docs/` before writing framework code.
-- **Verify with `npm run build`** — and for DB work, actually query the database.
+- **Verify with `npm run build`** and the tests — and for DB work, actually query the database.
 - **Typed routes won't catch a dead single-segment link** (`/[handle]` swallows it) — check
   top-level routes exist yourself; use `as const` for nav arrays and route ternaries.
 - **Server pages:** import Phosphor icons from `.../dist/ssr`.

@@ -7,12 +7,12 @@ import {
   PackageIcon,
   PlusIcon,
   ReceiptIcon,
-  TrendDownIcon,
   TrendUpIcon,
   UsersIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { HandleForm } from "@/components/dashboard/handle-form";
+import { deltaOf, KpiCard } from "@/components/dashboard/kpi-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import {
 } from "@/lib/server/dal/orders";
 import { requireUser } from "@/lib/server/dal/session";
 import { formatCents } from "@/lib/server/money";
-import { cn, getInitials } from "@/lib/utils";
+import { getInitials } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Dashboard · Creator Commerce",
@@ -49,26 +49,6 @@ const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> =
     refunded: "neutral",
     failed: "destructive",
   };
-
-/**
- * Percent change between two windows, or null when there's nothing to compare
- * against.
- *
- * A previous window of zero has no percentage — "up ∞%" from the first sale is
- * noise, not information — so the card omits the delta rather than inventing
- * one. That's also the normal state for a new creator.
- */
-function deltaOf(current: number, previous: number): number | null {
-  if (previous === 0) {
-    return null;
-  }
-
-  return ((current - previous) / previous) * 100;
-}
-
-function formatDelta(delta: number) {
-  return `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%`;
-}
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -169,42 +149,9 @@ export default async function DashboardPage() {
 
         <TabsContent value="overview" className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((entry) => {
-              const TrendIcon =
-                entry.delta !== null && entry.delta < 0
-                  ? TrendDownIcon
-                  : TrendUpIcon;
-
-              return (
-                <Card key={entry.label} size="sm">
-                  <CardHeader>
-                    <CardDescription>{entry.label}</CardDescription>
-                    <CardTitle className="text-2xl">{entry.value}</CardTitle>
-                    <CardAction>
-                      <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                        <entry.icon className="size-4" />
-                      </span>
-                    </CardAction>
-                  </CardHeader>
-                  <CardFooter className="gap-1.5 text-xs text-muted-foreground">
-                    {/* No delta when the previous window was empty — see
-                        `deltaOf`. The hint still explains the period. */}
-                    {entry.delta !== null && (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 font-medium",
-                          entry.delta >= 0 ? "text-success" : "text-destructive",
-                        )}
-                      >
-                        <TrendIcon className="size-3.5" />
-                        {formatDelta(entry.delta)}
-                      </span>
-                    )}
-                    {entry.hint}
-                  </CardFooter>
-                </Card>
-              );
-            })}
+            {stats.map((entry) => (
+              <KpiCard key={entry.label} {...entry} />
+            ))}
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
