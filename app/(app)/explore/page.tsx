@@ -5,7 +5,7 @@ import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr";
 import { SearchControls } from "@/components/explore/search-controls";
 import { ProductCover } from "@/components/store/product-cover";
 import { Card } from "@/components/ui/card";
-import { strings } from "@/constants/strings";
+import { getStrings, pageMetadata } from "@/lib/server/i18n";
 import {
   hasActiveFilters,
   isSearchable,
@@ -14,10 +14,9 @@ import {
 import { listProductTypes, searchProducts } from "@/lib/server/dal/products";
 import { formatPrice } from "@/lib/store-data";
 
-export const metadata: Metadata = {
-  title: "Explore · Creator Commerce",
-  description: "Find digital products from creators across the platform.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("explore");
+}
 
 export default async function ExplorePage({
   searchParams,
@@ -25,6 +24,7 @@ export default async function ExplorePage({
   // A promise since Next 15 — it can't be read synchronously.
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const strings = await getStrings();
   // No session read here on purpose: (app)/layout.tsx gates the whole group,
   // and nothing on this page is scoped to the viewer — /explore shows every
   // live product, the reader's own catalog included.
@@ -76,7 +76,7 @@ export default async function ExplorePage({
   return (
     <div className="flex flex-1 flex-col gap-5 p-4 md:p-6">
       <div className="space-y-1">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">
+        <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-tight">
           {strings.explore.title}
         </h1>
         <p className="text-sm text-muted-foreground">

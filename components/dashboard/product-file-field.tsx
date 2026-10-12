@@ -10,7 +10,10 @@ import {
 } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
-import { strings } from "@/constants/strings";
+import {
+  useStrings,
+  useTranslateMessage,
+} from "@/components/i18n/i18n-provider";
 import {
   MAX_PRODUCT_FILE_BYTES,
   type ProductInput,
@@ -53,6 +56,8 @@ export function ProductFileField({
    */
   onUploadingChange?: (uploading: boolean) => void;
 }) {
+  const strings = useStrings();
+  const translate = useTranslateMessage();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = React.useState(false);
@@ -193,7 +198,9 @@ export function ProductFileField({
   // The upload's own error wins over the schema's: "over 100 MB" says more than
   // "upload the file buyers will download", and the second is only true because
   // the first happened.
-  const message = error ?? fieldState.error?.message ?? null;
+  const message =
+    error ??
+    (fieldState.error ? translate(fieldState.error.message) : null);
 
   return (
     <div className="flex flex-col gap-2">

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ProductCover } from "@/components/store/product-cover"
-import { strings } from "@/constants/strings"
+import { getStrings } from "@/lib/server/i18n"
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
 import { listPurchasedProductIds } from "@/lib/server/dal/orders"
@@ -21,6 +21,7 @@ export async function generateMetadata({
 }: {
   params: Promise<{ handle: string }>
 }): Promise<Metadata> {
+  const strings = await getStrings()
   const { handle } = await params
   const creator = await getCreatorByHandle(handle)
 
@@ -39,6 +40,7 @@ export default async function StorefrontPage({
 }: {
   params: Promise<{ handle: string }>
 }) {
+  const strings = await getStrings()
   const { handle } = await params
   // Cached alongside the layout's lookup, so this is the same single query.
   const creator = await getCreatorByHandle(handle)
@@ -91,16 +93,19 @@ export default async function StorefrontPage({
         }}
       />
       <section className="mx-auto flex max-w-[1000px] items-center gap-5 px-8 pt-12 pb-8">
-        <Avatar size="lg" className="size-18">
+        <Avatar
+          size="lg"
+          className="size-18 ring-4 ring-brand-indigo/20 ring-offset-2 ring-offset-background"
+        >
           {creator.image ? (
             <AvatarImage src={creator.image} alt={creator.name} />
           ) : null}
-          <AvatarFallback className="text-2xl font-medium">
+          <AvatarFallback className="bg-brand-gradient text-2xl font-medium text-white">
             {creator.initials}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="font-heading text-3xl font-semibold tracking-[-0.02em]">
+          <h1 className="text-brand-gradient font-heading text-3xl font-semibold tracking-[-0.02em]">
             {creator.name}
           </h1>
           {/* There's no bio column on `user` yet, so the handle stands in

@@ -6,7 +6,7 @@ import { CircleNotchIcon, PlusIcon, XIcon } from "@phosphor-icons/react";
 
 import { ProductCover } from "@/components/store/product-cover";
 import { Button } from "@/components/ui/button";
-import { strings } from "@/constants/strings";
+import { useStrings } from "@/components/i18n/i18n-provider";
 import { MAX_PRODUCT_IMAGES, type ProductInput } from "@/lib/schemas/product";
 import { useUploadThing } from "@/lib/uploadthing";
 import { cn } from "@/lib/utils";
@@ -48,6 +48,7 @@ export function ProductImageField({
    */
   onUploadingChange?: (uploading: boolean) => void;
 }) {
+  const strings = useStrings();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = React.useState(false);

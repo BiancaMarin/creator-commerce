@@ -25,12 +25,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { strings } from "@/constants/strings";
+import {
+  useStrings,
+  useTranslateMessage,
+} from "@/components/i18n/i18n-provider";
 import { authClient } from "@/lib/auth-client";
 import { signupSchema, type SignupValues } from "@/lib/schemas/auth";
 import { safeNextPath } from "@/lib/utils";
 
 export default function SignupPage() {
+  const strings = useStrings();
+  const translate = useTranslateMessage();
   const router = useRouter();
   // Forwarded from /login when a buyer was sent to sign in from their cart.
   const next = safeNextPath(useSearchParams().get("next"));
@@ -74,11 +79,11 @@ export default function SignupPage() {
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
       <div className="flex flex-col items-center gap-3 text-center">
-        <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+        <span className="flex size-11 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-md shadow-brand-indigo/20">
           <StorefrontIcon className="size-5" />
         </span>
         <div className="space-y-1">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">
+          <h1 className="text-brand-gradient mx-auto font-heading text-xl font-semibold tracking-tight">
             {strings.signup.title}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -117,7 +122,7 @@ export default function SignupPage() {
               />
               {errors.name && (
                 <p className="text-xs text-destructive">
-                  {errors.name.message}
+                  {translate(errors.name.message)}
                 </p>
               )}
             </div>
@@ -136,7 +141,7 @@ export default function SignupPage() {
               />
               {errors.email && (
                 <p className="text-xs text-destructive">
-                  {errors.email.message}
+                  {translate(errors.email.message)}
                 </p>
               )}
             </div>
@@ -160,7 +165,11 @@ export default function SignupPage() {
                   variant="ghost"
                   size="icon-sm"
                   className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showPassword
+                      ? strings.common.hidePassword
+                      : strings.common.showPassword
+                  }
                   aria-pressed={showPassword}
                   onClick={() => setShowPassword((value) => !value)}
                 >
@@ -169,12 +178,12 @@ export default function SignupPage() {
               </div>
               {errors.password && (
                 <p className="text-xs text-destructive">
-                  {errors.password.message}
+                  {translate(errors.password.message)}
                 </p>
               )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-brand-gradient text-white hover:opacity-90" disabled={isSubmitting}>
               {isSubmitting ? strings.signup.submitting : strings.signup.submit}
             </Button>
           </form>
@@ -188,11 +197,19 @@ export default function SignupPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" disabled title={strings.account.socialComingSoon}>
+            <Button
+              variant="outline"
+              disabled
+              title={strings.account.socialComingSoon}
+            >
               <GoogleLogoIcon />
               {strings.signup.google}
             </Button>
-            <Button variant="outline" disabled title={strings.account.socialComingSoon}>
+            <Button
+              variant="outline"
+              disabled
+              title={strings.account.socialComingSoon}
+            >
               <GithubLogoIcon />
               {strings.signup.github}
             </Button>

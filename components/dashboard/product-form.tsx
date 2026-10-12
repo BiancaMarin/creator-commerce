@@ -26,7 +26,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { strings } from "@/constants/strings";
+import {
+  useStrings,
+  useTranslateMessage,
+} from "@/components/i18n/i18n-provider";
 import {
   createProduct,
   draftProduct,
@@ -101,6 +104,8 @@ export function ProductForm({
   /** Present when editing; omitted when creating. */
   product?: SavedProduct;
 }) {
+  const strings = useStrings();
+  const translate = useTranslateMessage();
   const router = useRouter();
   const isEdit = Boolean(product);
   // A new product is created in lei (createProductForUser); an existing one
@@ -367,7 +372,7 @@ export function ProductForm({
                 />
                 {errors.name && (
                   <p className="text-xs text-destructive">
-                    {errors.name.message}
+                    {translate(errors.name.message)}
                   </p>
                 )}
               </div>
@@ -385,7 +390,7 @@ export function ProductForm({
                 />
                 {errors.tag && (
                   <p className="text-xs text-destructive">
-                    {errors.tag.message}
+                    {translate(errors.tag.message)}
                   </p>
                 )}
               </div>
@@ -409,7 +414,7 @@ export function ProductForm({
               />
               {errors.description && (
                 <p className="text-xs text-destructive">
-                  {errors.description.message}
+                  {translate(errors.description.message)}
                 </p>
               )}
             </div>
@@ -442,7 +447,7 @@ export function ProductForm({
               </div>
               {errors.price && (
                 <p className="text-xs text-destructive">
-                  {errors.price.message}
+                  {translate(errors.price.message)}
                 </p>
               )}
             </div>

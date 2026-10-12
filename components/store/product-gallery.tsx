@@ -11,7 +11,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel"
 import { ProductCover } from "@/components/store/product-cover"
-import { strings } from "@/constants/strings"
+import { useStrings } from "@/components/i18n/i18n-provider"
 import { cn } from "@/lib/utils"
 
 /**
@@ -45,6 +45,7 @@ export function ProductGallery({
   className?: string
   iconClassName?: string
 }) {
+  const strings = useStrings()
   const [api, setApi] = React.useState<CarouselApi>()
   const [current, setCurrent] = React.useState(0)
 

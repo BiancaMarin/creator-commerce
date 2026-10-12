@@ -1,12 +1,12 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
-import { strings } from "@/constants/strings";
 import {
   MAX_PRODUCT_FILE_BYTES,
   MAX_PRODUCT_IMAGES,
 } from "@/lib/schemas/product";
 import { getSession } from "@/lib/server/dal/session";
+import { getStrings } from "@/lib/server/i18n";
 
 const f = createUploadthing();
 
@@ -36,7 +36,10 @@ export const uploadRouter = {
       // Deliberately `getSession()` and not `requireUser()`: this runs inside a
       // POST from the browser's uploader, where a redirect to /login would come
       // back as an opaque failure. Throwing gives the client a real error.
-      const session = await getSession();
+      const [session, strings] = await Promise.all([
+        getSession(),
+        getStrings(),
+      ]);
 
       if (!session) {
         // The `code` is not optional in practice: without it UploadThingError
@@ -84,7 +87,10 @@ export const uploadRouter = {
     // `files` carries the name/size/type the browser declared, before any bytes
     // move — which is what makes rejecting an oversized upload here cheap.
     .middleware(async ({ files }) => {
-      const session = await getSession();
+      const [session, strings] = await Promise.all([
+        getSession(),
+        getStrings(),
+      ]);
 
       if (!session) {
         throw new UploadThingError({

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { strings } from "@/constants/strings";
+import { translateMessage } from "@/lib/i18n";
 import {
   productDescriptionRequestSchema,
   productSchema,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/schemas/product";
 import { generateProductDraft } from "@/lib/server/ai";
 import { requireUser } from "@/lib/server/dal/session";
+import { getStrings } from "@/lib/server/i18n";
 import {
   createProductForUser,
   deleteProductForUser,
@@ -97,12 +98,16 @@ export async function createProduct(
 ): Promise<ProductActionResult> {
   // Ownership comes from the session, never from the payload.
   const user = await requireUser();
+  const strings = await getStrings();
   const parsed = productSchema.safeParse(input);
 
   if (!parsed.success) {
     return {
       ok: false,
-      error: parsed.error.issues[0]?.message ?? strings.errors.generic,
+      error: translateMessage(
+        strings,
+        parsed.error.issues[0]?.message ?? strings.errors.generic,
+      ),
     };
   }
 
@@ -123,12 +128,16 @@ export async function updateProduct(
   input: ProductValues,
 ): Promise<ProductActionResult> {
   const user = await requireUser();
+  const strings = await getStrings();
   const parsed = productSchema.safeParse(input);
 
   if (!parsed.success) {
     return {
       ok: false,
-      error: parsed.error.issues[0]?.message ?? strings.errors.generic,
+      error: translateMessage(
+        strings,
+        parsed.error.issues[0]?.message ?? strings.errors.generic,
+      ),
     };
   }
 
@@ -157,6 +166,7 @@ export async function updateProduct(
  */
 export async function deleteProduct(id: number): Promise<ProductActionResult> {
   const user = await requireUser();
+  const strings = await getStrings();
   const row = await deleteProductForUser(id, user.id);
 
   if (!row) {
@@ -184,12 +194,16 @@ export async function draftProduct(
   input: ProductDescriptionRequest,
 ): Promise<DraftActionResult> {
   const user = await requireUser();
+  const strings = await getStrings();
   const parsed = productDescriptionRequestSchema.safeParse(input);
 
   if (!parsed.success) {
     return {
       ok: false,
-      error: parsed.error.issues[0]?.message ?? strings.errors.generic,
+      error: translateMessage(
+        strings,
+        parsed.error.issues[0]?.message ?? strings.errors.generic,
+      ),
     };
   }
 

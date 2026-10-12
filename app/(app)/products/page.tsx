@@ -19,17 +19,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { strings } from "@/constants/strings"
+import { getStrings, pageMetadata } from "@/lib/server/i18n"
 import { listProductsForUser } from "@/lib/server/dal/products"
 import { requireUser } from "@/lib/server/dal/session"
 import { formatPrice } from "@/lib/store-data"
 
-export const metadata: Metadata = {
-  title: "Products · Creator Commerce",
-  description: "Manage your catalog of digital products.",
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("products")
 }
 
 export default async function ProductsPage() {
+  const strings = await getStrings()
   const user = await requireUser()
   const products = await listProductsForUser(user.id)
 
@@ -37,7 +37,7 @@ export default async function ProductsPage() {
     <div className="flex flex-1 flex-col gap-5 p-4 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
+          <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-tight">
             {strings.products.title}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -57,7 +57,7 @@ export default async function ProductsPage() {
       {products.length === 0 ? (
         <Card className="flex flex-1 items-center justify-center">
           <div className="flex max-w-xs flex-col items-center gap-3 py-10 text-center text-muted-foreground">
-            <span className="flex size-14 items-center justify-center rounded-4xl bg-muted">
+            <span className="flex size-14 items-center justify-center rounded-4xl bg-primary/15 text-primary">
               <PackageIcon className="size-6" />
             </span>
             <p className="text-sm">{strings.products.empty}</p>

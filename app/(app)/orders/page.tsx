@@ -17,11 +17,13 @@ import { expireStalePendingOrders } from "@/lib/server/checkout"
 import { listOrdersForSeller } from "@/lib/server/dal/orders"
 import { requireUser } from "@/lib/server/dal/session"
 import { formatCents } from "@/lib/server/money"
-import { getInitials } from "@/lib/utils"
+import { toneFor } from "@/lib/tones"
+import { cn, getInitials } from "@/lib/utils"
+import { INTL_LOCALE, orderStatusLabel } from "@/lib/i18n"
+import { getLocale, getStrings, pageMetadata } from "@/lib/server/i18n"
 
-export const metadata: Metadata = {
-  title: "Orders · Creator Commerce",
-  description: "Track fulfillment and manage refunds.",
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("orders")
 }
 
 const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> = {
@@ -31,15 +33,15 @@ const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> = 
   failed: "destructive",
 }
 
-const dateFormat = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-})
-
 export default async function OrdersPage() {
   // `requireUser`, not `getSession`: this page has no signed-out state, and the
   // id it returns is what scopes every row below to this creator's own sales.
   const user = await requireUser()
+  const strings = await getStrings()
+  const dateFormat = new Intl.DateTimeFormat(INTL_LOCALE[await getLocale()], {
+    month: "short",
+    day: "numeric",
+  })
 
   // Opportunistic expiry, scoped to this seller's own orders, before the list
   // is read — so the page can't show a row as `pending` that this very request
@@ -64,28 +66,27 @@ export default async function OrdersPage() {
     <div className="flex flex-1 flex-col gap-5 p-4 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Orders
+          <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-tight">
+            {strings.orders.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Track fulfillment and manage refunds.
+            {strings.orders.subtitle}
           </p>
         </div>
         <Button variant="outline" size="sm" disabled={orders.length === 0}>
           <ExportIcon />
-          Export
+          {strings.common.export}
         </Button>
       </div>
 
       <Card className="p-0">
         {orders.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <span className="flex size-12 items-center justify-center rounded-full bg-brand-indigo/15 text-brand-indigo">
               <ReceiptIcon className="size-[22px]" />
             </span>
             <p className="text-sm text-muted-foreground">
-              No orders yet. They&apos;ll appear here as soon as someone buys one of
-              your products.
+              {strings.orders.empty}
             </p>
           </div>
         ) : (
@@ -93,22 +94,22 @@ export default async function OrdersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Order
+                  {strings.orders.columnOrder}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Customer
+                  {strings.orders.columnCustomer}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Product
+                  {strings.orders.columnProduct}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Date
+                  {strings.orders.columnDate}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Status
+                  {strings.orders.columnStatus}
                 </TableHead>
                 <TableHead className="px-5 text-right text-xs text-muted-foreground">
-                  Amount
+                  {strings.orders.columnAmount}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -124,7 +125,12 @@ export default async function OrdersPage() {
                   <TableCell className="px-5 py-3">
                     <div className="flex items-center gap-2.5">
                       <Avatar size="sm">
-                        <AvatarFallback className="text-[10px] font-medium">
+                        <AvatarFallback
+                          className={cn(
+                            "text-[10px] font-medium",
+                            toneFor(order.buyerName).tile,
+                          )}
+                        >
                           {getInitials(order.buyerName)}
                         </AvatarFallback>
                       </Avatar>
@@ -147,7 +153,7 @@ export default async function OrdersPage() {
                       variant={badgeFor[order.status] ?? "neutral"}
                       className="capitalize"
                     >
-                      {order.status}
+                      {orderStatusLabel(strings, order.status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-5 py-3 text-right font-mono font-medium">

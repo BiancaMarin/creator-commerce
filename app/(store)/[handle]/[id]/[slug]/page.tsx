@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation"
 
 import { TrackEvent } from "@/components/analytics/track-event"
 import { ProductCheckoutFlow } from "@/components/store/product-checkout-flow"
-import { strings } from "@/constants/strings"
+import { getStrings } from "@/lib/server/i18n"
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
 import { readCartIds } from "@/lib/server/cart"
 import { getCreatorByHandle } from "@/lib/server/dal/creators"
@@ -23,6 +23,7 @@ export async function generateMetadata({
 }: {
   params: Promise<{ handle: string; id: string }>
 }): Promise<Metadata> {
+  const strings = await getStrings()
   const { handle, id } = await params
   const productId = parseId(id)
   const product = productId
@@ -30,7 +31,7 @@ export async function generateMetadata({
     : null
 
   if (!product) {
-    return { title: `Product — ${strings.store.brand}` }
+    return { title: `${strings.products.columnProduct} — ${strings.store.brand}` }
   }
 
   const creator = await getCreatorByHandle(handle)

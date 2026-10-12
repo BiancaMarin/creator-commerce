@@ -40,10 +40,19 @@ type KpiCardProps = {
   /** The period the figure covers, e.g. "vs. previous 30 days". */
   hint: string;
   icon: ComponentType<{ className?: string }>;
+  /** Classes for the icon tile — a tone from lib/tones. Muted when omitted. */
+  iconClassName?: string;
 };
 
 /** One dashboard tile: a headline figure and its trend over the period. */
-export function KpiCard({ label, value, delta, hint, icon: Icon }: KpiCardProps) {
+export function KpiCard({
+  label,
+  value,
+  delta,
+  hint,
+  icon: Icon,
+  iconClassName = "bg-muted text-muted-foreground",
+}: KpiCardProps) {
   const TrendIcon = delta !== null && delta < 0 ? TrendDownIcon : TrendUpIcon;
 
   return (
@@ -52,7 +61,12 @@ export function KpiCard({ label, value, delta, hint, icon: Icon }: KpiCardProps)
         <CardDescription>{label}</CardDescription>
         <CardTitle className="text-2xl">{value}</CardTitle>
         <CardAction>
-          <span className="flex size-9 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+          <span
+            className={cn(
+              "flex size-9 items-center justify-center rounded-2xl",
+              iconClassName,
+            )}
+          >
             <Icon className="size-4" />
           </span>
         </CardAction>

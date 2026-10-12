@@ -15,51 +15,52 @@ import {
 import { listCustomersForSeller } from "@/lib/server/dal/orders"
 import { requireUser } from "@/lib/server/dal/session"
 import { formatCents } from "@/lib/server/money"
-import { getInitials } from "@/lib/utils"
+import { toneFor } from "@/lib/tones"
+import { cn, getInitials } from "@/lib/utils"
+import { INTL_LOCALE } from "@/lib/i18n"
+import { getLocale, getStrings, pageMetadata } from "@/lib/server/i18n"
 
-export const metadata: Metadata = {
-  title: "Customers · Creator Commerce",
-  description: "Everyone who has bought from your store.",
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("customers")
 }
-
-const dateFormat = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-})
 
 export default async function CustomersPage() {
   // `requireUser`, not `getSession`: the page has no signed-out state, and the
   // id it returns is what scopes every row to this creator's own buyers.
   const user = await requireUser()
   const customers = await listCustomersForSeller(user.id)
+  const strings = await getStrings()
+  const dateFormat = new Intl.DateTimeFormat(INTL_LOCALE[await getLocale()], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
 
   return (
     <div className="flex flex-1 flex-col gap-5 p-4 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
-            Customers
+          <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-tight">
+            {strings.customers.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Everyone who has bought from your store.
+            {strings.customers.subtitle}
           </p>
         </div>
         <Button variant="outline" size="sm" disabled={customers.length === 0}>
           <ExportIcon />
-          Export
+          {strings.common.export}
         </Button>
       </div>
 
       <Card className="p-0">
         {customers.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <span className="flex size-12 items-center justify-center rounded-full bg-brand-violet/15 text-brand-violet">
               <UsersIcon className="size-[22px]" />
             </span>
             <p className="text-sm text-muted-foreground">
-              No customers yet. Anyone who buys one of your products will appear
-              here.
+              {strings.customers.empty}
             </p>
           </div>
         ) : (
@@ -67,19 +68,19 @@ export default async function CustomersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Customer
+                  {strings.customers.columnCustomer}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Email
+                  {strings.customers.columnEmail}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Last order
+                  {strings.customers.columnLastOrder}
                 </TableHead>
                 <TableHead className="px-5 text-right text-xs text-muted-foreground">
-                  Orders
+                  {strings.customers.columnOrders}
                 </TableHead>
                 <TableHead className="px-5 text-right text-xs text-muted-foreground">
-                  Lifetime value
+                  {strings.customers.columnLifetimeValue}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -89,7 +90,12 @@ export default async function CustomersPage() {
                   <TableCell className="px-5 py-3">
                     <div className="flex items-center gap-2.5">
                       <Avatar>
-                        <AvatarFallback className="text-xs font-medium">
+                        <AvatarFallback
+                        className={cn(
+                          "text-xs font-medium",
+                          toneFor(customer.name).tile,
+                        )}
+                      >
                           {getInitials(customer.name)}
                         </AvatarFallback>
                       </Avatar>

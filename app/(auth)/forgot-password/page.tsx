@@ -16,7 +16,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { strings } from "@/constants/strings";
+import {
+  useStrings,
+  useTranslateMessage,
+} from "@/components/i18n/i18n-provider";
 import { authClient } from "@/lib/auth-client";
 import {
   forgotPasswordSchema,
@@ -34,6 +37,8 @@ import {
  * to branch on.
  */
 export default function ForgotPasswordPage() {
+  const strings = useStrings();
+  const translate = useTranslateMessage();
   const [sent, setSent] = React.useState(false);
 
   const {
@@ -62,11 +67,11 @@ export default function ForgotPasswordPage() {
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
       <div className="flex flex-col items-center gap-3 text-center">
-        <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+        <span className="flex size-11 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-md shadow-brand-indigo/20">
           <StorefrontIcon className="size-5" />
         </span>
         <div className="space-y-1">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">
+          <h1 className="text-brand-gradient mx-auto font-heading text-xl font-semibold tracking-tight">
             {strings.forgotPassword.title}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -78,7 +83,7 @@ export default function ForgotPasswordPage() {
       <Card>
         {sent ? (
           <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <span className="flex size-11 items-center justify-center rounded-2xl bg-brand-mint/15 text-brand-mint">
               <EnvelopeSimpleIcon className="size-5" />
             </span>
             <CardTitle>{strings.forgotPassword.sentTitle}</CardTitle>
@@ -114,14 +119,14 @@ export default function ForgotPasswordPage() {
                   />
                   {errors.email && (
                     <p className="text-xs text-destructive">
-                      {errors.email.message}
+                      {translate(errors.email.message)}
                     </p>
                   )}
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-brand-gradient text-white hover:opacity-90"
                   disabled={isSubmitting}
                 >
                   {isSubmitting

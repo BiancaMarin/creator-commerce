@@ -2,8 +2,20 @@ import "server-only";
 
 import { strings } from "@/constants/strings";
 import { sendEmail } from "@/lib/server/email";
+import { getStrings } from "@/lib/server/i18n";
 
-const copy = strings.email.passwordReset;
+/**
+ * In the language of whoever asked for the link — this runs inside Better
+ * Auth's request, so the toggle's cookie is readable. English if it somehow
+ * runs outside one, rather than failing the reset.
+ */
+async function resetCopy() {
+  try {
+    return (await getStrings()).email.passwordReset;
+  } catch {
+    return strings.email.passwordReset;
+  }
+}
 
 /**
  * Escapes text destined for the HTML part. Same reasoning as the receipt's
@@ -43,6 +55,8 @@ export async function sendPasswordResetEmail({
   name: string;
   url: string;
 }): Promise<void> {
+  const copy = await resetCopy();
+
   await sendEmail({
     to,
     subject: copy.subject,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { strings } from "@/constants/strings";
+import { messageKey } from "@/lib/i18n";
 
 /**
  * Credentials handed to Better Auth. The server side of these rules lives in
@@ -11,9 +11,9 @@ import { strings } from "@/constants/strings";
  * the `user.create.before` hook, never submitted at signup.
  */
 export const signupSchema = z.object({
-  name: z.string().trim().min(1, strings.validation.required),
-  email: z.email(strings.validation.invalidEmail),
-  password: z.string().min(8, strings.validation.passwordMin),
+  name: z.string().trim().min(1, messageKey("validation.required")),
+  email: z.email(messageKey("validation.invalidEmail")),
+  password: z.string().min(8, messageKey("validation.passwordMin")),
 });
 
 export type SignupValues = z.infer<typeof signupSchema>;
@@ -21,8 +21,8 @@ export type SignupValues = z.infer<typeof signupSchema>;
 // Deliberately laxer than `signupSchema`: an existing account may predate a
 // rule change, and the only thing that decides a login is the server.
 export const loginSchema = z.object({
-  email: z.email(strings.validation.invalidEmail),
-  password: z.string().min(1, strings.validation.required),
+  email: z.email(messageKey("validation.invalidEmail")),
+  password: z.string().min(1, messageKey("validation.required")),
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;
@@ -33,7 +33,7 @@ export type LoginValues = z.infer<typeof loginSchema>;
  * is nothing here to validate against.
  */
 export const forgotPasswordSchema = z.object({
-  email: z.email(strings.validation.invalidEmail),
+  email: z.email(messageKey("validation.invalidEmail")),
 });
 
 export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
@@ -52,11 +52,11 @@ export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
  */
 export const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, strings.validation.passwordMin),
+    password: z.string().min(8, messageKey("validation.passwordMin")),
     confirmPassword: z.string(),
   })
   .refine((values) => values.password === values.confirmPassword, {
-    message: strings.validation.passwordMismatch,
+    message: messageKey("validation.passwordMismatch"),
     path: ["confirmPassword"],
   });
 

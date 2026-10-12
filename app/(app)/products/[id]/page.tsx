@@ -5,13 +5,12 @@ import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr"
 
 import { ProductForm } from "@/components/dashboard/product-form"
 import { Button } from "@/components/ui/button"
-import { strings } from "@/constants/strings"
+import { getStrings, pageMetadata } from "@/lib/server/i18n"
 import { getProductForUser } from "@/lib/server/dal/products"
 import { requireUser } from "@/lib/server/dal/session"
 
-export const metadata: Metadata = {
-  title: "Edit product · Creator Commerce",
-  description: "Update the details buyers see on your storefront.",
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("editProduct")
 }
 
 export default async function EditProductPage({
@@ -19,6 +18,7 @@ export default async function EditProductPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const strings = await getStrings()
   const { id } = await params
   const productId = Number(id)
 

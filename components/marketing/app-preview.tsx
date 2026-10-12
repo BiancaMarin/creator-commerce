@@ -6,18 +6,28 @@ import {
 } from "@phosphor-icons/react/dist/ssr"
 
 import { cn } from "@/lib/utils"
-import { strings } from "@/constants/strings"
-
-const previewStats = [
-  { label: "Revenue", value: "48.120 RON", icon: CoinsIcon },
-  { label: "Orders", value: "1,204", icon: ReceiptIcon },
-  { label: "Customers", value: "318", icon: UsersIcon },
-]
+import { getStrings } from "@/lib/server/i18n"
 
 const bars = [82, 57, 34, 64, 46]
+// One accent per bar, so the mini chart previews the page's palette.
+const barTones = [
+  "bg-primary",
+  "bg-brand-sky",
+  "bg-brand-mint",
+  "bg-brand-indigo",
+  "bg-brand-violet",
+]
 
 /** Stylized product preview — a mini dashboard, not a screenshot. */
-export function AppPreview() {
+export async function AppPreview() {
+  const strings = await getStrings()
+  const stats = strings.marketing.hero.previewStats
+  const previewStats = [
+    { label: stats.revenue, value: "48.120 RON", icon: CoinsIcon, tone: "text-primary" },
+    { label: stats.orders, value: "1.204", icon: ReceiptIcon, tone: "text-brand-indigo" },
+    { label: stats.customers, value: "318", icon: UsersIcon, tone: "text-brand-violet" },
+  ]
+
   return (
     <div className="overflow-hidden rounded-4xl bg-card shadow-lg ring-1 ring-foreground/5">
       <div className="flex items-center gap-1.5 border-b px-4 py-3">
@@ -39,7 +49,7 @@ export function AppPreview() {
                 <span className="text-[11px] text-muted-foreground">
                   {stat.label}
                 </span>
-                <stat.icon className="size-3.5 text-muted-foreground" />
+                <stat.icon className={cn("size-3.5", stat.tone)} />
               </div>
               <span className="font-mono text-xl font-semibold">
                 {stat.value}
@@ -61,7 +71,7 @@ export function AppPreview() {
                 key={index}
                 className={cn(
                   "flex-1 rounded-t-md",
-                  index === 3 ? "bg-primary" : "bg-primary/30"
+                  barTones[index % barTones.length]
                 )}
                 style={{ height: `${height}%` }}
               />

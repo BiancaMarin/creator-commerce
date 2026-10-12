@@ -10,10 +10,15 @@ import { ArrowSquareOutIcon, CheckCircleIcon } from "@phosphor-icons/react";
 import { updateHandle } from "@/app/(app)/dashboard/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { strings } from "@/constants/strings";
+import {
+  useStrings,
+  useTranslateMessage,
+} from "@/components/i18n/i18n-provider";
 import { handleSchema, type HandleValues } from "@/lib/schemas/handle";
 
 export function HandleForm({ handle }: { handle: string }) {
+  const strings = useStrings();
+  const translate = useTranslateMessage();
   const router = useRouter();
   const [saved, setSaved] = React.useState<string | null>(null);
 
@@ -65,7 +70,7 @@ export function HandleForm({ handle }: { handle: string }) {
             />
           </div>
           {errors.handle && (
-            <p className="text-xs text-destructive">{errors.handle.message}</p>
+            <p className="text-xs text-destructive">{translate(errors.handle.message)}</p>
           )}
           {saved && !errors.handle && (
             <p className="flex items-center gap-1.5 text-xs text-success">

@@ -2,14 +2,15 @@ import type { Metadata } from "next"
 
 import { CartView } from "@/components/store/cart-view"
 import { StoreChrome } from "@/components/store/store-chrome"
-import { strings } from "@/constants/strings"
 import { readCartIds } from "@/lib/server/cart"
 import { listPurchasedProductIds } from "@/lib/server/dal/orders"
 import { getSession } from "@/lib/server/dal/session"
+import { getStrings } from "@/lib/server/i18n"
 import { listProductsByIds } from "@/lib/server/dal/products"
 
-export const metadata: Metadata = {
-  title: `${strings.cart.title} — ${strings.store.brand}`,
+export async function generateMetadata(): Promise<Metadata> {
+  const strings = await getStrings()
+  return { title: `${strings.cart.title} — ${strings.store.brand}` }
 }
 
 export default async function CartPage() {

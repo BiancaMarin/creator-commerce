@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { strings } from "@/constants/strings";
+import { translateMessage } from "@/lib/i18n";
 import { HANDLE_MAX_LENGTH, handleSchema } from "@/lib/schemas/handle";
 
 describe("handleSchema", () => {
@@ -16,7 +17,7 @@ describe("handleSchema", () => {
       const result = handleSchema.safeParse({ handle });
 
       expect(result.success).toBe(false);
-      expect(result.error?.issues[0].message).toBe(
+      expect(translateMessage(strings, result.error?.issues[0].message ?? "")).toBe(
         strings.validation.handleFormat,
       );
     },
@@ -27,7 +28,7 @@ describe("handleSchema", () => {
     (handle) => {
       const result = handleSchema.safeParse({ handle });
 
-      expect(result.error?.issues[0].message).toBe(
+      expect(translateMessage(strings, result.error?.issues[0].message ?? "")).toBe(
         strings.validation.handleLength,
       );
     },

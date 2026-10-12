@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
-import { strings } from "@/constants/strings";
+import { translateMessage } from "@/lib/i18n";
 import { handleSchema } from "@/lib/schemas/handle";
 import { requireUser } from "@/lib/server/dal/session";
 import db from "@/lib/server/db";
 import { user } from "@/lib/server/db/schemas/auth";
 import { isHandleTaken } from "@/lib/server/handle";
+import { getStrings } from "@/lib/server/i18n";
 
 export type UpdateHandleResult =
   | { ok: true; handle: string }
@@ -25,13 +26,17 @@ export async function updateHandle(input: {
   // Identity comes from the session, never from the client payload — the form
   // can only ever rename the store belonging to whoever is signed in.
   const current = await requireUser();
+  const strings = await getStrings();
 
   const parsed = handleSchema.safeParse(input);
 
   if (!parsed.success) {
     return {
       ok: false,
-      error: parsed.error.issues[0]?.message ?? strings.errors.generic,
+      error: translateMessage(
+        strings,
+        parsed.error.issues[0]?.message ?? strings.errors.generic,
+      ),
     };
   }
 

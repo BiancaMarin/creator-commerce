@@ -5,6 +5,64 @@ export const strings = {
     save: "Save",
     submit: "Submit",
     back: "Back",
+    // Accessible name of the EN | RO toggle.
+    language: "Language",
+    export: "Export",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
+  },
+
+  // <title> and description per page. The brand suffix is added where the
+  // title is used, so each entry names only the page.
+  meta: {
+    dashboard: {
+      title: "Dashboard",
+      description: "Revenue, orders, and customer activity at a glance.",
+    },
+    products: {
+      title: "Products",
+      description: "Manage your catalog of digital products.",
+    },
+    newProduct: {
+      title: "New product",
+      description: "Add a digital product to your storefront.",
+    },
+    editProduct: {
+      title: "Edit product",
+      description: "Update the details buyers see on your storefront.",
+    },
+    orders: {
+      title: "Orders",
+      description: "Track fulfillment and manage refunds.",
+    },
+    customers: {
+      title: "Customers",
+      description: "Everyone who has bought from your store.",
+    },
+    analytics: {
+      title: "Analytics",
+      description: "Revenue, traffic, and conversion.",
+    },
+    wishlist: {
+      title: "Wishlist",
+      description: "Products customers saved but haven't bought yet.",
+    },
+    downloads: {
+      title: "Downloads",
+      description: "Everything you've bought, ready to download.",
+    },
+    explore: {
+      title: "Explore",
+      description: "Find digital products from creators across the platform.",
+    },
+  },
+
+  // Order status badges, keyed by the orders.status column value.
+  orderStatus: {
+    paid: "Paid",
+    pending: "Pending",
+    refunded: "Refunded",
+    failed: "Failed",
   },
 
   login: {
@@ -127,6 +185,86 @@ export const strings = {
       title: "Settings",
       description: "Store preferences, payouts, and notifications.",
       comingSoon: "Settings aren't wired up yet — check back soon.",
+    },
+    newProduct: "New product",
+    kpi: {
+      revenue: "Revenue",
+      orders: "Orders",
+      customers: "Customers",
+      avgOrder: "Avg. order",
+      vsPrevious: "vs. previous 30 days",
+      last30: "last 30 days",
+    },
+    recentOrders: "Recent orders",
+    recentOrdersHint: "Your latest 5 orders across the store.",
+    viewAll: "View all",
+    noOrders: "No orders yet.",
+    topProducts: "Top products",
+    topProductsHint: "Best sellers this month.",
+    noSales: "No sales yet.",
+    viewAnalytics: "View analytics",
+  },
+
+  orders: {
+    title: "Orders",
+    subtitle: "Track fulfillment and manage refunds.",
+    empty:
+      "No orders yet. They'll appear here as soon as someone buys one of your products.",
+    columnOrder: "Order",
+    columnCustomer: "Customer",
+    columnProduct: "Product",
+    columnDate: "Date",
+    columnStatus: "Status",
+    columnAmount: "Amount",
+  },
+
+  customers: {
+    title: "Customers",
+    subtitle: "Everyone who has bought from your store.",
+    empty:
+      "No customers yet. Anyone who buys one of your products will appear here.",
+    columnCustomer: "Customer",
+    columnEmail: "Email",
+    columnLastOrder: "Last order",
+    columnOrders: "Orders",
+    columnLifetimeValue: "Lifetime value",
+  },
+
+  downloads: {
+    title: "Downloads",
+    subtitle: "Everything you've bought, ready to download.",
+    paymentSuccessful: "Payment successful",
+    paymentConfirming: "Confirming your payment",
+    // {email} is the address the receipt went to.
+    receiptSent: "receipt sent to {email}",
+    confirmingHint:
+      "This usually takes a moment — refresh the page and your purchase will appear below.",
+    empty: "You haven't bought anything yet.",
+    browse: "Browse products",
+    columnProduct: "Product",
+    columnCreator: "Creator",
+    columnPurchased: "Purchased",
+    columnFile: "File",
+    columnPaid: "Paid",
+  },
+
+  analytics: {
+    title: "Analytics",
+    subtitle: "Understand revenue, traffic, and conversion.",
+    placeholder: "The analytics view lives here — a template not yet built.",
+  },
+
+  wishlist: {
+    title: "Wishlist",
+    subtitle: "Products customers saved but haven't bought yet.",
+    columnProduct: "Product",
+    columnSavedBy: "Saved by",
+    columnSaved: "Saved",
+    columnStatus: "Status",
+    columnPrice: "Price",
+    status: {
+      inStock: "In stock",
+      waitlist: "Waitlist",
     },
   },
 
@@ -368,6 +506,7 @@ export const strings = {
     signInToCheckout: "Sign in to checkout",
     // The same requirement on the single-product "Buy now" path.
     signInToBuy: "Sign in to buy",
+    buyNow: "Buy now",
     goToDashboard: "Go to dashboard",
     orderSummary: "Order summary",
     subtotal: "Subtotal",
@@ -446,8 +585,6 @@ export const strings = {
       features: "Features",
       how: "How it works",
       pricing: "Pricing",
-      docs: "Docs",
-      signIn: "Sign in",
       getStarted: "Get started",
     },
     hero: {
@@ -455,12 +592,17 @@ export const strings = {
       title: "The storefront built for creators.",
       subtitle:
         "Publish digital products, take payments through Stripe, and deliver protected downloads — track revenue, orders, and customers all in one place.",
-      ctaPrimary: "Start selling free",
-      ctaSecondary: "Watch demo",
+      ctaPrimary: "Start selling now",
       trustNoCard: "No credit card required",
       trustFee: "2% flat fee",
       previewLabel: "Dashboard",
       previewChart: "Sales this month",
+      // Stat labels on the stylized dashboard preview.
+      previewStats: {
+        revenue: "Revenue",
+        orders: "Orders",
+        customers: "Customers",
+      },
     },
     // Headline numbers under the hero.
     trust: [
@@ -529,11 +671,53 @@ export const strings = {
       save: "−20%",
       mostPopular: "Most popular",
       perMonth: "/mo",
+      // Keyed like features.items: the section pairs prices and the highlight
+      // with each tier by name.
+      tiers: {
+        starter: {
+          name: "Starter",
+          sub: "For your first sales",
+          fee: "2% + Stripe fees",
+          feats: [
+            "Public storefront",
+            "Unlimited products",
+            "Protected downloads",
+            "Basic analytics",
+          ],
+          cta: "Start free",
+        },
+        pro: {
+          name: "Pro",
+          sub: "For growing creators",
+          fee: "1% + Stripe fees",
+          feats: [
+            "Everything in Starter",
+            "AI product pages",
+            "Customer segments",
+            "Custom domain",
+            "Priority support",
+          ],
+          cta: "Start Pro trial",
+        },
+        studio: {
+          name: "Studio",
+          sub: "For full catalogs",
+          fee: "0% platform fee",
+          feats: [
+            "Everything in Pro",
+            "Team members",
+            "Stripe Connect payouts",
+            "Advanced analytics",
+            "Sentry & PostHog",
+          ],
+          cta: "Contact sales",
+        },
+      },
     },
     cta: {
       title: "Start selling your work today",
       subtitle: "Join 12,000+ creators running their business on Creator Commerce.",
-      button: "Start selling free",
+      button: "Start selling now",
     },
     footer: {
       tagline: "The storefront built for creators. Sell what you make.",

@@ -8,7 +8,6 @@ import {
   LockKeyIcon,
   MagicWandIcon,
   HandCoinsIcon,
-  PlayCircleIcon,
   SparkleIcon,
   StorefrontIcon,
   UploadSimpleIcon,
@@ -22,45 +21,58 @@ import { AppPreview } from "@/components/marketing/app-preview";
 import { LogoMark } from "@/components/marketing/logo";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { PricingSection } from "@/components/marketing/pricing-section";
-import { strings } from "@/constants/strings";
+import { getStrings } from "@/lib/server/i18n";
+import { toneAt } from "@/lib/tones";
+import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: strings.marketing.meta.title,
-  description: strings.marketing.hero.subtitle,
-};
-
-// Copy lives in constants/strings.ts; only the icon — which isn't copy — is
-// paired in here, by name rather than by position.
-const features = [
-  { icon: StorefrontIcon, ...strings.marketing.features.items.storefront },
-  { icon: CreditCardIcon, ...strings.marketing.features.items.checkout },
-  { icon: LockKeyIcon, ...strings.marketing.features.items.downloads },
-  { icon: SparkleIcon, ...strings.marketing.features.items.aiPages },
-  { icon: ChartLineUpIcon, ...strings.marketing.features.items.analytics },
-  { icon: UsersThreeIcon, ...strings.marketing.features.items.customers },
-];
-
-const steps = [
-  { icon: UploadSimpleIcon, ...strings.marketing.how.steps.upload },
-  { icon: MagicWandIcon, ...strings.marketing.how.steps.publish },
-  { icon: HandCoinsIcon, ...strings.marketing.how.steps.getPaid },
-];
+export async function generateMetadata(): Promise<Metadata> {
+  const strings = await getStrings();
+  return {
+    title: strings.marketing.meta.title,
+    description: strings.marketing.hero.subtitle,
+  };
+}
 
 const headingClass = "font-heading font-semibold tracking-[-0.03em]";
 
-export default function MarketingHomePage() {
+
+export default async function MarketingHomePage() {
+  const strings = await getStrings();
   const { hero, trust, features: featuresCopy, how, cta } = strings.marketing;
+
+  // Copy lives in constants/strings.ts; only the icon — which isn't copy — is
+  // paired in here, by name rather than by position.
+  const features = [
+    { icon: StorefrontIcon, ...strings.marketing.features.items.storefront },
+    { icon: CreditCardIcon, ...strings.marketing.features.items.checkout },
+    { icon: LockKeyIcon, ...strings.marketing.features.items.downloads },
+    { icon: SparkleIcon, ...strings.marketing.features.items.aiPages },
+    { icon: ChartLineUpIcon, ...strings.marketing.features.items.analytics },
+    { icon: UsersThreeIcon, ...strings.marketing.features.items.customers },
+  ];
+
+  const steps = [
+    { icon: UploadSimpleIcon, ...strings.marketing.how.steps.upload },
+    { icon: MagicWandIcon, ...strings.marketing.how.steps.publish },
+    { icon: HandCoinsIcon, ...strings.marketing.how.steps.getPaid },
+  ];
 
   return (
     <>
       <MarketingNav />
 
       {/* Hero */}
-      <section className="py-20">
+      <section className="relative isolate overflow-hidden py-20">
+        {/* Decorative glow in the brand blues — behind everything, ignored by
+            screen readers and pointer events. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(40rem_24rem_at_15%_10%,color-mix(in_oklch,var(--primary)_14%,transparent),transparent),radial-gradient(36rem_22rem_at_85%_60%,color-mix(in_oklch,var(--brand-indigo)_12%,transparent),transparent)]"
+        />
         <div className="mx-auto grid max-w-[1120px] items-center gap-14 px-8 md:grid-cols-2">
           <div className="flex flex-col gap-6">
             <span>
-              <Badge>
+              <Badge className="bg-brand-gradient text-white">
                 <SparkleIcon />
                 {hero.badge}
               </Badge>
@@ -68,7 +80,9 @@ export default function MarketingHomePage() {
             <h1
               className={`${headingClass} text-4xl leading-[1.02] sm:text-5xl md:text-[54px]`}
             >
-              {hero.title}
+              <span className="text-brand-gradient">
+                {hero.title}
+              </span>
             </h1>
             <p className="max-w-[460px] text-lg leading-relaxed text-muted-foreground">
               {hero.subtitle}
@@ -76,15 +90,12 @@ export default function MarketingHomePage() {
             <div className="flex flex-wrap gap-3">
               <Button
                 size="lg"
+                className="bg-brand-gradient text-white shadow-lg shadow-brand-indigo/25 hover:opacity-90"
                 nativeButton={false}
                 render={<Link href="/signup" />}
               >
                 {hero.ctaPrimary}
                 <ArrowRightIcon />
-              </Button>
-              <Button size="lg" variant="outline">
-                <PlayCircleIcon />
-                {hero.ctaSecondary}
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-2.5 text-sm text-muted-foreground">
@@ -104,11 +115,16 @@ export default function MarketingHomePage() {
       </section>
 
       {/* Trust strip */}
-      <section className="border-y bg-muted">
+      <section className="border-y bg-gradient-to-r from-primary/10 via-brand-indigo/10 to-brand-violet/10">
         <div className="mx-auto grid max-w-[1120px] grid-cols-2 gap-6 px-8 py-8 md:grid-cols-4">
-          {trust.map((stat) => (
+          {trust.map((stat, index) => (
             <div key={stat.label} className="text-center">
-              <div className="font-mono text-3xl font-semibold tracking-[-0.03em]">
+              <div
+                className={cn(
+                  "font-mono text-3xl font-semibold tracking-[-0.03em]",
+                  toneAt(index).text,
+                )}
+              >
                 {stat.value}
               </div>
               <div className="mt-1 text-sm text-muted-foreground">
@@ -124,7 +140,9 @@ export default function MarketingHomePage() {
         <div className="mx-auto max-w-[1120px] px-8">
           <div className="mx-auto mb-11 flex max-w-[640px] flex-col gap-3.5 text-center">
             <span className="mx-auto">
-              <Badge variant="secondary">{featuresCopy.badge}</Badge>
+              <Badge className="bg-brand-indigo/15 text-brand-indigo">
+                {featuresCopy.badge}
+              </Badge>
             </span>
             <h2 className={`${headingClass} text-3xl sm:text-[38px]`}>
               {featuresCopy.title}
@@ -134,10 +152,21 @@ export default function MarketingHomePage() {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <Card key={feature.title}>
+            {features.map((feature, index) => (
+              <Card
+                key={feature.title}
+                className={cn(
+                  "border-t-4 transition-shadow hover:shadow-lg",
+                  toneAt(index).edge,
+                )}
+              >
                 <div className="flex flex-col gap-3 px-6">
-                  <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span
+                    className={cn(
+                      "flex size-11 items-center justify-center rounded-2xl",
+                      toneAt(index).tile,
+                    )}
+                  >
                     <feature.icon className="size-6" />
                   </span>
                   <div className="font-heading text-[17px] font-semibold">
@@ -154,7 +183,10 @@ export default function MarketingHomePage() {
       </section>
 
       {/* How it works */}
-      <section id="how" className="border-y bg-muted py-20">
+      <section
+        id="how"
+        className="border-y bg-gradient-to-br from-brand-mint/10 via-primary/5 to-brand-indigo/10 py-20"
+      >
         <div className="mx-auto max-w-[1120px] px-8">
           <div className="mb-11 text-center">
             <h2 className={`${headingClass} mb-3 text-3xl sm:text-[38px]`}>
@@ -168,7 +200,12 @@ export default function MarketingHomePage() {
             {steps.map((step, index) => (
               <div key={step.title} className="flex flex-col gap-3.5">
                 <div className="flex items-center gap-3">
-                  <span className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <span
+                    className={cn(
+                      "flex size-10 items-center justify-center rounded-full text-white",
+                      toneAt(index).solid,
+                    )}
+                  >
                     <step.icon className="size-5" />
                   </span>
                   <span className="font-mono text-sm text-muted-foreground">
@@ -193,7 +230,7 @@ export default function MarketingHomePage() {
       {/* CTA band */}
       <section className="pb-20">
         <div className="mx-auto max-w-[1120px] px-8">
-          <div className="flex flex-col items-center gap-5 rounded-4xl bg-primary px-10 py-14 text-center text-primary-foreground">
+          <div className="flex flex-col items-center gap-5 rounded-4xl bg-gradient-to-br from-primary via-brand-indigo to-brand-violet px-10 py-14 text-center text-primary-foreground">
             <span className="flex size-13 items-center justify-center rounded-2xl bg-white/20 text-white">
               <LogoMark className="size-7" />
             </span>

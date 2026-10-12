@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { strings } from "@/constants/strings";
+import { messageKey } from "@/lib/i18n";
 
 /**
  * How many images one product can carry. Lives here because three places have
@@ -41,18 +41,18 @@ export const productFileSchema = z.object({
   key: z
     .string()
     .trim()
-    .min(1, strings.validation.productFile)
-    .max(512, strings.validation.productFile),
+    .min(1, messageKey("validation.productFile"))
+    .max(512, messageKey("validation.productFile")),
   /** The original filename, shown to the buyer and used for the download. */
   name: z
     .string()
     .trim()
-    .min(1, strings.validation.productFile)
-    .max(255, strings.validation.productFile),
+    .min(1, messageKey("validation.productFile"))
+    .max(255, messageKey("validation.productFile")),
   size: z
     .int()
-    .positive(strings.validation.productFile)
-    .max(MAX_PRODUCT_FILE_BYTES, strings.validation.productFileSize),
+    .positive(messageKey("validation.productFile"))
+    .max(MAX_PRODUCT_FILE_BYTES, messageKey("validation.productFileSize")),
 });
 
 export type ProductFile = z.infer<typeof productFileSchema>;
@@ -69,18 +69,18 @@ export const productSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(3, strings.validation.productName)
-    .max(255, strings.validation.productName),
+    .min(3, messageKey("validation.productName"))
+    .max(255, messageKey("validation.productName")),
   tag: z
     .string()
     .trim()
-    .min(2, strings.validation.productTag)
-    .max(60, strings.validation.productTag),
+    .min(2, messageKey("validation.productTag"))
+    .max(60, messageKey("validation.productTag")),
   description: z
     .string()
     .trim()
-    .min(10, strings.validation.productDescription)
-    .max(2000, strings.validation.productDescription),
+    .min(10, messageKey("validation.productDescription"))
+    .max(2000, messageKey("validation.productDescription")),
   // Kept as a string all the way to the database: `numeric` round-trips as a
   // string in Drizzle, and money should never pass through a float. The regex
   // is what makes it a number — digits, at most 2 decimals, no sign or
@@ -88,8 +88,8 @@ export const productSchema = z.object({
   price: z
     .string()
     .trim()
-    .regex(/^\d{1,8}(\.\d{1,2})?$/, strings.validation.productPrice)
-    .refine((value) => Number(value) > 0, strings.validation.productPricePositive),
+    .regex(/^\d{1,8}(\.\d{1,2})?$/, messageKey("validation.productPrice"))
+    .refine((value) => Number(value) > 0, messageKey("validation.productPricePositive")),
   // The digital product itself, and the one field whose input and output types
   // differ — which is deliberate, not incidental:
   //
@@ -106,7 +106,7 @@ export const productSchema = z.object({
   // so the split is enforced at the one boundary it matters at.
   file: z
     .nullable(productFileSchema)
-    .refine((value) => value !== null, strings.validation.productFileRequired),
+    .refine((value) => value !== null, messageKey("validation.productFileRequired")),
   // The image URLs handed back by UploadThing, in display order — the first is
   // the cover. No images is `[]`, never null, matching the NOT NULL DEFAULT '{}'
   // column, so neither side ever has to branch on a missing value.
@@ -117,15 +117,14 @@ export const productSchema = z.object({
   imageUrls: z
     .array(
       z
-        .url(strings.validation.productImage)
-        .max(512, strings.validation.productImage),
+        .url(messageKey("validation.productImage"))
+        .max(512, messageKey("validation.productImage")),
     )
     .max(
       MAX_PRODUCT_IMAGES,
-      strings.validation.productImageCount.replace(
-        "{count}",
-        String(MAX_PRODUCT_IMAGES),
-      ),
+      messageKey("validation.productImageCount", {
+        count: MAX_PRODUCT_IMAGES,
+      }),
     ),
 });
 
@@ -152,7 +151,7 @@ export const productDescriptionRequestSchema = z
   .refine(
     (value) =>
       value.name.length >= 3 || value.imageUrl !== null || value.file !== null,
-    strings.validation.productDescriptionSource,
+    messageKey("validation.productDescriptionSource"),
   );
 
 export type ProductDescriptionRequest = z.infer<

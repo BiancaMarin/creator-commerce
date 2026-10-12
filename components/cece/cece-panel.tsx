@@ -26,7 +26,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
-import { strings } from "@/constants/strings"
+import { useStrings } from "@/components/i18n/i18n-provider"
 import { CECE_MAX_INPUT_LENGTH } from "@/lib/schemas/cece"
 import type { CeceUIMessage } from "@/lib/server/cece/chat"
 import { cn } from "@/lib/utils"
@@ -54,6 +54,7 @@ function CeceMark({ className }: { className?: string }) {
  * that reply believable.
  */
 function ToolChip({ part }: { part: MessagePart }) {
+  const strings = useStrings()
   if (!isToolUIPart(part)) {
     return null
   }
@@ -158,6 +159,7 @@ function UserMessage({ message }: { message: CeceUIMessage }) {
 }
 
 function EmptyState({ onPick }: { onPick: (question: string) => void }) {
+  const strings = useStrings()
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-5 px-2 py-8 text-center">
       <CeceMark className="size-12 [&_svg]:size-6" />
@@ -190,6 +192,7 @@ function EmptyState({ onPick }: { onPick: (question: string) => void }) {
  * so closing the sheet (which unmounts it) loses nothing.
  */
 export function CecePanel() {
+  const strings = useStrings()
   const {
     open,
     setOpen,

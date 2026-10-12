@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { strings } from "@/constants/strings";
+import { INTL_LOCALE, orderStatusLabel } from "@/lib/i18n";
+import { getLocale, getStrings, pageMetadata } from "@/lib/server/i18n";
 import {
   getSellerStats,
   listOrdersForSeller,
@@ -35,12 +36,12 @@ import {
 } from "@/lib/server/dal/orders";
 import { requireUser } from "@/lib/server/dal/session";
 import { formatCents } from "@/lib/server/money";
-import { getInitials } from "@/lib/utils";
+import { toneAt, toneFor } from "@/lib/tones";
+import { cn, getInitials } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Dashboard · Creator Commerce",
-  description: "Revenue, orders, and customer activity at a glance.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("dashboard");
+}
 
 const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> =
   {
@@ -51,6 +52,8 @@ const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> =
   };
 
 export default async function DashboardPage() {
+  const strings = await getStrings();
+  const number = new Intl.NumberFormat(INTL_LOCALE[await getLocale()]);
   const user = await requireUser();
   const [stat, recentOrders, topProducts] = await Promise.all([
     getSellerStats(user.id),
@@ -65,34 +68,34 @@ export default async function DashboardPage() {
 
   const stats = [
     {
-      label: "Revenue",
+      label: strings.dashboard.kpi.revenue,
       value: formatCents(stat.revenue),
       delta: deltaOf(stat.revenue, stat.revenuePrevious),
-      hint: "vs. previous 30 days",
+      hint: strings.dashboard.kpi.vsPrevious,
       icon: CoinsIcon,
     },
     {
-      label: "Orders",
-      value: stat.orders.toLocaleString(),
+      label: strings.dashboard.kpi.orders,
+      value: number.format(stat.orders),
       delta: deltaOf(stat.orders, stat.ordersPrevious),
-      hint: "vs. previous 30 days",
+      hint: strings.dashboard.kpi.vsPrevious,
       icon: ReceiptIcon,
     },
     {
-      label: "Customers",
-      value: stat.customers.toLocaleString(),
+      label: strings.dashboard.kpi.customers,
+      value: number.format(stat.customers),
       delta: deltaOf(stat.customers, stat.customersPrevious),
-      hint: "vs. previous 30 days",
+      hint: strings.dashboard.kpi.vsPrevious,
       icon: UsersIcon,
     },
     {
       // Replaces the old "Conversion" tile. Conversion needs a view count, and
       // nothing here records page views — the figure would have to be invented.
       // Average order value comes from the same rows as the tiles beside it.
-      label: "Avg. order",
+      label: strings.dashboard.kpi.avgOrder,
       value: averageOrder === null ? "—" : formatCents(averageOrder),
       delta: null,
-      hint: "last 30 days",
+      hint: strings.dashboard.kpi.last30,
       icon: TrendUpIcon,
     },
   ];
@@ -111,7 +114,7 @@ export default async function DashboardPage() {
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">
+          <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-tight">
             {strings.dashboard.greeting.replace("{name}", firstName)}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -121,7 +124,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm">
             <ExportIcon />
-            Export
+            {strings.common.export}
           </Button>
           <Button
             size="sm"
@@ -129,7 +132,7 @@ export default async function DashboardPage() {
             render={<Link href="/products" />}
           >
             <PlusIcon />
-            New product
+            {strings.dashboard.newProduct}
           </Button>
         </div>
       </div>
@@ -149,17 +152,21 @@ export default async function DashboardPage() {
 
         <TabsContent value="overview" className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((entry) => (
-              <KpiCard key={entry.label} {...entry} />
+            {stats.map((entry, index) => (
+              <KpiCard
+                key={entry.label}
+                {...entry}
+                iconClassName={toneAt(index).tile}
+              />
             ))}
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>Recent orders</CardTitle>
+                <CardTitle>{strings.dashboard.recentOrders}</CardTitle>
                 <CardDescription>
-                  Your latest 5 orders across the store.
+                  {strings.dashboard.recentOrdersHint}
                 </CardDescription>
                 <CardAction>
                   <Button
@@ -168,7 +175,7 @@ export default async function DashboardPage() {
                     nativeButton={false}
                     render={<Link href="/orders" />}
                   >
-                    View all
+                    {strings.dashboard.viewAll}
                     <ArrowUpRightIcon />
                   </Button>
                 </CardAction>
@@ -176,7 +183,7 @@ export default async function DashboardPage() {
               <CardContent className="flex flex-col">
                 {recentOrders.length === 0 ? (
                   <p className="rounded-2xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
-                    No orders yet.
+                    {strings.dashboard.noOrders}
                   </p>
                 ) : (
                   recentOrders.map((order, index) => (
@@ -186,7 +193,12 @@ export default async function DashboardPage() {
                       {index > 0 && <Separator />}
                       <div className="flex items-center gap-3 py-3">
                         <Avatar>
-                          <AvatarFallback className="text-xs font-medium">
+                          <AvatarFallback
+                            className={cn(
+                              "text-xs font-medium",
+                              toneFor(order.buyerName).tile,
+                            )}
+                          >
                             {getInitials(order.buyerName)}
                           </AvatarFallback>
                         </Avatar>
@@ -202,7 +214,7 @@ export default async function DashboardPage() {
                           variant={badgeFor[order.status] ?? "neutral"}
                           className="capitalize"
                         >
-                          {order.status}
+                          {orderStatusLabel(strings, order.status)}
                         </Badge>
                         <span className="w-16 text-right font-mono text-sm font-medium">
                           {formatCents(order.amount, order.currency)}
@@ -216,13 +228,13 @@ export default async function DashboardPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Top products</CardTitle>
-                <CardDescription>Best sellers this month.</CardDescription>
+                <CardTitle>{strings.dashboard.topProducts}</CardTitle>
+                <CardDescription>{strings.dashboard.topProductsHint}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 {topProducts.length === 0 ? (
                   <p className="rounded-2xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
-                    No sales yet.
+                    {strings.dashboard.noSales}
                   </p>
                 ) : (
                   topProducts.map((product) => (
@@ -240,7 +252,7 @@ export default async function DashboardPage() {
                       </div>
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                         <div
-                          className="h-full rounded-full bg-primary"
+                          className="h-full rounded-full bg-brand-gradient"
                           // Relative to the best seller, not to 100 — see
                           // `topSales`. Guarded because the list is empty-checked
                           // above but the divisor still has to be non-zero.
@@ -260,7 +272,7 @@ export default async function DashboardPage() {
                   nativeButton={false}
                   render={<Link href="/analytics" />}
                 >
-                  View analytics
+                  {strings.dashboard.viewAnalytics}
                 </Button>
               </CardFooter>
             </Card>
@@ -278,7 +290,7 @@ export default async function DashboardPage() {
             <CardContent className="flex flex-col">
               <div className="flex items-center gap-3 pb-4">
                 <Avatar size="lg">
-                  <AvatarFallback className="font-medium">
+                  <AvatarFallback className="bg-brand-gradient font-medium text-white">
                     {getInitials(user.name || user.email)}
                   </AvatarFallback>
                 </Avatar>

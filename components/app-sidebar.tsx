@@ -19,6 +19,8 @@ import {
 } from "@phosphor-icons/react"
 
 import { useCece } from "@/components/cece/cece-provider"
+import { useStrings } from "@/components/i18n/i18n-provider"
+import { LocaleToggle } from "@/components/i18n/locale-toggle"
 import { LogoMark } from "@/components/marketing/logo"
 import { NavUser, type NavUserProps } from "@/components/nav-user"
 import {
@@ -37,32 +39,34 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { strings } from "@/constants/strings"
+import type { Strings } from "@/lib/i18n"
 
 // `Route` is the union of real routes, so a dead multi-segment href is a type
 // error here rather than a runtime 404. It can't catch a single-segment one —
 // `/[handle]` swallows those.
-type NavItem = { title: string; href: Route; icon: Icon }
+// Labels are named by key rather than stored, so the arrays can stay
+// module-level while the text follows the reader's language.
+type NavItem = { label: keyof Strings["nav"]; href: Route; icon: Icon }
 
 // The account is one identity with two jobs: a creator sells their own products
 // and buys other creators'. Splitting the nav by that keeps "Orders" (people
 // buying from me) from sitting next to "Downloads" (what I bought), which read
 // as the same thing when they're in one undifferentiated list.
 const navHome: readonly NavItem[] = [
-  { title: strings.nav.dashboard, href: "/dashboard", icon: HouseIcon },
+  { label: "dashboard", href: "/dashboard", icon: HouseIcon },
 ]
 
 const navSelling: readonly NavItem[] = [
-  { title: strings.nav.products, href: "/products", icon: PackageIcon },
-  { title: strings.nav.orders, href: "/orders", icon: ReceiptIcon },
-  { title: strings.nav.customers, href: "/customers", icon: UsersIcon },
-  { title: strings.nav.analytics, href: "/analytics", icon: ChartLineIcon },
+  { label: "products", href: "/products", icon: PackageIcon },
+  { label: "orders", href: "/orders", icon: ReceiptIcon },
+  { label: "customers", href: "/customers", icon: UsersIcon },
+  { label: "analytics", href: "/analytics", icon: ChartLineIcon },
 ]
 
 const navBuying: readonly NavItem[] = [
-  { title: strings.nav.explore, href: "/explore", icon: MagnifyingGlassIcon },
-  { title: strings.nav.wishlist, href: "/wishlist", icon: HeartIcon },
-  { title: strings.nav.downloads, href: "/downloads", icon: FileArrowDownIcon },
+  { label: "explore", href: "/explore", icon: MagnifyingGlassIcon },
+  { label: "wishlist", href: "/wishlist", icon: HeartIcon },
+  { label: "downloads", href: "/downloads", icon: FileArrowDownIcon },
 ]
 
 export function AppSidebar({
@@ -74,6 +78,7 @@ export function AppSidebar({
   /** Products in the cart cookie, resolved server-side in (app)/layout.tsx. */
   cartCount: number
 }) {
+  const strings = useStrings()
   const pathname = usePathname()
   const cece = useCece()
   const { setOpenMobile } = useSidebar()
@@ -85,11 +90,11 @@ export function AppSidebar({
       <SidebarMenuItem key={item.href}>
         <SidebarMenuButton
           isActive={isActive(item.href)}
-          tooltip={item.title}
+          tooltip={strings.nav[item.label]}
           render={<Link href={item.href} />}
         >
           <item.icon />
-          <span>{item.title}</span>
+          <span>{strings.nav[item.label]}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     ))
@@ -104,7 +109,7 @@ export function AppSidebar({
               render={<Link href="/dashboard" />}
               tooltip="Creator Commerce"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-brand-gradient text-white">
                 <LogoMark className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -179,6 +184,8 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
+        {/* No room for it once the sidebar collapses to icons. */}
+        <LocaleToggle className="mx-2 self-start group-data-[collapsible=icon]:hidden" />
         <SidebarMenu>
           {/* In the footer rather than a nav group: it isn't a page, and it
               should sit in the same place whichever page someone is stuck on. */}
@@ -193,7 +200,7 @@ export function AppSidebar({
                 cece.setOpen(true)
               }}
             >
-              <SparkleIcon weight="fill" className="text-primary" />
+              <SparkleIcon weight="fill" className="text-brand-violet" />
               <span>{strings.cece.navLabel}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -22,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { strings } from "@/constants/strings";
+import { useStrings } from "@/components/i18n/i18n-provider";
 import { deleteProduct } from "@/lib/actions/products";
 
 export function DeleteProductDialog({
@@ -41,6 +41,7 @@ export function DeleteProductDialog({
    */
   afterDelete?: "refresh" | "list";
 }) {
+  const strings = useStrings();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);

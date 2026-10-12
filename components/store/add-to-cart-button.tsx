@@ -6,7 +6,7 @@ import type { Route } from "next"
 import { CheckIcon, ShoppingBagIcon } from "@phosphor-icons/react"
 
 import { Button } from "@/components/ui/button"
-import { strings } from "@/constants/strings"
+import { useStrings } from "@/components/i18n/i18n-provider"
 import { addToCart } from "@/lib/actions/cart"
 import { capture } from "@/lib/analytics/capture"
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
@@ -25,6 +25,7 @@ export function AddToCartButton({
   productId: number
   inCart: boolean
 }) {
+  const strings = useStrings()
   const router = useRouter()
   const [pending, startTransition] = React.useTransition()
   const [error, setError] = React.useState<string | null>(null)

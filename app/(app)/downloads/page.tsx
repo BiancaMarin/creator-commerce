@@ -19,7 +19,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ClearPurchasedCart } from "@/components/store/clear-purchased-cart"
-import { strings } from "@/constants/strings"
+import { INTL_LOCALE } from "@/lib/i18n"
+import { getLocale, getStrings, pageMetadata } from "@/lib/server/i18n"
 import {
   PURCHASE_PARAM,
   reconcileCheckoutSession,
@@ -29,16 +30,9 @@ import { requireUser } from "@/lib/server/dal/session"
 import { formatCents } from "@/lib/server/money"
 import { formatFileSize } from "@/lib/utils"
 
-export const metadata: Metadata = {
-  title: "Downloads · Creator Commerce",
-  description: "Everything you've bought, ready to download.",
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("downloads")
 }
-
-const dateFormat = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-})
 
 /**
  * The buyer's library — and where Stripe returns them after a successful
@@ -53,6 +47,12 @@ export default async function DownloadsPage({
 }: {
   searchParams: Promise<{ [PURCHASE_PARAM]?: string }>
 }) {
+  const strings = await getStrings()
+  const dateFormat = new Intl.DateTimeFormat(INTL_LOCALE[await getLocale()], {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
   const user = await requireUser()
   const params = await searchParams
   const sessionId = params[PURCHASE_PARAM]
@@ -82,11 +82,11 @@ export default async function DownloadsPage({
       {settled && <ClearPurchasedCart />}
 
       <div className="space-y-1">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">
-          Downloads
+        <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-tight">
+          {strings.downloads.title}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Everything you&apos;ve bought, ready to download.
+          {strings.downloads.subtitle}
         </p>
       </div>
 
@@ -113,20 +113,22 @@ export default async function DownloadsPage({
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-sm font-semibold">
-              {settled ? "Payment successful" : "Confirming your payment"}
+              {settled
+                ? strings.downloads.paymentSuccessful
+                : strings.downloads.paymentConfirming}
             </div>
             <p className="truncate text-xs text-muted-foreground">
               {settled ? (
                 <>
                   {justBought.items.map((item) => item.name).join(", ")} ·{" "}
-                  {formatCents(justBought.amountTotal, justBought.currency)} ·
-                  receipt sent to {justBought.email}
+                  {formatCents(justBought.amountTotal, justBought.currency)} ·{" "}
+                  {strings.downloads.receiptSent.replace(
+                    "{email}",
+                    justBought.email,
+                  )}
                 </>
               ) : (
-                <>
-                  This usually takes a moment — refresh the page and your
-                  purchase will appear below.
-                </>
+                strings.downloads.confirmingHint
               )}
             </p>
           </div>
@@ -136,11 +138,11 @@ export default async function DownloadsPage({
       <Card className="p-0">
         {purchases.length === 0 ? (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <span className="flex size-12 items-center justify-center rounded-full bg-brand-mint/15 text-brand-mint">
               <FileArrowDownIcon className="size-[22px]" />
             </span>
             <p className="text-sm text-muted-foreground">
-              You haven&apos;t bought anything yet.
+              {strings.downloads.empty}
             </p>
             <Button
               variant="outline"
@@ -148,7 +150,7 @@ export default async function DownloadsPage({
               nativeButton={false}
               render={<Link href="/explore" />}
             >
-              Browse products
+              {strings.downloads.browse}
             </Button>
           </div>
         ) : (
@@ -156,19 +158,19 @@ export default async function DownloadsPage({
             <TableHeader>
               <TableRow>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Product
+                  {strings.downloads.columnProduct}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Creator
+                  {strings.downloads.columnCreator}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  Purchased
+                  {strings.downloads.columnPurchased}
                 </TableHead>
                 <TableHead className="px-5 text-xs text-muted-foreground">
-                  File
+                  {strings.downloads.columnFile}
                 </TableHead>
                 <TableHead className="px-5 text-right text-xs text-muted-foreground">
-                  Paid
+                  {strings.downloads.columnPaid}
                 </TableHead>
               </TableRow>
             </TableHeader>

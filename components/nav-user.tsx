@@ -6,7 +6,7 @@ import { SignOutIcon } from "@phosphor-icons/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
-import { strings } from "@/constants/strings";
+import { useStrings } from "@/components/i18n/i18n-provider";
 import { authClient } from "@/lib/auth-client";
 import { getInitials } from "@/lib/utils";
 
@@ -17,6 +17,7 @@ export interface NavUserProps {
 }
 
 export function NavUser({ name, email, image }: NavUserProps) {
+  const strings = useStrings();
   const router = useRouter();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -57,7 +58,7 @@ export function NavUser({ name, email, image }: NavUserProps) {
       >
         <Avatar className="size-8 rounded-lg">
           {image && <AvatarImage src={image} alt={displayName} />}
-          <AvatarFallback className="rounded-lg">
+          <AvatarFallback className="rounded-lg bg-brand-gradient text-white">
             {getInitials(displayName) || "?"}
           </AvatarFallback>
         </Avatar>

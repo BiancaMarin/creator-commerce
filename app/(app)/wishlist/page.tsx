@@ -12,52 +12,55 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { INTL_LOCALE } from "@/lib/i18n"
+import { getLocale, getStrings, pageMetadata } from "@/lib/server/i18n"
+import { toneFor } from "@/lib/tones"
+import { cn } from "@/lib/utils"
 
-export const metadata: Metadata = {
-  title: "Wishlist · Creator Commerce",
-  description: "Products customers saved but haven't bought yet.",
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("wishlist")
 }
 
 const wishlisted = [
   {
     product: "Lightroom Masterclass",
     customer: "Amara Okafor",
-    saved: "2 days ago",
+    savedDaysAgo: 2,
     price: "$129.00",
-    status: "in stock" as const,
+    status: "inStock" as const,
   },
   {
     product: "Studio Preset Pack",
     customer: "Leo Nakamura",
-    saved: "4 days ago",
+    savedDaysAgo: 4,
     price: "$48.00",
-    status: "in stock" as const,
+    status: "inStock" as const,
   },
   {
     product: "1:1 Coaching Call",
     customer: "Priya Menon",
-    saved: "1 week ago",
+    savedDaysAgo: 7,
     price: "$220.00",
     status: "waitlist" as const,
   },
   {
     product: "Brand Kit Templates",
     customer: "Sofia Rossi",
-    saved: "1 week ago",
+    savedDaysAgo: 7,
     price: "$64.00",
-    status: "in stock" as const,
+    status: "inStock" as const,
   },
   {
     product: "1:1 Coaching Call",
     customer: "Daniel Weber",
-    saved: "2 weeks ago",
+    savedDaysAgo: 14,
     price: "$220.00",
     status: "waitlist" as const,
   },
 ]
 
 const badgeFor: Record<string, React.ComponentProps<typeof Badge>["variant"]> = {
-  "in stock": "success",
+  inStock: "success",
   waitlist: "warning",
 }
 
@@ -69,15 +72,26 @@ function initials(name: string) {
     .join("")
 }
 
-export default function WishlistPage() {
+export default async function WishlistPage() {
+  const strings = await getStrings()
+  const relative = new Intl.RelativeTimeFormat(INTL_LOCALE[await getLocale()], {
+    numeric: "auto",
+  })
+  // Placeholder rows, so "saved" is a day count rendered in the reader's
+  // language rather than a fixed English phrase.
+  const savedAgo = (days: number) =>
+    days >= 7
+      ? relative.format(-Math.round(days / 7), "week")
+      : relative.format(-days, "day")
+
   return (
     <div className="flex flex-1 flex-col gap-5 p-4 md:p-6">
       <div className="space-y-1">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">
-          Wishlist
+        <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-tight">
+          {strings.wishlist.title}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Products customers saved but haven&apos;t bought yet.
+          {strings.wishlist.subtitle}
         </p>
       </div>
 
@@ -86,19 +100,19 @@ export default function WishlistPage() {
           <TableHeader>
             <TableRow>
               <TableHead className="px-5 text-xs text-muted-foreground">
-                Product
+                {strings.wishlist.columnProduct}
               </TableHead>
               <TableHead className="px-5 text-xs text-muted-foreground">
-                Saved by
+                {strings.wishlist.columnSavedBy}
               </TableHead>
               <TableHead className="px-5 text-xs text-muted-foreground">
-                Saved
+                {strings.wishlist.columnSaved}
               </TableHead>
               <TableHead className="px-5 text-xs text-muted-foreground">
-                Status
+                {strings.wishlist.columnStatus}
               </TableHead>
               <TableHead className="px-5 text-right text-xs text-muted-foreground">
-                Price
+                {strings.wishlist.columnPrice}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -116,7 +130,12 @@ export default function WishlistPage() {
                 <TableCell className="px-5 py-3">
                   <div className="flex items-center gap-2.5">
                     <Avatar>
-                      <AvatarFallback className="text-xs font-medium">
+                      <AvatarFallback
+                      className={cn(
+                        "text-xs font-medium",
+                        toneFor(item.customer).tile,
+                      )}
+                    >
                         {initials(item.customer)}
                       </AvatarFallback>
                     </Avatar>
@@ -126,11 +145,11 @@ export default function WishlistPage() {
                   </div>
                 </TableCell>
                 <TableCell className="px-5 py-3 text-muted-foreground">
-                  {item.saved}
+                  {savedAgo(item.savedDaysAgo)}
                 </TableCell>
                 <TableCell className="px-5 py-3">
-                  <Badge variant={badgeFor[item.status]} className="capitalize">
-                    {item.status}
+                  <Badge variant={badgeFor[item.status]}>
+                    {strings.wishlist.status[item.status]}
                   </Badge>
                 </TableCell>
                 <TableCell className="px-5 py-3 text-right font-mono font-medium">

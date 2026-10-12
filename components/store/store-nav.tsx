@@ -1,14 +1,16 @@
 import Link from "next/link"
 import { ShoppingBagIcon, SquaresFourIcon } from "@phosphor-icons/react/dist/ssr"
 
+import { LocaleToggle } from "@/components/i18n/locale-toggle"
 import { Button } from "@/components/ui/button"
 import { LogoMark } from "@/components/marketing/logo"
-import { strings } from "@/constants/strings"
+import { getStrings } from "@/lib/server/i18n"
 import { readCartIds } from "@/lib/server/cart"
 import type { Creator } from "@/lib/server/dal/creators"
 import { getSession } from "@/lib/server/dal/session"
 
 export async function StoreNav({ creator }: { creator: Creator | null }) {
+  const strings = await getStrings()
   // Counted from the cookie rather than from resolved rows: the badge appears
   // on every storefront page, and a DB round trip per page view is a poor trade
   // for catching the one case they differ — a product deleted while it sat in
@@ -24,7 +26,7 @@ export async function StoreNav({ creator }: { creator: Creator | null }) {
   return (
     <header className="sticky top-0 z-20 flex h-[60px] items-center gap-4 border-b bg-background/80 px-8 backdrop-blur-md">
       <Link href={homeHref} className="flex items-center gap-2 font-semibold">
-        <span className="flex size-[30px] items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <span className="flex size-[30px] items-center justify-center rounded-lg bg-brand-gradient text-white">
           <LogoMark />
         </span>
         {creator ? creator.handle : strings.store.brand}
@@ -38,6 +40,7 @@ export async function StoreNav({ creator }: { creator: Creator | null }) {
         </a>
       </nav>
       <div className="ml-auto flex items-center gap-2">
+        <LocaleToggle />
         <Button
           variant="ghost"
           size="icon-sm"

@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator"
 import { AddToCartButton } from "@/components/store/add-to-cart-button"
 import { ProductCover } from "@/components/store/product-cover"
 import { ProductGallery } from "@/components/store/product-gallery"
-import { strings } from "@/constants/strings"
+import { useStrings } from "@/components/i18n/i18n-provider"
 import { checkoutProduct } from "@/lib/actions/cart"
 import { capture } from "@/lib/analytics/capture"
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
@@ -53,6 +53,7 @@ export function ProductCheckoutFlow({
   hasPurchased: boolean
   email: string
 }) {
+  const strings = useStrings()
   const router = useRouter()
   // The buyer pressed "Buy now", was sent to sign in, and came back — reopen the
   // payment form instead of making them press it again. Resolved at the first
@@ -122,7 +123,7 @@ export function ProductCheckoutFlow({
           onClick={() => router.push(`/${storeHandle}`)}
         >
           <ArrowLeftIcon />
-          Back to shop
+          {strings.store.backToShop}
         </Button>
         <div className="grid items-start gap-7 md:grid-cols-[1.3fr_1fr]">
           <Card className="overflow-hidden p-0">
@@ -139,7 +140,7 @@ export function ProductCheckoutFlow({
             <div>
               <Badge>{product.tag}</Badge>
             </div>
-            <h1 className="font-heading text-2xl font-semibold tracking-[-0.02em]">
+            <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-[-0.02em]">
               {product.name}
             </h1>
             <p className="leading-relaxed text-muted-foreground">
@@ -208,7 +209,7 @@ export function ProductCheckoutFlow({
                     {signedIn ? (
                       <Button size="lg" onClick={() => setStep("checkout")}>
                         <LockSimpleIcon />
-                        Buy now
+                        {strings.cart.buyNow}
                       </Button>
                     ) : (
                       // Adding to the cart stays open to anonymous visitors;
@@ -258,12 +259,14 @@ export function ProductCheckoutFlow({
         onClick={() => setStep("product")}
       >
         <ArrowLeftIcon />
-        Back
+        {strings.common.back}
       </Button>
       <div className="grid items-start gap-7 md:grid-cols-[1.2fr_1fr]">
         <Card className="p-0">
           <div className="flex flex-col gap-4 p-6">
-            <h1 className="font-heading text-xl font-semibold">Checkout</h1>
+            <h1 className="text-brand-gradient font-heading text-xl font-semibold">
+              {strings.cart.checkout}
+            </h1>
             {error && (
               <p
                 role="alert"
@@ -275,7 +278,7 @@ export function ProductCheckoutFlow({
             {/* Card details are collected on Stripe's hosted page, never
                 here — see the note on the same panel in cart-view.tsx. */}
             <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">Email</span>
+              <span className="text-sm font-medium">{strings.cart.email}</span>
               <span className="text-sm text-muted-foreground">{email}</span>
             </div>
             <Separator />
@@ -303,7 +306,7 @@ export function ProductCheckoutFlow({
         <Card className="p-0">
           <div className="flex flex-col gap-4 p-6">
             <div className="text-sm font-semibold text-muted-foreground">
-              Order summary
+              {strings.cart.orderSummary}
             </div>
             <div className="flex items-center gap-3">
               <ProductCover
@@ -324,20 +327,20 @@ export function ProductCheckoutFlow({
             <Separator />
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
+                <span className="text-muted-foreground">{strings.cart.subtotal}</span>
                 <span className="font-mono">{formatMoney(price, product.currency)}</span>
               </div>
             </div>
             <Separator />
             <div className="flex items-baseline justify-between">
-              <span className="font-semibold">Total</span>
+              <span className="font-semibold">{strings.cart.total}</span>
               <span className="font-mono text-[22px] font-bold">
                 {formatMoney(total, product.currency)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <FileArrowDownIcon className="size-4" />
-              Instant download after payment
+              {strings.cart.instantDownload}
             </div>
           </div>
         </Card>

@@ -23,7 +23,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { strings } from "@/constants/strings";
+import {
+  useStrings,
+  useTranslateMessage,
+} from "@/components/i18n/i18n-provider";
 import { authClient } from "@/lib/auth-client";
 import {
   resetPasswordSchema,
@@ -43,6 +46,8 @@ import {
  * URL carries is a claim, not an authorization.
  */
 export default function ResetPasswordPage() {
+  const strings = useStrings();
+  const translate = useTranslateMessage();
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token");
@@ -88,11 +93,11 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex w-full max-w-sm flex-col gap-6">
       <div className="flex flex-col items-center gap-3 text-center">
-        <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+        <span className="flex size-11 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-md shadow-brand-indigo/20">
           <StorefrontIcon className="size-5" />
         </span>
         <div className="space-y-1">
-          <h1 className="font-heading text-xl font-semibold tracking-tight">
+          <h1 className="text-brand-gradient mx-auto font-heading text-xl font-semibold tracking-tight">
             {strings.resetPassword.title}
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -104,7 +109,7 @@ export default function ResetPasswordPage() {
       <Card>
         {done ? (
           <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <span className="flex size-11 items-center justify-center rounded-2xl bg-brand-mint/15 text-brand-mint">
               <CheckCircleIcon className="size-5" />
             </span>
             <CardTitle>{strings.resetPassword.doneTitle}</CardTitle>
@@ -141,7 +146,9 @@ export default function ResetPasswordPage() {
           <>
             <CardHeader>
               <CardTitle>{strings.resetPassword.title}</CardTitle>
-              <CardDescription>{strings.resetPassword.subtitle}</CardDescription>
+              <CardDescription>
+                {strings.resetPassword.subtitle}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form
@@ -178,7 +185,9 @@ export default function ResetPasswordPage() {
                       size="icon-sm"
                       className="absolute top-1/2 right-1 -translate-y-1/2 text-muted-foreground"
                       aria-label={
-                        showPassword ? "Hide password" : "Show password"
+                        showPassword
+                          ? strings.common.hidePassword
+                          : strings.common.showPassword
                       }
                       aria-pressed={showPassword}
                       onClick={() => setShowPassword((value) => !value)}
@@ -188,7 +197,7 @@ export default function ResetPasswordPage() {
                   </div>
                   {errors.password && (
                     <p className="text-xs text-destructive">
-                      {errors.password.message}
+                      {translate(errors.password.message)}
                     </p>
                   )}
                 </div>
@@ -210,12 +219,16 @@ export default function ResetPasswordPage() {
                   />
                   {errors.confirmPassword && (
                     <p className="text-xs text-destructive">
-                      {errors.confirmPassword.message}
+                      {translate(errors.confirmPassword.message)}
                     </p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full bg-brand-gradient text-white hover:opacity-90"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting
                     ? strings.resetPassword.submitting
                     : strings.resetPassword.submit}

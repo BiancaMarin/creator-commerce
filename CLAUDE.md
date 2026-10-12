@@ -911,6 +911,33 @@ hardcoding literals in JSX.
 - Prefer wiring **zod messages** to `strings.validation.*` (e.g. `invalidEmail`,
   `handleFormat`) so validation copy stays in one place.
 
+### Languages (English / Romanian)
+
+The UI ships in **English and Romanian**, switched by the EN | RO toggle
+(`components/i18n/locale-toggle.tsx`) in the marketing nav, storefront nav, auth pages
+and the sidebar footer.
+
+- **Every key goes in both dictionaries**: `constants/strings.ts` (English, the source)
+  and `constants/strings.ro.ts`. The Romanian one is typed `Strings`, so a missing key
+  fails the build.
+- **Don't import `strings` from `@/constants/strings` in app code** — that's always
+  English. Server Components, actions and route handlers use
+  `const strings = await getStrings()` (`lib/server/i18n.ts`); Client Components use
+  `const strings = useStrings()` (`components/i18n/i18n-provider.tsx`). Tests and e2e
+  specs may still import the English object.
+- Copy can't live in module-level constants (nav arrays, `metadata`), since the language
+  is per request. Store keys there (see `AppSidebar`), and use `generateMetadata` —
+  `pageMetadata("<page>")` for app pages, from `strings.meta`.
+- **Zod schemas emit keys, not text**: `messageKey("validation.invalidEmail")`. Render
+  form errors through `useTranslateMessage()`; server actions return
+  `translateMessage(strings, issue.message)`. Non-key text passes through untouched.
+- The language is the `locale` cookie, falling back to `Accept-Language`, then English.
+  Reading it in the root layout makes every route dynamic.
+- Dates and counts format with `INTL_LOCALE[locale]`; money still follows the currency.
+- CECE is told to reply in the chosen language. The password-reset email follows the
+  requester's language; the order receipt is sent from the webhook, which has no reader,
+  so it stays English.
+
 ## Forms & validation strategy
 
 Standard stack is **react-hook-form + zod**, wired directly (no shadcn `Form` wrapper,
@@ -947,7 +974,7 @@ since that primitive isn't installed). Pattern — see `app/(auth)/signup/page.t
 - **Style with semantic tokens + `cn()`**, not raw colors or string concatenation.
 - **Add shadcn primitives via the CLI**; don't hand-roll or heavily edit `components/ui/*`.
 - **Base UI API:** `render` prop (+ `nativeButton={false}`) for polymorphism, not `asChild`.
-- **User-facing copy lives in `constants/strings.ts`** — reference it, don't hardcode text.
+- **User-facing copy lives in `constants/strings.ts` + `strings.ro.ts`** — read it via `getStrings()` / `useStrings()`, never hardcode text.
 - **Images render through `@/components/image`**, never `next/image` directly.
 - **Auth checks live in layouts**; read sessions through `lib/server/dal/session.ts`.
 - **Server Actions take identity from the session**, never from client-supplied ids.

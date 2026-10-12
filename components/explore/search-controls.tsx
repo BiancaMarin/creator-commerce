@@ -8,7 +8,7 @@ import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { strings } from "@/constants/strings";
+import { useStrings } from "@/components/i18n/i18n-provider";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   MIN_SEARCH_LENGTH,
@@ -18,11 +18,6 @@ import {
   type SearchSort,
 } from "@/lib/schemas/search";
 import { cn } from "@/lib/utils";
-
-const sortLabels: Record<SearchSort, string> = {
-  newest: strings.explore.sortNewest,
-  oldest: strings.explore.sortOldest,
-};
 
 type ExploreQuery = {
   query: string;
@@ -101,6 +96,12 @@ export function SearchControls({
   min: string;
   max: string;
 }) {
+  const strings = useStrings();
+  const sortLabels: Record<SearchSort, string> = {
+    newest: strings.explore.sortNewest,
+    oldest: strings.explore.sortOldest,
+  };
+
   const router = useRouter();
 
   // Seeded from the props once and never re-synced. Syncing on every server

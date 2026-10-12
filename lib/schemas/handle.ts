@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { strings } from "@/constants/strings";
+import { messageKey } from "@/lib/i18n";
 
 /** Mirrors the `handle` column: 3–30 chars of [a-z0-9-]. */
 export const HANDLE_MIN_LENGTH = 3;
@@ -21,9 +21,9 @@ export const handleSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .min(HANDLE_MIN_LENGTH, strings.validation.handleLength)
-    .max(HANDLE_MAX_LENGTH, strings.validation.handleLength)
-    .regex(HANDLE_PATTERN, strings.validation.handleFormat),
+    .min(HANDLE_MIN_LENGTH, messageKey("validation.handleLength"))
+    .max(HANDLE_MAX_LENGTH, messageKey("validation.handleLength"))
+    .regex(HANDLE_PATTERN, messageKey("validation.handleFormat")),
 });
 
 export type HandleValues = z.infer<typeof handleSchema>;

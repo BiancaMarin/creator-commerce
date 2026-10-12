@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ProductCover } from "@/components/store/product-cover"
-import { strings } from "@/constants/strings"
+import { useStrings } from "@/components/i18n/i18n-provider"
 import { checkoutCart, removeFromCart } from "@/lib/actions/cart"
 import { capture } from "@/lib/analytics/capture"
 import { ANALYTICS_EVENTS } from "@/lib/analytics/events"
@@ -49,6 +49,7 @@ export function CartView({
   purchasedIds: number[]
   email: string
 }) {
+  const strings = useStrings()
   const router = useRouter()
 
   // A creator can't buy their own product, so a cart holding one can't be paid
@@ -162,7 +163,7 @@ export function CartView({
           {strings.cart.title}
         </h1>
         <Card className="flex flex-col items-center gap-4 py-16">
-          <span className="flex size-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <span className="flex size-14 items-center justify-center rounded-full bg-brand-indigo/15 text-brand-indigo">
             <ShoppingBagIcon className="size-[26px]" />
           </span>
           <p className="text-sm text-muted-foreground">{strings.cart.empty}</p>
@@ -277,7 +278,7 @@ export function CartView({
       )}
 
       <div className="mb-5 flex items-baseline gap-3">
-        <h1 className="font-heading text-2xl font-semibold tracking-[-0.02em]">
+        <h1 className="text-brand-gradient font-heading text-2xl font-semibold tracking-[-0.02em]">
           {strings.cart.title}
         </h1>
         <span className="text-sm text-muted-foreground">

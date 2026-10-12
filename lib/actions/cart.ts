@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 
-import { strings } from "@/constants/strings";
 import { MAX_CART_ITEMS } from "@/lib/schemas/cart";
 import { readCartIds, writeCartIds } from "@/lib/server/cart";
 import { startCheckout } from "@/lib/server/checkout";
@@ -12,6 +11,7 @@ import {
   listPurchasedProductIds,
 } from "@/lib/server/dal/orders";
 import { listProductsByIds } from "@/lib/server/dal/products";
+import { getStrings } from "@/lib/server/i18n";
 import { signInToCheckoutHref } from "@/lib/utils";
 
 /**
@@ -49,7 +49,8 @@ const SIGN_IN_HREF = signInToCheckoutHref("/cart");
  * button click surfaces as an opaque failure and throws away the return path —
  * the same reason the UploadThing middleware avoids it (app/api/uploadthing/core.ts).
  */
-function signedOut(): CartActionResult {
+async function signedOut(): Promise<CartActionResult> {
+  const strings = await getStrings();
   return {
     ok: false,
     error: strings.errors.signInToCheckout,
@@ -76,6 +77,8 @@ function signedOut(): CartActionResult {
  * no quantities, so the cart is already in the state the caller asked for.
  */
 export async function addToCart(productId: number): Promise<CartActionResult> {
+  const strings = await getStrings();
+
   if (!Number.isInteger(productId) || productId <= 0) {
     return { ok: false, error: strings.errors.productNotFound };
   }
@@ -169,6 +172,7 @@ export async function removeFromCart(
  * with what's left rather than charging for something unbuyable.
  */
 export async function checkoutCart(): Promise<CheckoutResult> {
+  const strings = await getStrings();
   const session = await getSession();
 
   if (!session) {
@@ -268,7 +272,7 @@ export async function clearPurchasedFromCart(): Promise<CartActionResult> {
   const session = await getSession();
 
   if (!session) {
-    return signedOut();
+    return await signedOut();
   }
 
   const ids = await readCartIds();
@@ -307,6 +311,7 @@ export async function clearPurchasedFromCart(): Promise<CartActionResult> {
 export async function checkoutProduct(
   productId: number,
 ): Promise<CheckoutResult> {
+  const strings = await getStrings();
   const session = await getSession();
 
   if (!session) {

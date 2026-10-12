@@ -1,6 +1,7 @@
 import { ceceRequestSchema } from "@/lib/schemas/cece";
 import { streamCeceReply } from "@/lib/server/cece/chat";
 import { getSession } from "@/lib/server/dal/session";
+import { getLocale } from "@/lib/server/i18n";
 
 /**
  * CECE's chat endpoint, called by `useChat` in components/cece/cece-panel.tsx.
@@ -40,5 +41,6 @@ export async function POST(request: Request) {
     name: session.user.name,
     messages: body.data.messages,
     pathname: body.data.pathname,
+    locale: await getLocale(),
   });
 }

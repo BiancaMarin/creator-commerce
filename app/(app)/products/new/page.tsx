@@ -4,15 +4,15 @@ import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr"
 
 import { ProductForm } from "@/components/dashboard/product-form"
 import { Button } from "@/components/ui/button"
-import { strings } from "@/constants/strings"
+import { getStrings, pageMetadata } from "@/lib/server/i18n"
 import { requireUser } from "@/lib/server/dal/session"
 
-export const metadata: Metadata = {
-  title: "New product · Creator Commerce",
-  description: "Add a digital product to your storefront.",
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata("newProduct")
 }
 
 export default async function NewProductPage() {
+  const strings = await getStrings()
   const user = await requireUser()
 
   return (

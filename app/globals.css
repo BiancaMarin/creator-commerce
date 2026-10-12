@@ -39,6 +39,10 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-brand-sky: var(--brand-sky);
+  --color-brand-indigo: var(--brand-indigo);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-mint: var(--brand-mint);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -61,6 +65,13 @@
   --popover-foreground: oklch(0.145 0.008 326);
   --primary: oklch(0.52 0.105 223.128);
   --primary-foreground: oklch(0.984 0.019 200.873);
+  /* Accents that sit beside --primary on the color wheel (blue-teal, hue 223):
+     its neighbours either side, plus a lighter tint. Used sparingly for
+     decoration on the marketing page, never for state or meaning. */
+  --brand-sky: oklch(0.66 0.12 210);
+  --brand-indigo: oklch(0.54 0.15 272);
+  --brand-violet: oklch(0.56 0.16 302);
+  --brand-mint: oklch(0.64 0.11 175);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.96 0.003 325.6);
@@ -100,6 +111,10 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.45 0.085 224.283);
   --primary-foreground: oklch(0.984 0.019 200.873);
+  --brand-sky: oklch(0.74 0.11 210);
+  --brand-indigo: oklch(0.68 0.14 272);
+  --brand-violet: oklch(0.7 0.14 302);
+  --brand-mint: oklch(0.74 0.11 175);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.263 0.024 320.12);
@@ -139,4 +154,44 @@
   html {
     @apply font-sans;
   }
+}
+
+/* The brand gradient (primary → indigo → violet), shared by the marketing
+   page and the app so headings, CTAs and accents read as one palette. */
+@utility bg-brand-gradient {
+  background-image: linear-gradient(
+    to right,
+    var(--primary),
+    var(--brand-indigo),
+    var(--brand-violet)
+  );
+}
+
+/* Gradient text. `w-fit` keeps the gradient spanning the words rather than
+   the whole line, so a short heading still reaches the violet end. */
+@utility text-brand-gradient {
+  width: fit-content;
+  background-image: linear-gradient(
+    to right,
+    var(--primary),
+    var(--brand-indigo),
+    var(--brand-violet)
+  );
+  background-clip: text;
+  color: transparent;
+}
+
+/* A soft two-colour glow behind a page. Purely decorative. */
+@utility bg-brand-glow {
+  background-image:
+    radial-gradient(
+      40rem 24rem at 15% 0%,
+      color-mix(in oklch, var(--primary) 12%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      36rem 22rem at 90% 40%,
+      color-mix(in oklch, var(--brand-indigo) 10%, transparent),
+      transparent
+    );
 }
