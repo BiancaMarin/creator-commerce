@@ -41,7 +41,7 @@ export const strings = {
     },
     analytics: {
       title: "Analytics",
-      description: "Revenue, traffic, and conversion.",
+      description: "Who visits your store, from PostHog.",
     },
     downloads: {
       title: "Downloads",
@@ -238,8 +238,18 @@ export const strings = {
 
   analytics: {
     title: "Analytics",
-    subtitle: "Understand revenue, traffic, and conversion.",
-    placeholder: "The analytics view lives here — a template not yet built.",
+    subtitle: "Who visits your store, from PostHog.",
+    period: "last {days} days",
+    visitors: "{count} unique visitors",
+    events: {
+      storefront_viewed: "Store visits",
+      product_viewed: "Product views",
+      checkout_started: "Checkouts started",
+    },
+    unconfigured:
+      "Traffic data isn't connected yet. Add a PostHog personal API key and project id to the server environment to see it here.",
+    error: "Couldn't load traffic data from PostHog right now. Try again in a moment.",
+    note: "Counts come from PostHog and leave out your own visits to your store.",
   },
 
 

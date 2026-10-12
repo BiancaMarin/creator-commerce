@@ -46,7 +46,7 @@ export const ro: Strings = {
     },
     analytics: {
       title: "Statistici",
-      description: "Venituri, trafic și conversie.",
+      description: "Cine îți vizitează magazinul, din PostHog.",
     },
     downloads: {
       title: "Descărcări",
@@ -231,8 +231,18 @@ export const ro: Strings = {
 
   analytics: {
     title: "Statistici",
-    subtitle: "Înțelege veniturile, traficul și conversia.",
-    placeholder: "Aici vor fi statisticile — o pagină încă neconstruită.",
+    subtitle: "Cine îți vizitează magazinul, din PostHog.",
+    period: "ultimele {days} zile",
+    visitors: "{count} vizitatori unici",
+    events: {
+      storefront_viewed: "Vizite în magazin",
+      product_viewed: "Vizualizări de produs",
+      checkout_started: "Checkout-uri începute",
+    },
+    unconfigured:
+      "Datele de trafic nu sunt încă conectate. Adaugă pe server o cheie personală PostHog și ID-ul proiectului ca să le vezi aici.",
+    error: "Nu am putut încărca acum datele de trafic din PostHog. Încearcă din nou în câteva momente.",
+    note: "Cifrele vin din PostHog și nu includ vizitele tale în propriul magazin.",
   },
 
 
