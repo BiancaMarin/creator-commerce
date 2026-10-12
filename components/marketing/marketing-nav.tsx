@@ -9,9 +9,10 @@ import { getStrings } from "@/lib/server/i18n"
 export async function MarketingNav() {
   const strings = await getStrings()
   const navLinks = [
-    { href: "#features", label: strings.marketing.nav.features },
-    { href: "#how", label: strings.marketing.nav.how },
-    { href: "#pricing", label: strings.marketing.nav.pricing },
+    // Rooted at "/" so the section links still work from /docs.
+    { href: "/#features", label: strings.marketing.nav.features },
+    { href: "/#how", label: strings.marketing.nav.how },
+    { href: "/#pricing", label: strings.marketing.nav.pricing },
   ]
 
   // No separate "Sign in": "Get started" leads to signup, which links to
@@ -26,6 +27,9 @@ export async function MarketingNav() {
               {link.label}
             </a>
           ))}
+          <Link href="/docs" className="hover:text-foreground">
+            {strings.marketing.nav.docs}
+          </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
           <LocaleToggle />

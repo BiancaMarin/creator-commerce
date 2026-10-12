@@ -558,6 +558,59 @@ export const strings = {
       how: "How it works",
       pricing: "Pricing",
       getStarted: "Get started",
+      docs: "Docs",
+    },
+    docs: {
+      title: "Docs",
+      subtitle:
+        "What Creator Commerce is built with, and how the pieces fit together.",
+      stackTitle: "Tech stack",
+      architectureTitle: "Architecture",
+      architectureSubtitle:
+        "One Next.js app: pages render on the server, writes go through Server Actions, and every external service sits behind the server layer.",
+      layers: {
+        client: "Browser",
+        clientDetail: "React 19 · Client Components only where needed",
+        app: "Next.js App Router",
+        appDetail: "Server Components · Server Actions · Route handlers",
+        data: "Data layer",
+        dataDetail: "lib/server/dal · Drizzle ORM · React cache()",
+        services: "External services",
+      },
+      groups: {
+        frontend: "Frontend",
+        backend: "Backend & data",
+        auth: "Auth & payments",
+        files: "Files & email",
+        ai: "AI",
+        quality: "Analytics, testing & hosting",
+      },
+      points: {
+        routes: {
+          title: "Four route groups",
+          body: "(marketing) and (store) are public, (auth) holds sign-in, and (app) is the seller app — its layout checks the session once for every page inside.",
+        },
+        data: {
+          title: "Queries in one place",
+          body: "Every read lives in lib/server/dal, wrapped in React cache(), so a layout and its page share one query. Inputs are validated with Zod on both sides.",
+        },
+        payments: {
+          title: "Stripe-hosted checkout",
+          body: "A pending order is written first, then the buyer pays on Stripe. Only the signed webhook marks an order paid — idempotently, so redeliveries are harmless.",
+        },
+        downloads: {
+          title: "Protected downloads",
+          body: "Files live on UploadThing, but buyers never get the storage URL: the server streams each download after re-checking the purchase.",
+        },
+        ai: {
+          title: "AI where it helps",
+          body: "The product form drafts a name, type and description from the uploaded file, and CECE answers questions about the platform using read-only tools.",
+        },
+        i18n: {
+          title: "English & Romanian",
+          body: "All copy sits in two typed dictionaries; the EN | RO toggle stores the choice in a cookie, so server-rendered pages follow it too.",
+        },
+      },
     },
     hero: {
       badge: "Now with AI product pages",

@@ -470,6 +470,59 @@ export const ro: Strings = {
       how: "Cum funcționează",
       pricing: "Prețuri",
       getStarted: "Începe acum",
+      docs: "Docs",
+    },
+    docs: {
+      title: "Docs",
+      subtitle:
+        "Cu ce e construit Creator Commerce și cum se leagă piesele între ele.",
+      stackTitle: "Tehnologii",
+      architectureTitle: "Arhitectură",
+      architectureSubtitle:
+        "O singură aplicație Next.js: paginile se randează pe server, scrierile trec prin Server Actions, iar fiecare serviciu extern stă în spatele stratului de server.",
+      layers: {
+        client: "Browser",
+        clientDetail: "React 19 · Client Components doar unde e nevoie",
+        app: "Next.js App Router",
+        appDetail: "Server Components · Server Actions · Route handlers",
+        data: "Stratul de date",
+        dataDetail: "lib/server/dal · Drizzle ORM · React cache()",
+        services: "Servicii externe",
+      },
+      groups: {
+        frontend: "Frontend",
+        backend: "Backend și date",
+        auth: "Autentificare și plăți",
+        files: "Fișiere și email",
+        ai: "AI",
+        quality: "Analiză, testare și hosting",
+      },
+      points: {
+        routes: {
+          title: "Patru grupuri de rute",
+          body: "(marketing) și (store) sunt publice, (auth) conține autentificarea, iar (app) este aplicația vânzătorului — layout-ul ei verifică sesiunea o singură dată pentru toate paginile.",
+        },
+        data: {
+          title: "Interogări într-un singur loc",
+          body: "Toate citirile stau în lib/server/dal, învelite în React cache(), astfel încât un layout și pagina lui folosesc aceeași interogare. Datele sunt validate cu Zod pe ambele părți.",
+        },
+        payments: {
+          title: "Checkout găzduit de Stripe",
+          body: "Mai întâi se scrie o comandă în așteptare, apoi cumpărătorul plătește pe Stripe. Doar webhook-ul semnat marchează comanda ca plătită — idempotent, deci retrimiterile nu strică nimic.",
+        },
+        downloads: {
+          title: "Descărcări protejate",
+          body: "Fișierele stau pe UploadThing, dar cumpărătorii nu primesc niciodată adresa lor: serverul transmite fiecare descărcare după ce reverifică achiziția.",
+        },
+        ai: {
+          title: "AI acolo unde ajută",
+          body: "Formularul de produs propune nume, tip și descriere pornind de la fișierul încărcat, iar CECE răspunde la întrebări despre platformă folosind unelte doar de citire.",
+        },
+        i18n: {
+          title: "Engleză și română",
+          body: "Toate textele stau în două dicționare tipizate; comutatorul EN | RO salvează alegerea într-un cookie, așa că și paginile randate pe server o respectă.",
+        },
+      },
     },
     hero: {
       badge: "Acum cu pagini de produs generate de AI",
