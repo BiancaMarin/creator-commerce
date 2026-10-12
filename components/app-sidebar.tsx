@@ -103,7 +103,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              render={<Link href="/dashboard" />}
+              render={<Link href="/" />}
               tooltip="Creator Commerce"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-brand-gradient text-white">
