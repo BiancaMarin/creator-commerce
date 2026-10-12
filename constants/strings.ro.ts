@@ -48,10 +48,6 @@ export const ro: Strings = {
       title: "Statistici",
       description: "Venituri, trafic și conversie.",
     },
-    wishlist: {
-      title: "Favorite",
-      description: "Produse salvate de clienți, dar necumpărate încă.",
-    },
     downloads: {
       title: "Descărcări",
       description: "Tot ce ai cumpărat, gata de descărcat.",
@@ -80,9 +76,6 @@ export const ro: Strings = {
     signIn: "Conectare",
     submit: "Conectează-te",
     submitting: "Se conectează…",
-    continueWith: "sau continuă cu",
-    google: "Google",
-    github: "GitHub",
     forgotPassword: "Ai uitat parola?",
     footerPrompt: "Nu ai cont?",
     footerLink: "Înregistrează-te",
@@ -101,9 +94,6 @@ export const ro: Strings = {
     passwordPlaceholder: "••••••••",
     submit: "Creează cont",
     submitting: "Se creează contul…",
-    continueWith: "sau continuă cu",
-    google: "Google",
-    github: "GitHub",
     footerPrompt: "Ai deja cont?",
     footerLink: "Conectează-te",
   },
@@ -149,7 +139,6 @@ export const ro: Strings = {
     customers: "Clienți",
     analytics: "Statistici",
     explore: "Explorează",
-    wishlist: "Favorite",
     downloads: "Descărcări",
   },
 
@@ -185,9 +174,8 @@ export const ro: Strings = {
       revenue: "Venituri",
       orders: "Comenzi",
       customers: "Clienți",
-      avgOrder: "Comandă medie",
       vsPrevious: "față de cele 30 de zile anterioare",
-      last30: "ultimele 30 de zile",
+      allTime: "Total: {value}",
     },
     recentOrders: "Comenzi recente",
     recentOrdersHint: "Ultimele 5 comenzi din magazin.",
@@ -247,19 +235,6 @@ export const ro: Strings = {
     placeholder: "Aici vor fi statisticile — o pagină încă neconstruită.",
   },
 
-  wishlist: {
-    title: "Favorite",
-    subtitle: "Produse salvate de clienți, dar necumpărate încă.",
-    columnProduct: "Produs",
-    columnSavedBy: "Salvat de",
-    columnSaved: "Salvat",
-    columnStatus: "Stare",
-    columnPrice: "Preț",
-    status: {
-      inStock: "Disponibil",
-      waitlist: "Listă de așteptare",
-    },
-  },
 
   products: {
     title: "Produse",
@@ -386,13 +361,10 @@ export const ro: Strings = {
     signingOut: "Se deconectează…",
     signOutError: "Deconectarea a eșuat — ești în continuare conectat. Încearcă din nou.",
     fallbackName: "Contul tău",
-    socialComingSoon: "Conectarea cu rețele sociale vine în curând.",
   },
 
   store: {
     brand: "Creator Commerce",
-    shop: "Magazin",
-    about: "Despre",
     signIn: "Conectare",
     cart: "Coș",
     products: "Produse",

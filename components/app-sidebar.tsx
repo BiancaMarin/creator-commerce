@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation"
 import {
   ChartLineIcon,
   FileArrowDownIcon,
-  HeartIcon,
   HouseIcon,
   MagnifyingGlassIcon,
   PackageIcon,
@@ -20,7 +19,6 @@ import {
 
 import { useCece } from "@/components/cece/cece-provider"
 import { useStrings } from "@/components/i18n/i18n-provider"
-import { LocaleToggle } from "@/components/i18n/locale-toggle"
 import { LogoMark } from "@/components/marketing/logo"
 import { NavUser, type NavUserProps } from "@/components/nav-user"
 import {
@@ -65,7 +63,6 @@ const navSelling: readonly NavItem[] = [
 
 const navBuying: readonly NavItem[] = [
   { label: "explore", href: "/explore", icon: MagnifyingGlassIcon },
-  { label: "wishlist", href: "/wishlist", icon: HeartIcon },
   { label: "downloads", href: "/downloads", icon: FileArrowDownIcon },
 ]
 
@@ -184,8 +181,6 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
-        {/* No room for it once the sidebar collapses to icons. */}
-        <LocaleToggle className="mx-2 self-start group-data-[collapsible=icon]:hidden" />
         <SidebarMenu>
           {/* In the footer rather than a nav group: it isn't a page, and it
               should sit in the same place whichever page someone is stuck on. */}
@@ -204,9 +199,7 @@ export function AppSidebar({
               <span>{strings.cece.navLabel}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            <NavUser {...user} />
-          </SidebarMenuItem>
+          <NavUser {...user} />
         </SidebarMenu>
       </SidebarFooter>
 

@@ -124,7 +124,7 @@ app/
     dashboard/actions.ts          # Server Actions for the dashboard (updateHandle)
     orders/page.tsx               # "/orders"    → the seller's sales, from order_items
     downloads/page.tsx            # "/downloads" → the buyer's library; Stripe returns here
-    products|customers|analytics|wishlist/page.tsx   # placeholder screens
+    products|customers|analytics/page.tsx   # placeholder screens
   (store)/                        # Public buyer-facing storefronts
     layout.tsx                    # bare flex shell only — no nav/footer (see StoreChrome)
     [handle]/layout.tsx           # resolves the creator from the DB, 404s if unknown
@@ -235,7 +235,7 @@ Auth **is implemented** with **Better Auth** (email + password) on Drizzle/Neon.
   `/dashboard`. A new page under `(app)` is protected automatically — don't re-check.
 - **Server Actions must derive identity from the session**, never from their arguments.
   See `updateHandle` in `app/(app)/dashboard/actions.ts`.
-- Google / GitHub buttons are visual placeholders (disabled, no OAuth wired).
+- Email + password only — no social providers (Google / GitHub) are configured or shown.
 - `handle` is declared as an additionalField with `required: false` so Better Auth's
   pre-hook validation doesn't reject signups — the column is still NOT NULL, and the
   `user.create.before` hook fills it. Consequence: **`user.handle` is typed
@@ -835,7 +835,7 @@ Rules that are load-bearing:
   `needsApproval`; MCP elicitation). Until then CECE explains and links to the page.
 - **Help lives in `lib/server/cece/guide.ts`, and must describe only what's built.** A tool,
   not system prompt, so MCP clients get it too. When a feature ships or changes, update its
-  topic in the same change. Analytics, Wishlist and Settings are placeholders and say so.
+  topic in the same change. Analytics and Settings are placeholders and say so.
 - **Don't send what the model doesn't need.** Buyer emails are omitted on purpose; other
   creators' descriptions are truncated and the prompt tells the model to treat tool content
   as data. Tool errors are replaced with a generic message before the model sees them.

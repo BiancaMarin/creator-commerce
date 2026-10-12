@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import {
   EyeIcon,
   EyeSlashIcon,
-  GithubLogoIcon,
-  GoogleLogoIcon,
   StorefrontIcon,
 } from "@phosphor-icons/react";
 
@@ -24,7 +22,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   useStrings,
   useTranslateMessage,
@@ -176,35 +173,6 @@ export default function LoginPage() {
               {isSubmitting ? strings.login.submitting : strings.login.submit}
             </Button>
           </form>
-
-          <div className="flex items-center gap-3 py-4">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">
-              {strings.login.continueWith}
-            </span>
-            <Separator className="flex-1" />
-          </div>
-
-          {/* No socialProviders configured in lib/server/auth.ts yet, so these
-              stay disabled rather than pretending to be wired up. */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              disabled
-              title={strings.account.socialComingSoon}
-            >
-              <GoogleLogoIcon />
-              {strings.login.google}
-            </Button>
-            <Button
-              variant="outline"
-              disabled
-              title={strings.account.socialComingSoon}
-            >
-              <GithubLogoIcon />
-              {strings.login.github}
-            </Button>
-          </div>
         </CardContent>
         <CardFooter className="justify-center border-t text-sm text-muted-foreground">
           {strings.login.footerPrompt}{" "}

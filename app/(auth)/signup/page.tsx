@@ -9,8 +9,6 @@ import { useForm } from "react-hook-form";
 import {
   EyeIcon,
   EyeSlashIcon,
-  GithubLogoIcon,
-  GoogleLogoIcon,
   StorefrontIcon,
 } from "@phosphor-icons/react";
 
@@ -24,7 +22,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import {
   useStrings,
   useTranslateMessage,
@@ -187,33 +184,6 @@ export default function SignupPage() {
               {isSubmitting ? strings.signup.submitting : strings.signup.submit}
             </Button>
           </form>
-
-          <div className="flex items-center gap-3 py-4">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">
-              {strings.signup.continueWith}
-            </span>
-            <Separator className="flex-1" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="outline"
-              disabled
-              title={strings.account.socialComingSoon}
-            >
-              <GoogleLogoIcon />
-              {strings.signup.google}
-            </Button>
-            <Button
-              variant="outline"
-              disabled
-              title={strings.account.socialComingSoon}
-            >
-              <GithubLogoIcon />
-              {strings.signup.github}
-            </Button>
-          </div>
         </CardContent>
         <CardFooter className="justify-center border-t text-sm text-muted-foreground">
           {strings.signup.footerPrompt}{" "}

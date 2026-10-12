@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { CecePanel } from "@/components/cece/cece-panel";
 import { CeceProvider } from "@/components/cece/cece-provider";
+import { LocaleToggle } from "@/components/i18n/locale-toggle";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { readCartIds } from "@/lib/server/cart";
@@ -32,6 +33,11 @@ export default async function AppLayout({
             cartCount={cartCount}
           />
           <SidebarInset>
+            {/* Top right, where the marketing nav keeps it, so the language
+                switch doesn't move when someone signs in. */}
+            <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-end border-b bg-background/80 px-4 backdrop-blur-md md:px-6">
+              <LocaleToggle />
+            </header>
             <div className="flex flex-1 flex-col">{children}</div>
           </SidebarInset>
         </SidebarProvider>

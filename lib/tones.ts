@@ -12,24 +12,28 @@ export const TONES = [
     solid: "bg-primary",
     text: "text-primary",
     edge: "border-t-primary",
+    wash: "bg-linear-to-br from-primary/15 via-primary/5 to-transparent ring-primary/25 dark:ring-primary/30",
   },
   {
     tile: "bg-brand-indigo/15 text-brand-indigo",
     solid: "bg-brand-indigo",
     text: "text-brand-indigo",
     edge: "border-t-brand-indigo",
+    wash: "bg-linear-to-br from-brand-indigo/15 via-brand-indigo/5 to-transparent ring-brand-indigo/25 dark:ring-brand-indigo/30",
   },
   {
     tile: "bg-brand-violet/15 text-brand-violet",
     solid: "bg-brand-violet",
     text: "text-brand-violet",
     edge: "border-t-brand-violet",
+    wash: "bg-linear-to-br from-brand-violet/15 via-brand-violet/5 to-transparent ring-brand-violet/25 dark:ring-brand-violet/30",
   },
   {
     tile: "bg-brand-mint/15 text-brand-mint",
     solid: "bg-brand-mint",
     text: "text-brand-mint",
     edge: "border-t-brand-mint",
+    wash: "bg-linear-to-br from-brand-mint/15 via-brand-mint/5 to-transparent ring-brand-mint/25 dark:ring-brand-mint/30",
   },
 ] as const;
 

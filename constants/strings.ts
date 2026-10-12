@@ -43,10 +43,6 @@ export const strings = {
       title: "Analytics",
       description: "Revenue, traffic, and conversion.",
     },
-    wishlist: {
-      title: "Wishlist",
-      description: "Products customers saved but haven't bought yet.",
-    },
     downloads: {
       title: "Downloads",
       description: "Everything you've bought, ready to download.",
@@ -76,9 +72,6 @@ export const strings = {
     signIn: "Sign In",
     submit: "Sign in",
     submitting: "Signing in…",
-    continueWith: "or continue with",
-    google: "Google",
-    github: "GitHub",
     forgotPassword: "Forgot password?",
     footerPrompt: "Don't have an account?",
     footerLink: "Sign up",
@@ -97,9 +90,6 @@ export const strings = {
     passwordPlaceholder: "••••••••",
     submit: "Create account",
     submitting: "Creating account…",
-    continueWith: "or continue with",
-    google: "Google",
-    github: "GitHub",
     footerPrompt: "Already have an account?",
     footerLink: "Sign in",
   },
@@ -154,7 +144,6 @@ export const strings = {
     customers: "Customers",
     analytics: "Analytics",
     explore: "Explore",
-    wishlist: "Wishlist",
     downloads: "Downloads",
   },
 
@@ -191,9 +180,8 @@ export const strings = {
       revenue: "Revenue",
       orders: "Orders",
       customers: "Customers",
-      avgOrder: "Avg. order",
       vsPrevious: "vs. previous 30 days",
-      last30: "last 30 days",
+      allTime: "All time: {value}",
     },
     recentOrders: "Recent orders",
     recentOrdersHint: "Your latest 5 orders across the store.",
@@ -254,19 +242,6 @@ export const strings = {
     placeholder: "The analytics view lives here — a template not yet built.",
   },
 
-  wishlist: {
-    title: "Wishlist",
-    subtitle: "Products customers saved but haven't bought yet.",
-    columnProduct: "Product",
-    columnSavedBy: "Saved by",
-    columnSaved: "Saved",
-    columnStatus: "Status",
-    columnPrice: "Price",
-    status: {
-      inStock: "In stock",
-      waitlist: "Waitlist",
-    },
-  },
 
   products: {
     title: "Products",
@@ -443,13 +418,10 @@ export const strings = {
     // otherwise looks like it worked until the next page proves it didn't.
     signOutError: "Couldn't sign out — you're still signed in. Try again.",
     fallbackName: "Your account",
-    socialComingSoon: "Social sign-in is coming soon.",
   },
 
   store: {
     brand: "Creator Commerce",
-    shop: "Shop",
-    about: "About",
     signIn: "Sign in",
     cart: "Cart",
     products: "Products",

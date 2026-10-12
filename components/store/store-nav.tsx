@@ -31,14 +31,6 @@ export async function StoreNav({ creator }: { creator: Creator | null }) {
         </span>
         {creator ? creator.handle : strings.store.brand}
       </Link>
-      <nav className="ml-6 hidden items-center gap-5 text-sm text-muted-foreground sm:flex">
-        <Link href={homeHref} className="text-foreground">
-          {strings.store.shop}
-        </Link>
-        <a href="#" className="hover:text-foreground">
-          {strings.store.about}
-        </a>
-      </nav>
       <div className="ml-auto flex items-center gap-2">
         <LocaleToggle />
         <Button

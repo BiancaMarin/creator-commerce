@@ -496,6 +496,8 @@ export type SellerStats = {
   customersPrevious: number;
   /** Gross, all time — what the seller has ever earned. */
   revenueAllTime: number;
+  ordersAllTime: number;
+  customersAllTime: number;
 };
 
 export const getSellerStats = cache(
@@ -519,6 +521,8 @@ export const getSellerStats = cache(
         customers: sql<number>`count(distinct ${ordersTable.buyerId}) filter (where ${current})::int`,
         customersPrevious: sql<number>`count(distinct ${ordersTable.buyerId}) filter (where ${previous})::int`,
         revenueAllTime: sql<number>`coalesce(sum(${orderItemsTable.unitAmount}), 0)::int`,
+        ordersAllTime: sql<number>`count(distinct ${ordersTable.id})::int`,
+        customersAllTime: sql<number>`count(distinct ${ordersTable.buyerId})::int`,
       })
       .from(orderItemsTable)
       .innerJoin(ordersTable, eq(ordersTable.id, orderItemsTable.orderId))
@@ -538,6 +542,8 @@ export const getSellerStats = cache(
         customers: 0,
         customersPrevious: 0,
         revenueAllTime: 0,
+        ordersAllTime: 0,
+        customersAllTime: 0,
       }
     );
   },

@@ -3,11 +3,9 @@ import Link from "next/link";
 import {
   ArrowUpRightIcon,
   CoinsIcon,
-  ExportIcon,
   PackageIcon,
   PlusIcon,
   ReceiptIcon,
-  TrendUpIcon,
   UsersIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
@@ -62,9 +60,10 @@ export default async function DashboardPage() {
     listTopProductsForSeller(user.id),
   ]);
 
-  // The average is over the window's orders, so it's undefined with none —
-  // show a dash rather than dividing by zero.
-  const averageOrder = stat.orders > 0 ? stat.revenue / stat.orders : null;
+  // The cards count a 30-day window, which reads as an empty account once the
+  // last sale is older than that — the all-time line keeps the history visible.
+  const allTime = (value: string) =>
+    strings.dashboard.kpi.allTime.replace("{value}", value);
 
   const stats = [
     {
@@ -72,6 +71,7 @@ export default async function DashboardPage() {
       value: formatCents(stat.revenue),
       delta: deltaOf(stat.revenue, stat.revenuePrevious),
       hint: strings.dashboard.kpi.vsPrevious,
+      total: allTime(formatCents(stat.revenueAllTime)),
       icon: CoinsIcon,
     },
     {
@@ -79,6 +79,7 @@ export default async function DashboardPage() {
       value: number.format(stat.orders),
       delta: deltaOf(stat.orders, stat.ordersPrevious),
       hint: strings.dashboard.kpi.vsPrevious,
+      total: allTime(number.format(stat.ordersAllTime)),
       icon: ReceiptIcon,
     },
     {
@@ -86,17 +87,8 @@ export default async function DashboardPage() {
       value: number.format(stat.customers),
       delta: deltaOf(stat.customers, stat.customersPrevious),
       hint: strings.dashboard.kpi.vsPrevious,
+      total: allTime(number.format(stat.customersAllTime)),
       icon: UsersIcon,
-    },
-    {
-      // Replaces the old "Conversion" tile. Conversion needs a view count, and
-      // nothing here records page views — the figure would have to be invented.
-      // Average order value comes from the same rows as the tiles beside it.
-      label: strings.dashboard.kpi.avgOrder,
-      value: averageOrder === null ? "—" : formatCents(averageOrder),
-      delta: null,
-      hint: strings.dashboard.kpi.last30,
-      icon: TrendUpIcon,
     },
   ];
 
@@ -122,10 +114,6 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <ExportIcon />
-            {strings.common.export}
-          </Button>
           <Button
             size="sm"
             nativeButton={false}
@@ -151,12 +139,12 @@ export default async function DashboardPage() {
         </TabsList>
 
         <TabsContent value="overview" className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {stats.map((entry, index) => (
               <KpiCard
                 key={entry.label}
                 {...entry}
-                iconClassName={toneAt(index).tile}
+                tone={toneAt(index)}
               />
             ))}
           </div>

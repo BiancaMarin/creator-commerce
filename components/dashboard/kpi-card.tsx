@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { Tone } from "@/lib/tones";
 import { cn } from "@/lib/utils";
 
 /**
@@ -39,9 +40,14 @@ type KpiCardProps = {
   delta: number | null;
   /** The period the figure covers, e.g. "vs. previous 30 days". */
   hint: string;
+  /**
+   * Optional line under the figure, e.g. the all-time total — so a window
+   * with no activity doesn't make the account look empty.
+   */
+  total?: string;
   icon: ComponentType<{ className?: string }>;
-  /** Classes for the icon tile — a tone from lib/tones. Muted when omitted. */
-  iconClassName?: string;
+  /** Colours the card from lib/tones. Plain and muted when omitted. */
+  tone?: Tone;
 };
 
 /** One dashboard tile: a headline figure and its trend over the period. */
@@ -50,21 +56,25 @@ export function KpiCard({
   value,
   delta,
   hint,
+  total,
   icon: Icon,
-  iconClassName = "bg-muted text-muted-foreground",
+  tone,
 }: KpiCardProps) {
   const TrendIcon = delta !== null && delta < 0 ? TrendDownIcon : TrendUpIcon;
 
   return (
-    <Card size="sm">
+    <Card size="sm" className={tone?.wash}>
       <CardHeader>
         <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl">{value}</CardTitle>
+        <CardTitle className={cn("text-2xl", tone?.text)}>{value}</CardTitle>
+        {total && (
+          <p className="text-xs text-muted-foreground">{total}</p>
+        )}
         <CardAction>
           <span
             className={cn(
-              "flex size-9 items-center justify-center rounded-2xl",
-              iconClassName,
+              "flex size-9 items-center justify-center rounded-2xl shadow-sm",
+              tone ? [tone.solid, "text-white"] : "bg-muted text-muted-foreground",
             )}
           >
             <Icon className="size-4" />

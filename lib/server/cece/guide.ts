@@ -15,7 +15,7 @@ import { formatFileSize } from "@/lib/utils";
  *
  * **Describe only what exists.** This is the one place CECE can be confidently
  * wrong on the platform's behalf: a step that names a button nobody built reads
- * as a bug to the person following it. Analytics, Wishlist and Settings are
+ * as a bug to the person following it. Analytics and Settings are
  * placeholders today and are described as such. When a feature ships or
  * changes, update its topic in the same change.
  */
@@ -35,13 +35,13 @@ export const HELP_ARTICLES: Record<CeceHelpTopic, HelpArticle> = {
   getting_started: {
     title: "Getting started",
     steps: [
-      "Every account can both sell and buy. The sidebar is split into Selling (Products, Orders, Customers, Analytics) and Buying (Explore, Wishlist, Downloads, Cart).",
+      "Every account can both sell and buy. The sidebar is split into Selling (Products, Orders, Customers, Analytics) and Buying (Explore, Downloads, Cart).",
       "To start selling, create your first product from Products → New product. It goes live on your storefront as soon as you save it.",
       "Your storefront is at /your-handle. Change the handle in Dashboard → Account.",
       "The Dashboard shows revenue, orders and customers for the last 30 days against the 30 before.",
     ],
     notes: [
-      "Analytics, Wishlist and Settings are placeholder screens for now; they don't show your real data yet.",
+      "Analytics and Settings are placeholder screens for now; they don't show your real data yet.",
     ],
     links: [
       { label: "New product", href: "/products/new" },
