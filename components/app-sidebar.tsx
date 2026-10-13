@@ -52,6 +52,7 @@ type NavItem = { label: keyof Strings["nav"]; href: Route; icon: Icon }
 // as the same thing when they're in one undifferentiated list.
 const navHome: readonly NavItem[] = [
   { label: "dashboard", href: "/dashboard", icon: HouseIcon },
+  { label: "explore", href: "/explore", icon: MagnifyingGlassIcon },
 ]
 
 const navSelling: readonly NavItem[] = [
@@ -62,7 +63,6 @@ const navSelling: readonly NavItem[] = [
 ]
 
 const navBuying: readonly NavItem[] = [
-  { label: "explore", href: "/explore", icon: MagnifyingGlassIcon },
   { label: "downloads", href: "/downloads", icon: FileArrowDownIcon },
 ]
 
@@ -121,8 +121,9 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Unlabelled: the dashboard spans both roles, so filing it under one
-            would misdescribe it. */}
+        {/* Unlabelled: the dashboard and Explore span both roles (a creator
+            browses the platform to see what sells, too), so filing them under
+            one would misdescribe them. */}
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>{renderItems(navHome)}</SidebarMenu>
