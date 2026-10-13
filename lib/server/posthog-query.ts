@@ -20,12 +20,12 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics/events";
  */
 
 /**
- * The events the page shows: the three that carry the store's `handle`, so
- * they can be counted per creator. The later steps (add to cart from the
- * cart page, purchase) don't carry it yet.
+ * The events the page shows: two of the three that carry the store's
+ * `handle`, so they can be counted per creator. `storefront_viewed` carries
+ * it too but is left off the page: its count never filled in. The later
+ * steps (add to cart from the cart page, purchase) don't carry it yet.
  */
 export const TRAFFIC_EVENTS = [
-  ANALYTICS_EVENTS.storefrontViewed,
   ANALYTICS_EVENTS.productViewed,
   ANALYTICS_EVENTS.checkoutStarted,
 ] as const;

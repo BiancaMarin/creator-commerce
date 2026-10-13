@@ -235,7 +235,6 @@ export const ro: Strings = {
     period: "ultimele {days} zile",
     visitors: "{count} vizitatori unici",
     events: {
-      storefront_viewed: "Vizite în magazin",
       product_viewed: "Vizualizări de produs",
       checkout_started: "Checkout-uri începute",
     },

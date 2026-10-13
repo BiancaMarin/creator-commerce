@@ -242,7 +242,6 @@ export const strings = {
     period: "last {days} days",
     visitors: "{count} unique visitors",
     events: {
-      storefront_viewed: "Store visits",
       product_viewed: "Product views",
       checkout_started: "Checkouts started",
     },

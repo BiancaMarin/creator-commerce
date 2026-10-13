@@ -3,7 +3,6 @@ import {
   ChartLineIcon,
   CreditCardIcon,
   EyeIcon,
-  StorefrontIcon,
 } from "@phosphor-icons/react/dist/ssr"
 
 import { KpiCard } from "@/components/dashboard/kpi-card"
@@ -20,7 +19,6 @@ export async function generateMetadata(): Promise<Metadata> {
 const DAYS = 30
 
 const EVENT_ICONS = {
-  storefront_viewed: StorefrontIcon,
   product_viewed: EyeIcon,
   checkout_started: CreditCardIcon,
 } as const
@@ -49,7 +47,7 @@ export default async function AnalyticsPage() {
 
       {traffic.status === "ok" ? (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {TRAFFIC_EVENTS.map((event, index) => (
               <KpiCard
                 key={event}
