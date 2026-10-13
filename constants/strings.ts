@@ -570,57 +570,98 @@ export const strings = {
       getStarted: "Get started",
       docs: "Docs",
     },
+    // The /docs page mirrors the one-page project summary handed out with the
+    // presentation, section for section. List items are `lead` (bold) +
+    // `text`, where `text` carries its own leading space or colon.
     docs: {
       title: "Docs",
+      eyebrow: "Project summary",
       subtitle:
-        "What Creator Commerce is built with, and how the pieces fit together.",
-      stackTitle: "Tech stack",
-      architectureTitle: "Architecture",
-      architectureSubtitle:
-        "One Next.js app: pages render on the server, writes go through Server Actions, and every external service sits behind the server layer.",
-      layers: {
-        client: "Browser",
-        clientDetail: "React 19 · Client Components only where needed",
-        app: "Next.js App Router",
-        appDetail: "Server Components · Server Actions · Route handlers",
-        data: "Data layer",
-        dataDetail: "lib/server/dal · Drizzle ORM · React cache()",
-        services: "External services",
-      },
-      groups: {
-        frontend: "Frontend",
-        backend: "Backend & data",
-        auth: "Auth & payments",
-        files: "Files & email",
-        ai: "AI",
-        quality: "Analytics, testing & hosting",
-      },
-      points: {
-        routes: {
-          title: "Four route groups",
-          body: "(marketing) and (store) are public, (auth) holds sign-in, and (app) is the seller app — its layout checks the session once for every page inside.",
+        "A multi-user SaaS platform where creators sell their digital products: their own storefront, payments through Stripe and automatic delivery to the buyer.",
+      date: "October 2026",
+      flowTitle: "Main flow",
+      flow: [
+        {
+          title: "Upload",
+          body: "The creator uploads the file; AI writes the title, type and description.",
         },
-        data: {
-          title: "Queries in one place",
-          body: "Every read lives in lib/server/dal, wrapped in React cache(), so a layout and its page share one query. Inputs are validated with Zod on both sides.",
+        {
+          title: "Publish",
+          body: "The product appears in the public storefront /@handle and in Explore.",
         },
-        payments: {
-          title: "Stripe-hosted checkout",
-          body: "A pending order is written first, then the buyer pays on Stripe. Only the signed webhook marks an order paid — idempotently, so redeliveries are harmless.",
+        {
+          title: "Pay",
+          body: "The buyer pays on Stripe's secure page, in lei.",
         },
-        downloads: {
-          title: "Protected downloads",
-          body: "Files live on UploadThing, but buyers never get the storage URL: the server streams each download after re-checking the purchase.",
+        {
+          title: "Download",
+          body: "The webhook confirms the payment, and the file appears in Downloads.",
         },
-        ai: {
-          title: "AI where it helps",
-          body: "The product form drafts a name, type and description from the uploaded file, and CECE answers questions about the platform using read-only tools.",
+      ],
+      featuresTitle: "Features",
+      features: [
+        {
+          title: "For creators",
+          items: [
+            { lead: "Dashboard", text: " with revenue, orders, customers and top products." },
+            { lead: "Products", text: " with a file, cover, price in RON and a public URL." },
+            { lead: "Orders and customers", text: ": every sale and what each customer is worth." },
+          ],
         },
-        i18n: {
-          title: "English & Romanian",
-          body: "All copy sits in two typed dictionaries; the EN | RO toggle stores the choice in a cookie, so server-rendered pages follow it too.",
+        {
+          title: "For buyers",
+          items: [
+            { lead: "Explore", text: ": search across the whole platform, filter by type and price." },
+            { lead: "Cart", text: " with products from several creators, paid for at once." },
+            { lead: "Downloads", text: ": the library of everything they bought." },
+          ],
         },
-      },
+        {
+          title: "Account and forms",
+          items: [
+            { lead: "", text: "Sign up, log in and sign out, with sessions in a secure cookie." },
+            { lead: "", text: "Password reset by email, with a link valid for one hour." },
+            { lead: "", text: "Validation on every field, with the same rules in the browser and on the server." },
+          ],
+        },
+        {
+          title: "Built-in AI",
+          items: [
+            { lead: "Product draft", text: " generated from the uploaded file (PDF, images, text)." },
+            { lead: "CECE", text: ": an assistant that answers from the creator's data, read-only." },
+            { lead: "", text: "Runs through Vercel AI Gateway, on a Gemini Flash model." },
+          ],
+        },
+      ],
+      techTitle: "Technologies",
+      tech: [
+        { label: "Framework", value: "Next.js 16, React 19, TypeScript" },
+        { label: "Interface", value: "Tailwind CSS v4, shadcn (Base UI)" },
+        { label: "Data", value: "Neon Postgres, Drizzle ORM" },
+        { label: "Authentication", value: "Better Auth (email + password)" },
+        { label: "Payments", value: "Stripe Checkout + webhook" },
+        { label: "Files", value: "UploadThing" },
+        { label: "AI and analytics", value: "AI SDK, AI Gateway, PostHog" },
+        { label: "Hosting", value: "Vercel" },
+      ],
+      builtTitle: "How it's built",
+      built: [
+        { lead: "Safe multi-user", text: ": every row has an owner, and all data access goes through the lib/dal layer." },
+        { lead: "Trustworthy payments", text: ": an order becomes paid only from the Stripe webhook, with a verified signature." },
+        { lead: "Prices read from the database", text: ", never from the browser." },
+        { lead: "Secrets", text: " live only in Vercel; .env never reaches Git." },
+        { lead: "Tests", text: ": Vitest for logic and components, Playwright end-to-end, plus next build as the final check." },
+      ],
+      statusTitle: "Current status and next steps",
+      status: [
+        { lead: "", text: "The app works end to end, from upload to download." },
+        { lead: "", text: "Live on Vercel; payments run in Stripe test mode." },
+      ],
+      next: [
+        { lead: "Stripe live and Stripe Connect", text: ", so the money reaches the creators." },
+        { lead: "The Analytics page", text: " and error monitoring with Sentry." },
+      ],
+      footer: "project summary",
     },
     hero: {
       badge: "Now with AI product pages",

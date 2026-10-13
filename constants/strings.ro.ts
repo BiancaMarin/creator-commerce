@@ -484,55 +484,93 @@ export const ro: Strings = {
     },
     docs: {
       title: "Docs",
+      eyebrow: "Sumar de proiect",
       subtitle:
-        "Cu ce e construit Creator Commerce și cum se leagă piesele între ele.",
-      stackTitle: "Tehnologii",
-      architectureTitle: "Arhitectură",
-      architectureSubtitle:
-        "O singură aplicație Next.js: paginile se randează pe server, scrierile trec prin Server Actions, iar fiecare serviciu extern stă în spatele stratului de server.",
-      layers: {
-        client: "Browser",
-        clientDetail: "React 19 · Client Components doar unde e nevoie",
-        app: "Next.js App Router",
-        appDetail: "Server Components · Server Actions · Route handlers",
-        data: "Stratul de date",
-        dataDetail: "lib/server/dal · Drizzle ORM · React cache()",
-        services: "Servicii externe",
-      },
-      groups: {
-        frontend: "Frontend",
-        backend: "Backend și date",
-        auth: "Autentificare și plăți",
-        files: "Fișiere și email",
-        ai: "AI",
-        quality: "Analiză, testare și hosting",
-      },
-      points: {
-        routes: {
-          title: "Patru grupuri de rute",
-          body: "(marketing) și (store) sunt publice, (auth) conține autentificarea, iar (app) este aplicația vânzătorului — layout-ul ei verifică sesiunea o singură dată pentru toate paginile.",
+        "O platformă SaaS multi-user în care creatorii își vând produsele digitale: magazin propriu, plăți prin Stripe și livrare automată către cumpărător.",
+      date: "Octombrie 2026",
+      flowTitle: "Fluxul principal",
+      flow: [
+        {
+          title: "Încarcă",
+          body: "Creatorul urcă fișierul; AI-ul scrie titlul, tipul și descrierea.",
         },
-        data: {
-          title: "Interogări într-un singur loc",
-          body: "Toate citirile stau în lib/server/dal, învelite în React cache(), astfel încât un layout și pagina lui folosesc aceeași interogare. Datele sunt validate cu Zod pe ambele părți.",
+        {
+          title: "Publică",
+          body: "Produsul apare în magazinul public /@handle și în Explore.",
         },
-        payments: {
-          title: "Checkout găzduit de Stripe",
-          body: "Mai întâi se scrie o comandă în așteptare, apoi cumpărătorul plătește pe Stripe. Doar webhook-ul semnat marchează comanda ca plătită — idempotent, deci retrimiterile nu strică nimic.",
+        {
+          title: "Plătește",
+          body: "Cumpărătorul plătește pe pagina securizată Stripe, în lei.",
         },
-        downloads: {
-          title: "Descărcări protejate",
-          body: "Fișierele stau pe UploadThing, dar cumpărătorii nu primesc niciodată adresa lor: serverul transmite fiecare descărcare după ce reverifică achiziția.",
+        {
+          title: "Descarcă",
+          body: "Webhook-ul confirmă plata, iar fișierul apare în Downloads.",
         },
-        ai: {
-          title: "AI acolo unde ajută",
-          body: "Formularul de produs propune nume, tip și descriere pornind de la fișierul încărcat, iar CECE răspunde la întrebări despre platformă folosind unelte doar de citire.",
+      ],
+      featuresTitle: "Funcționalități",
+      features: [
+        {
+          title: "Pentru creator",
+          items: [
+            { lead: "Dashboard", text: " cu venituri, comenzi, clienți și top produse." },
+            { lead: "Produse", text: " cu fișier, copertă, preț în RON și URL public." },
+            { lead: "Comenzi și clienți", text: ": fiecare vânzare și valoarea fiecărui client." },
+          ],
         },
-        i18n: {
-          title: "Engleză și română",
-          body: "Toate textele stau în două dicționare tipizate; comutatorul EN | RO salvează alegerea într-un cookie, așa că și paginile randate pe server o respectă.",
+        {
+          title: "Pentru cumpărător",
+          items: [
+            { lead: "Explore", text: ": căutare în toată platforma, filtre pe tip și preț." },
+            { lead: "Coș", text: " cu produse de la mai mulți creatori, plătite o singură dată." },
+            { lead: "Downloads", text: ": biblioteca cu tot ce a cumpărat." },
+          ],
         },
-      },
+        {
+          title: "Cont și formulare",
+          items: [
+            { lead: "", text: "Signup, login și sign out cu sesiuni în cookie securizat." },
+            { lead: "", text: "Resetarea parolei prin email, cu link valabil o oră." },
+            { lead: "", text: "Validare pe fiecare câmp, aceleași reguli în browser și pe server." },
+          ],
+        },
+        {
+          title: "AI integrat",
+          items: [
+            { lead: "Draft de produs", text: " generat din fișierul încărcat (PDF, imagini, text)." },
+            { lead: "CECE", text: ": asistent care răspunde din datele creatorului, read-only." },
+            { lead: "", text: "Rulează prin Vercel AI Gateway, pe un model Gemini Flash." },
+          ],
+        },
+      ],
+      techTitle: "Tehnologii",
+      tech: [
+        { label: "Framework", value: "Next.js 16, React 19, TypeScript" },
+        { label: "Interfață", value: "Tailwind CSS v4, shadcn (Base UI)" },
+        { label: "Date", value: "Neon Postgres, Drizzle ORM" },
+        { label: "Autentificare", value: "Better Auth (email + parolă)" },
+        { label: "Plăți", value: "Stripe Checkout + webhook" },
+        { label: "Fișiere", value: "UploadThing" },
+        { label: "AI și analytics", value: "AI SDK, AI Gateway, PostHog" },
+        { label: "Găzduire", value: "Vercel" },
+      ],
+      builtTitle: "Cum e construit",
+      built: [
+        { lead: "Multi-user sigur", text: ": fiecare rând are un proprietar, iar toate accesele la date trec prin stratul lib/dal." },
+        { lead: "Plăți de încredere", text: ": o comandă devine plătită doar din webhook-ul Stripe, cu semnătură verificată." },
+        { lead: "Prețuri citite din baza de date", text: ", niciodată din browser." },
+        { lead: "Secretele", text: " stau doar în Vercel; .env nu ajunge în Git." },
+        { lead: "Teste", text: ": Vitest pentru logică și componente, Playwright end-to-end, plus next build ca verificare finală." },
+      ],
+      statusTitle: "Stare actuală și pașii următori",
+      status: [
+        { lead: "", text: "Aplicația funcționează cap-coadă, de la upload la descărcare." },
+        { lead: "", text: "Online pe Vercel; plățile rulează în modul de test Stripe." },
+      ],
+      next: [
+        { lead: "Stripe live și Stripe Connect", text: ", ca banii să ajungă la creatori." },
+        { lead: "Pagina de Analytics", text: " și monitorizarea erorilor cu Sentry." },
+      ],
+      footer: "sumar de proiect",
     },
     hero: {
       badge: "Acum cu pagini de produs generate de AI",
